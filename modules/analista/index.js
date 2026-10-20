@@ -51,13 +51,14 @@ async function analisarComIA({ texto, tipo, contexto }, tentativas) {
   for (const nome of est.ordem) {
     const p = providers.PROVEDORES[nome];
     if (!p.ativo()) { tentativas.push({ provedor: nome, ok: false, erro: 'sem chave' }); continue; }
-    if (p.nuvem && !est.enviarNuvem) { tentativas.push({ provedor: nome, ok: false, erro: 'envio à nuvem desligado (ANALISTA_ENVIAR_NUVEM)' }); continue; }
+    if (p.nuvem && !est.enviarNuvem && !(p.nuvemLiberada && p.nuvemLiberada())) { tentativas.push({ provedor: nome, ok: false, erro: 'envio à nuvem desligado (sem aprovação do jurídico)' }); continue; }
     // Nuvem recebe só texto mascarado e cortado.
     const base = (p.nuvem ? mascarar(texto).texto : String(texto)).slice(0, LIMITE_CHARS);
     const usuario = PROMPT_USUARIO.replace('{{tipo}}', tipo || 'documento').replace('{{unidade}}', ctx.unidade || '—').replace('{{competencia}}', ctx.competencia || '—')
       .replace('{{observacoes}}', ctx.observacoes || (ctx.mesImplantacao ? 'mês de implantação' : '—')).replace('{{texto}}', base);
     try {
-      const bruto = await p.chamar({ sistema: PROMPT_SISTEMA, usuario });
+      let bruto;
+      try { bruto = await p.chamar({ sistema: PROMPT_SISTEMA, usuario }); providers.contar(nome, true); } catch (e) { providers.contar(nome, false); throw e; }
       const achados = extrairJson(bruto).map((a) => limparAchado(a, base)).filter(Boolean);
       tentativas.push({ provedor: nome, ok: true, achados: achados.length });
       return { provedor: nome, achados };

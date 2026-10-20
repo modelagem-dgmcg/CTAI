@@ -129,6 +129,21 @@ CREATE TABLE IF NOT EXISTS integracao_log (
 CREATE TABLE IF NOT EXISTS lotes_api (
   lote_id INTEGER PRIMARY KEY AUTOINCREMENT, integracao_id INTEGER, cid INTEGER NOT NULL, fonte TEXT NOT NULL, criado_em TEXT, registros INTEGER, recusados INTEGER, status TEXT NOT NULL DEFAULT 'pendente'
 );
+-- Gestão CTAI: carteira (quais unidades cada funcionário acompanha, com histórico), configurações, IA (chave cifrada) e uso mensal.
+CREATE TABLE IF NOT EXISTS carteira (
+  carteira_id INTEGER PRIMARY KEY AUTOINCREMENT, usuario_id INTEGER NOT NULL, contrato_id TEXT NOT NULL, desde TEXT NOT NULL, ate TEXT,
+  atribuido_por TEXT, removido_por TEXT, motivo TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_carteira ON carteira (contrato_id, ate);
+CREATE INDEX IF NOT EXISTS ix_carteira_u ON carteira (usuario_id, ate);
+CREATE TABLE IF NOT EXISTS gestao_config (chave TEXT PRIMARY KEY, valor TEXT, atualizado_por TEXT, atualizado_em TEXT);
+CREATE TABLE IF NOT EXISTS ia_config (
+  provedor TEXT PRIMARY KEY, ativo INTEGER NOT NULL DEFAULT 0, modelo TEXT, url TEXT, chave_cifrada TEXT, chave_final TEXT,
+  juridico_por TEXT, juridico_em TEXT, atualizado_por TEXT, atualizado_em TEXT
+);
+CREATE TABLE IF NOT EXISTS ia_uso (
+  provedor TEXT NOT NULL, mes TEXT NOT NULL, chamadas INTEGER NOT NULL DEFAULT 0, falhas INTEGER NOT NULL DEFAULT 0, ultimo_uso TEXT, PRIMARY KEY (provedor, mes)
+);
 `;
 
 // Gatilhos que impedem alterar ou apagar o que precisa ficar imutável.

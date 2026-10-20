@@ -16,6 +16,7 @@ const { erro } = A;
 module.exports = (db) => {
   const r = express.Router();
   r.use(A.exigir(db, A.PERFIS_CTAI));
+  r.use(require('../carteira').guarda(db));
 
   r.get('/estado', (req, res) => res.json(analista.estado()));
 
@@ -60,7 +61,8 @@ module.exports = (db) => {
 
   // ---------- Achados: lista, fixar/descartar, encaminhar à unidade ----------
   r.get('/achados', (req, res) => {
-    const lista = achadosDb.listar(db, { cid: req.query.cid, origem_tipo: req.query.origem_tipo, origem_id: req.query.origem_id, status: req.query.status, contrato_id: req.query.contrato });
+    const lista = achadosDb.listar(db, { cid: req.query.cid, origem_tipo: req.query.origem_tipo, origem_id: req.query.origem_id, status: req.query.status, contrato_id: req.query.contrato })
+      .filter((a) => !req.escopo || !a.contrato_id || req.escopo.has(a.contrato_id));
     if (req.query.normas) for (const a of lista) a.normas = normasDb.paraAchado(db, a, a.contrato_id);
     res.json({ achados: lista });
   });
@@ -71,9 +73,9 @@ module.exports = (db) => {
   r.get('/painel', (req, res) => {
     const contagens = achadosDb.contagens(db);
     const hoje = new Date().toISOString().slice(0, 10);
-    const fila = achadosDb.listar(db, {}).filter((a) => ['novo', 'encaminhado', 'respondido'].includes(a.status)).slice(0, 60)
+    const fila = achadosDb.listar(db, {}).filter((a) => !req.escopo || !a.contrato_id || req.escopo.has(a.contrato_id)).filter((a) => ['novo', 'encaminhado', 'respondido'].includes(a.status)).slice(0, 60)
       .map((a) => Object.assign(a, { vencido: a.status === 'encaminhado' && !!a.prazo && a.prazo < hoje }));
-    const contratos = db.all('SELECT contrato_id, unidade, demo FROM contratos ORDER BY demo, unidade').map((c) => {
+    const contratos = db.all('SELECT contrato_id, unidade, demo FROM contratos ORDER BY demo, unidade').filter((c) => !req.escopo || req.escopo.has(c.contrato_id)).map((c) => {
       const integ = acervoSrv.integracaoDoContrato(db, c.contrato_id);
       return { contrato_id: c.contrato_id, unidade: c.unidade, demo: !!c.demo, acervo: integ ? { ativo: !!integ.ativo, estado: integ.estado, ultima_sync: integ.ultima_sync } : null,
         competencias: db.all('SELECT cid, competencia_id, status FROM competencias WHERE contrato_id = ? ORDER BY competencia_id DESC', c.contrato_id).map((k) => Object.assign(k, { temEnvio: !!D.ultimoEnvio(db, k.cid) })) };

@@ -95,3 +95,24 @@ pre.sec{background:#f1eee6;padding:10px;border-radius:8px;overflow:auto;font-siz
 }
 @media print{.lateral,.no-print{display:none!important}.casca{display:block}.conteudo{padding:0}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---- Gestão CTAI ---- */
+.filtros{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;padding:12px 16px}
+.filtros .campo{margin:0;min-width:180px}.filtros .campo select{width:100%}
+.filtros .btn{margin-left:auto}
+.kpi.alta{border-color:#e3b3bb;background:#fff6f7}.kpi.atencao{border-color:#e8c98a;background:#fffaf0}
+.alertas{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.alertas li{padding:7px 10px;border-radius:8px;background:#f6f4ef;font-size:14px}
+.alertas li.alta{background:#fff3f5}.alertas li.atencao{background:#fff8ec}
+.unidades-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(520px,1fr));margin-bottom:16px}
+.unidades-grid .cartao{margin:0}
+.un-rodape{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--borda)}
+.un-rodape .r{font-size:12.5px;color:var(--cinza)}
+.num-medio{font:600 22px "Source Serif 4",serif;color:var(--escuro)}
+.delta{font-weight:600;font-size:13.5px}.delta.baixou{color:var(--verm)}.delta.subiu{color:var(--ok)}
+.barra-rot{display:flex;align-items:center;gap:8px;min-width:140px}.barra-rot .barra{flex:1}
+.sem-carteira{padding:6px 0;border-top:1px solid var(--borda)}
+label.ck{display:block;padding:5px 0;cursor:pointer}label.ck input{margin-right:6px}
+.ia-card .ia-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:12px 0}
+.ia-card .r{font-size:12.5px;color:var(--cinza)}
+@media (max-width:640px){.unidades-grid{grid-template-columns:1fr}}

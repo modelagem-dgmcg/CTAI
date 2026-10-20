@@ -557,11 +557,13 @@
   }
 
   async function iniciar() {
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/', rotulo: 'Painel' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }].concat([]) });
+    const me0 = await api('GET', '/api/auth/me').catch(() => null);
+    window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão CTAI' }] : [];
+    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/', rotulo: 'Painel' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }].concat(window.__soGestao || []) });
     if (!EU) return;
     if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), nav); }
     META = await api('GET', '/api/meta');
-    rotear([['/', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]], (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();

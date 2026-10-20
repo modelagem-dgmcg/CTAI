@@ -34,6 +34,8 @@ function criarApp(db) {
   app.use('/api/analista', require('./routes/analista')(db));
   app.use('/api/integracoes', require('./routes/integracoes')(db));
   app.use('/api/admin', require('./routes/admin')(db));
+  require('./ia-config').instalar(db);
+  app.use('/api/gestao', require('./routes/gestao')(db));
 
   app.get('/api/meta', A.exigir(db), (req, res) => {
     res.json({

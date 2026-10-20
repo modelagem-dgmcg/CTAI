@@ -18,13 +18,15 @@ const { erro } = A;
 module.exports = (db) => {
   const r = express.Router();
   r.use(A.exigir(db, A.PERFIS_CTAI));
+  const CART = require('../carteira');
+  r.use(CART.guarda(db));
   const CL = require('../checklist');
   const PZ = require('../prazos');
   const soCriadorOuAdmin = (u) => { if (!['criador', 'admin'].includes(u.perfil)) throw erro(403, 'Esta ação é de quem cria o parecer.'); };
 
   // ---------- Painel ----------
   r.get('/contratos', (req, res) => {
-    const lista = db.all('SELECT * FROM contratos ORDER BY demo, contrato_id').map((c) => {
+    const lista = db.all('SELECT * FROM contratos ORDER BY demo, contrato_id').filter((c) => !req.escopo || req.escopo.has(c.contrato_id)).map((c) => {
       const comps = db.all('SELECT cid, competencia_id, status, mes_implantacao FROM competencias WHERE contrato_id = ? ORDER BY competencia_id', c.contrato_id).map((k) => {
         const ult = D.ultimoEnvio(db, k.cid);
         const div = db.get("SELECT COUNT(*) AS n FROM divergencias WHERE cid = ? AND status = 'aberta'", k.cid).n;
@@ -34,7 +36,7 @@ module.exports = (db) => {
       const p = D.pendenciasDeRegra(db, c.contrato_id, regras);
       return Object.assign(c, { demo: !!c.demo, competencias: comps, decisoesAbertas: p.abertas.length });
     });
-    res.json({ contratos: lista });
+    res.json({ contratos: lista, escopo: req.escopo ? 'carteira' : 'todas' });
   });
 
   r.get('/competencias/:cid', (req, res) => {
@@ -134,7 +136,7 @@ module.exports = (db) => {
   });
 
   // ---------- Pareceres e mesa ----------
-  r.get('/pareceres', (req, res) => res.json({ pareceres: M.listar(db) }));
+  r.get('/pareceres', (req, res) => res.json({ pareceres: M.listar(db).filter((p) => !req.escopo || req.escopo.has(p.contrato_id)) }));
   r.post('/pareceres', (req, res) => res.json({ parecer_id: M.criar(db, req.usuario, req.body || {}) }));
   r.get('/pareceres/:id', (req, res) => res.json(M.detalhe(db, req.params.id, req.usuario)));
   r.put('/pareceres/:id/texto', (req, res) => { M.salvarTexto(db, req.params.id, req.usuario, req.body && req.body.texto, req.body); res.json({ ok: true }); });
