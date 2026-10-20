@@ -13,18 +13,22 @@ Primeira versão para teste. Funciona de ponta a ponta com **dados fictícios**.
 | Segurança | login, bloqueio por tentativas, CSRF, CSP, perfis, trilha com cadeia, imutabilidade por gatilho | testes automáticos |
 | Analista (encaixe) | regras locais + provedores de IA desligados sem chave; mascaramento; anti-invenção | testes automáticos (sem IA real) |
 | Rack do MV | configuração só com nome de variável, prévia, lote pendente, mapeamento, simulador | testes automáticos contra o simulador |
+| **Analista CTAI** (20/10/2026) | fila de achados; **encaminhar à unidade** com setor e prazo, resposta da unidade (tela Esclarecimentos), aceitar/fixar; **normas por unidade** com busca e sugestão junto do achado; **conferência com o acervo** (fonte opcional, só leitura); **relatório trimestral** (minuta com texto sugerido, edição, congelar, PDF) | 7 testes novos em `test/analista-ctai.test.js` + E2E (encaminha, responde, aceita, normas, acervo, relatório) |
 | Dados de demonstração | contrato fictício, recriar e apagar | testes + E2E |
 
-Números: `npm test` = **50 testes, 0 falhas**. `npm run e2e` = fluxo completo no Chromium (unidade envia, PDF válido, CTAI recalcula, minuta, congelar, três pessoas conferem, superintendente autoriza, SEI do parecer registrado, trilha íntegra, número do SEI do relatório registrado pela unidade, dois canais e alerta de nova versão, sem erro de JavaScript nas telas percorridas). Capturas em `docs/capturas/`.
+Números: `npm test` = **57 testes, 0 falhas**. `npm run e2e` = fluxo completo no Chromium (unidade envia, PDF válido, CTAI recalcula, minuta, congelar, três pessoas conferem, superintendente autoriza, SEI do parecer registrado, trilha íntegra, número do SEI do relatório registrado pela unidade, dois canais e alerta de nova versão, sem erro de JavaScript nas telas percorridas). Capturas em `docs/capturas/`.
 
 ## Vagas (encaixes) deixadas prontas
 
-1. **Analista existente (o DNA)**: contrato e pontos de encaixe em `docs/DNA-ANALISTA.md`. Não tive o código dele; nada foi inventado.
+1. **Analista da diretoria (o DNA)**: a lógica de achados, normas e log foi trazida para o Analista CTAI (`docs/ANALISTA-CTAI.md`). Os leitores de IA e as regras do `Achados.gs` ainda não foram portados; o contrato de encaixe está em `docs/DNA-ANALISTA.md`.
 2. **API do MV**: rack pronto; falta o acesso e o dicionário de campos. `docs/INTEGRACAO-MV.md`.
 3. **Regras de contrato de outras unidades**: `regras/igq_v1.json` serve de modelo; cada contrato aponta para uma regra.
 
 ## Não testado (por falta de acesso ou de ambiente)
 
+- **Acervo/SIMAS real**: só o modo demonstração (valores fictícios) e o arquivo JSON. Falta saber quem alimenta o SIMAS e se ele entrega linhas ou só totais.
+- **Normas reais**: as do contrato de demonstração são textos de exemplo; as da UPA Olinda precisam ser coladas pela CTAI.
+- **Formulário padronizado definitivo**: segue a UPA Olinda (16 indicadores, seis fichas). Ajusta quando chegar a lista de dados obrigatórios da UPA.
 - **API real do MV** (nem o segundo sistema, "Pixeon"). Só o simulador.
 - **Provedores de IA reais** (Gemini, Groq, Kimi, DeepSeek, OpenRouter, Ollama): sem chave aqui. Os modelos e as URLs são configuráveis e podem precisar de ajuste.
 - **O Analista real** (não estava disponível).

@@ -76,8 +76,8 @@
   function abaDivergencias(d, p) {
     if (!d.divergencias.length) return h('p', { class: 'vazio' }, 'Nenhuma divergência registrada.');
     return h('div', null, h('p', { class: 'mudo' }, d.divergencias.length + ' divergência(s). Decidir uma divergência exige uma observação, que fica na trilha.'),
-      d.divergencias.map((x) => h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('strong', null, x.tema), h('div', { class: 'linha' }, seloGrav(x.gravidade), selo(x.origem === 'leitura' ? 'lida nos documentos' : 'recálculo'))),
-        h('div', { class: 'duas peq', style: 'margin-top:6px' }, h('div', null, h('span', { class: 'mudo' }, 'Declarado: '), x.declarado ?? '—'), h('div', null, h('span', { class: 'mudo' }, 'Recalculado: '), x.recalculado ?? '—')),
+      d.divergencias.map((x) => h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('strong', null, x.tema), h('div', { class: 'linha' }, seloGrav(x.gravidade), selo(x.origem === 'leitura' ? 'lida nos documentos' : (x.origem === 'acervo' ? 'conferência com o acervo' : 'recálculo')))),
+        h('div', { class: 'duas peq', style: 'margin-top:6px' }, h('div', null, h('span', { class: 'mudo' }, x.origem === 'acervo' ? 'No sistema da CTAI: ' : 'Declarado: '), x.declarado ?? '—'), h('div', null, h('span', { class: 'mudo' }, x.origem === 'acervo' ? 'No acervo: ' : 'Recalculado: '), x.recalculado ?? '—')),
         x.observacao ? h('p', { class: 'peq' }, x.observacao) : null,
         h('div', { class: 'linha', style: 'margin-top:8px' }, h('label', { style: 'margin:0;font-weight:400' }, 'Situação '), h('select', { 'aria-label': 'Situação da divergência', id: 'dv' + x.divergencia_id }, STATUS_DIV.map((s) => h('option', { value: s, selected: s === x.status }, s))),
           h('button', { class: 'sec', onclick: async () => {
@@ -387,7 +387,7 @@
       try {
         const o = await api('POST', '/api/analista/competencias/' + cid + '/acervo/conferir', {});
         troca(saida, h('div', { class: 'cartao' }, h('h3', null, 'Resultado'), h('p', { class: 'peq mudo' }, 'Fonte: ' + o.fonte + ' · ' + o.comparados + ' indicador(es) comparado(s) · ' + o.divergentes + ' divergente(s). As divergências foram para a aba Divergências da competência.'),
-          tabela([{ t: 'Item' }, { t: 'No sistema da CTAI', n: true }, { t: 'No acervo', n: true }, { t: 'Diferença', n: true }, { t: 'Situação' }], o.itens.map((x) => [x.indicador_id, fmt.valor(x.sistema), fmt.valor(x.acervo), String(x.diferenca), x.confere ? selo('confere', 'ok') : selo('divergente', 'atencao')]), { vazio: 'Nenhum indicador em comum.' })));
+          tabela([{ t: 'Item' }, { t: 'No sistema da CTAI', n: true }, { t: 'No acervo', n: true }, { t: 'Diferença', n: true }, { t: 'Situação' }], o.itens.map((x) => [x.indicador_id, fmt.valor(x.sistema), fmt.valor(x.acervo), fmt.valor(x.diferenca), x.confere ? selo('confere', 'ok') : selo('divergente', 'atencao')]), { vazio: 'Nenhum indicador em comum.' })));
       } catch (e) { troca(saida, aviso('erro', e.message)); }
     };
     return [aviso('info', 'O acervo é uma fonte ', h('strong', null, 'opcional'), ' de conferência (SIMAS ou outro banco da SES), só leitura. O sistema compara o que a unidade enviou, já recalculado pela CTAI, com o que o acervo tem do mesmo mês.'),
