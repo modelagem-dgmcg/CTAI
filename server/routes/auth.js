@@ -3,6 +3,7 @@ const express = require('express');
 const A = require('../auth');
 const trilha = require('../trilha');
 const U = require('../../core/util');
+const EX = require('../exposicao');
 
 module.exports = (db) => {
   const r = express.Router();
@@ -12,6 +13,7 @@ module.exports = (db) => {
     const { login, senha } = req.body || {};
     const e = A.entrar(db, login, senha);
     if (e.erro) { trilha.registrar(db, { usuario: String(login || '').slice(0, 40), tabela: 'sessoes', registro: 'login', campo: 'tentativa', valor_novo: 'falhou' }); return res.status(401).json({ erro: e.erro }); }
+    if (!EX.perfilPermitido(req, e.usuario.perfil)) { trilha.registrar(db, { usuario: e.usuario.login, tabela: 'sessoes', registro: 'login', campo: 'tentativa', valor_novo: 'recusada fora da rede interna' }); return res.status(401).json({ erro: 'Usuário ou senha incorretos.' }); }
     const s = A.criarSessao(db, e.usuario.usuario_id);
     res.setHeader('Set-Cookie', A.cookieDe(s.token, s.expira));
     trilha.registrar(db, { usuario: e.usuario.login, tabela: 'sessoes', registro: 'login', campo: 'entrada', valor_novo: 'ok' });
@@ -28,6 +30,7 @@ module.exports = (db) => {
   r.get('/me', (req, res) => {
     const u = A.usuarioDaSessao(db, req);
     if (!u) return res.status(401).json({ erro: 'Sem sessão.' });
+    if (!EX.perfilPermitido(req, u.perfil)) return res.status(401).json({ erro: 'Sem sessão.' });
     res.json({ usuario: publico(u) });
   });
 

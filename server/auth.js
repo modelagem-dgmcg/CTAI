@@ -105,6 +105,7 @@ function exigir(db, perfis) {
   return (req, res, next) => {
     const u = usuarioDaSessao(db, req);
     if (!u) return res.status(401).json({ erro: 'Entre com seu usuário e senha.' });
+    if (!require('./exposicao').perfilPermitido(req, u.perfil)) return res.status(404).json({ erro: 'Rota não encontrada.' });
     if (u.trocar_senha && !String(req.originalUrl || '').startsWith('/api/auth/')) return res.status(403).json({ erro: 'Troque a senha temporária antes de continuar.', trocarSenha: true });
     if (perfis && !perfis.includes(u.perfil) && u.perfil !== 'admin') return res.status(403).json({ erro: 'Seu perfil não tem acesso a esta área.' });
     req.usuario = u;
