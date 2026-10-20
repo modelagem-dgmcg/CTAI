@@ -18,6 +18,7 @@ function prazosDaCompetencia(competenciaId) {
   return { sei: base + pad(DIA_SEI), simas: base + pad(DIA_SIMAS) };
 }
 
+const br = (iso) => iso.split('-').reverse().join('/');
 const emDias = (iso) => Math.round(Date.UTC(...iso.split('-').map((x, i) => (i === 1 ? Number(x) - 1 : Number(x)))) / 86400000);
 const diasEntre = (de, ate) => emDias(ate) - emDias(de); // positivo quando "ate" é depois de "de"
 
@@ -25,8 +26,8 @@ const diasEntre = (de, ate) => emDias(ate) - emDias(de); // positivo quando "ate
 function avaliar(prazo, entregue, hoje) {
   if (entregue) {
     const atraso = diasEntre(prazo, entregue);
-    if (atraso <= 0) return { situacao: 'entregue no prazo', nivel: 'ok', dias: 0, mensagem: 'Entregue em ' + entregue + ', dentro do prazo.' };
-    return { situacao: 'entregue com atraso', nivel: 'alta', dias: atraso, mensagem: 'Entregue em ' + entregue + ', ' + atraso + ' dia(s) depois do prazo.' };
+    if (atraso <= 0) return { situacao: 'entregue no prazo', nivel: 'ok', dias: 0, mensagem: 'Entregue em ' + br(entregue) + ', dentro do prazo.' };
+    return { situacao: 'entregue com atraso', nivel: 'alta', dias: atraso, mensagem: 'Entregue em ' + br(entregue) + ', ' + atraso + ' dia(s) depois do prazo.' };
   }
   const resta = diasEntre(hoje, prazo);
   if (resta < 0) return { situacao: 'vencido', nivel: 'alta', dias: -resta, mensagem: 'Prazo vencido há ' + (-resta) + ' dia(s).' };

@@ -53,6 +53,14 @@ Depois de anexar e assinar no SEI, **registre o número do documento no sistema*
 - Na aba **Envios**, cada versão mostra **Enviado ao sistema** (ainda sem número) ou **Registrado no SEI**.
 - O sistema **não impede** o envio se você não registrar o número. Ele só **avisa**, no Resumo e em Envios, quando uma versão não tem registro ou quando você enviou uma versão nova depois de registrar o SEI da anterior.
 
+### Prazos e documentos obrigatórios
+
+- **Prazos:** o relatório vai ao **SEI até o dia 20** e ao **SIMAS até o dia 25** do mês seguinte. Cada mês mostra os dois prazos, com aviso quando faltam 5 dias ou menos e quando o prazo venceu. O aviso nunca bloqueia o envio.
+- **SEI:** vale o dia em que você registrou o número do documento aqui.
+- **SIMAS:** o gestor clica em **Informar o envio ao SIMAS** e coloca a data. Para corrigir a data, explique o motivo.
+- **Documentos obrigatórios:** na ficha da **Qualidade**, informe o **Relatório da Comissão de Óbitos** (item 2.10). Na ficha da **Ouvidoria**, informe as **informações da publicação de transparência** (item 2.13): endereço da página, data e o que foi publicado. Sem isso o sistema avisa antes do envio e a CTAI marca o item como incompleto.
+- O relatório em PDF traz a seção **Documentos obrigatórios do mês**, que mostra o que está completo, incompleto ou não informado.
+
 ## 6. Corrigir depois de enviar
 Faça a correção nas fichas ou listas e volte em **Conferir e enviar**. O sistema gera uma **nova versão** e exige o **motivo da correção**. A versão antiga continua guardada. Aba **Envios** lista todas, com o PDF de cada. **Cada versão nova tem o seu próprio documento no SEI**: anexe, assine e registre o novo número.
 

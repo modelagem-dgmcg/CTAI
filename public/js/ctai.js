@@ -68,8 +68,8 @@
       i.observacao || '', h('button', { class: 'sec', onclick: () => editarItem(i, recarregar, p.cid) }, 'Editar')]);
     const cols = [{ t: 'Item' }, { t: 'Status' }, { t: 'Origem' }, { t: 'Recebido em' }, { t: 'Responsável' }, { t: 'Validação' }, { t: 'Observações' }, { t: '' }];
     return [avisoPrazos(d.prazos),
-      h('div', { class: 'kpis' }, kpi('Competência', fmt.comp(d.competencia.competencia_id)), kpi('Data de recebimento', dataBr(ck.data_recebimento), 'versão v' + ck.versao), kpi('Responsável pelo envio', ck.responsavel_envio || '—'),
-        kpi('Recebidos', String(r.recebido), 'de ' + (r.recebido + r.pendente + r.incompleto + r['não aplicável'])), kpi('Incompletos', String(r.incompleto)), kpi('Pendentes', String(r.pendente))),
+      h('p', { style: 'margin:0 0 10px' }, h('strong', null, 'Competência: '), fmt.comp(d.competencia.competencia_id), ' · ', h('strong', null, 'Responsável pelo envio: '), ck.responsavel_envio || '—', ' · versão v' + ck.versao),
+      h('div', { class: 'kpis' }, kpi('Data de recebimento', dataBr(ck.data_recebimento)), kpi('Recebidos', String(r.recebido), 'de ' + (r.recebido + r.pendente + r.incompleto + r['não aplicável'])), kpi('Incompletos', String(r.incompleto)), kpi('Pendentes', String(r.pendente)), kpi('Não aplicáveis', String(r['não aplicável']))),
       h('div', { class: 'cartao' }, h('h3', null, 'Documentos e relatórios obrigatórios da UPA'), h('p', { class: 'mudo peq' }, 'O sistema sugere o status pelo que a unidade informou. A decisão é de quem confere: ao editar, o item deixa de ser recalculado a cada novo envio.'), tabela(cols, linhas(false))),
       h('div', { class: 'cartao' }, h('h3', null, 'Complementares (mantidos por decisão)'), tabela(cols, linhas(true))),
       cartaoPrazos(d.prazos)];

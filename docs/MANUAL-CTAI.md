@@ -55,3 +55,14 @@ Registro que só cresce, com a cadeia de códigos. A faixa verde diz "Cadeia ín
 
 ## 10. Administração (admin)
 Usuários (criar, redefinir senha, ativar/desativar), saúde do sistema, e **dados de demonstração**: recriar ou apagar (digite `APAGAR`). Apagar só mexe no contrato fictício.
+
+
+## Checklist de recebimento e prazos
+
+Cada competência com envio tem a aba **Checklist de recebimento** (console da CTAI, dentro da competência).
+
+- O sistema cria o checklist ao receber o envio, com um item para cada documento obrigatório da UPA e dois complementares (transferências e pessoal). Mostra a **competência**, a **data de recebimento** e o **responsável pelo envio**.
+- Para cada item: **status** (recebido, pendente, incompleto, não aplicável), **data de recebimento**, **responsável**, **validação** (validado, com divergências, com inconsistências) e **observações**. "Não aplicável" exige o motivo nas observações.
+- O sistema sugere o status pelo que a unidade informou. Quando você edita, o item deixa de ser recalculado a cada nova versão; **Voltar ao cálculo do sistema** desfaz isso. Toda alteração fica na trilha.
+- **Prazos:** SEI até o dia 20 e SIMAS até o dia 25 do mês seguinte. O painel tem a coluna **Prazos** e a competência mostra o aviso de prazo vencido, a vencer ou entregue com atraso.
+- O checklist e os prazos vão para a minuta e para o PDF do parecer (seção **Checklist de recebimento e prazos**) e aparecem na mesa, dentro do item de identificação.

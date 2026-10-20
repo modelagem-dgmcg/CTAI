@@ -14,9 +14,10 @@ Primeira versão para teste. Funciona de ponta a ponta com **dados fictícios**.
 | Analista (encaixe) | regras locais + provedores de IA desligados sem chave; mascaramento; anti-invenção | testes automáticos (sem IA real) |
 | Rack do MV | configuração só com nome de variável, prévia, lote pendente, mapeamento, simulador | testes automáticos contra o simulador |
 | **Analista CTAI** (20/10/2026) | fila de achados; **encaminhar à unidade** com setor e prazo, resposta da unidade (tela Esclarecimentos), aceitar/fixar; **normas por unidade** com busca e sugestão junto do achado; **conferência com o acervo** (fonte opcional, só leitura); **relatório trimestral** (minuta com texto sugerido, edição, congelar, PDF) | 7 testes novos em `test/analista-ctai.test.js` + E2E (encaminha, responde, aceita, normas, acervo, relatório) |
+| **Lista oficial de obrigatórios da UPA** (20/10/2026) | prazos SEI (dia 20) e SIMAS (dia 25) por competência, com alerta e atraso no portal e no console; **checklist de recebimento** (competência, data de recebimento, status por item, responsável pelo envio, validação, observações) na recepção, na mesa e no PDF da minuta; campos **Relatório da Comissão de Óbitos** (2.10) e **informações da publicação de transparência** (2.13); seção **Documentos obrigatórios** e prazos no PDF da unidade; Transferências e Pessoal mantidos como complementares | 11 testes novos em `test/obrigatorios.test.js` + E2E |
 | Dados de demonstração | contrato fictício, recriar e apagar | testes + E2E |
 
-Números: `npm test` = **57 testes, 0 falhas**. `npm run e2e` = fluxo completo no Chromium (unidade envia, PDF válido, CTAI recalcula, minuta, congelar, três pessoas conferem, superintendente autoriza, SEI do parecer registrado, trilha íntegra, número do SEI do relatório registrado pela unidade, dois canais e alerta de nova versão, sem erro de JavaScript nas telas percorridas). Capturas em `docs/capturas/`.
+Números: `npm test` = **68 testes, 0 falhas**. `npm run e2e` = fluxo completo no Chromium (unidade envia, PDF válido, CTAI recalcula, minuta, congelar, três pessoas conferem, superintendente autoriza, SEI do parecer registrado, trilha íntegra, número do SEI do relatório registrado pela unidade, dois canais e alerta de nova versão, sem erro de JavaScript nas telas percorridas). Capturas em `docs/capturas/`.
 
 ## Vagas (encaixes) deixadas prontas
 
@@ -41,6 +42,9 @@ Números: `npm test` = **57 testes, 0 falhas**. `npm run e2e` = fluxo completo n
 - Android/iOS reais (testei largura de celular no Chromium).
 
 ## Limites conhecidos
+
+- **Prazos:** a entrega no SEI é conhecida só pelo registro do número do documento no sistema (sem a API do SEI); a do SIMAS, pela data que o gestor informa. Se a unidade não registrar, o prazo aparece como vencido mesmo que ela tenha cumprido. O dia 20 e o dia 25 valem como dia corrido (não há calendário de feriados).
+- **Checklist:** a sugestão de status olha o que a unidade preencheu (valor e comprovação), não o conteúdo dos documentos. Quem confere decide.
 
 - **Sem a API do SEI, o vínculo entre o dado no sistema e o PDF no SEI depende do registro manual do número pela unidade.** Se a unidade não registrar, o sistema só alerta; não há como saber sozinho o que está no SEI. O número é validado só no formato (dígitos, 6 a 12): o sistema não confirma que o documento existe nem que é o PDF certo. Quem confere é a mesa, olhando o código no rodapé.
 - Versões da minuta congeladas **antes** do vínculo com o SEI não têm os dados de apoio e ficam com o item novo da mesa pendente.

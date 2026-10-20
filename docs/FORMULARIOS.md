@@ -50,6 +50,7 @@ Indicadores: 2.5, 2.10. Listas (linhas): Óbitos e revisão.
 | Óbitos com 24 horas ou mais de internação (`obitos_24h`) | inteiro | 0 a  | 2.10 | Conte só os que ficaram 24 horas ou mais entre a admissão e o óbito. |
 | Desses, quantos foram revisados pela comissão (`obitos_24h_revisados`) | inteiro | 0 a  | 2.10 | Revisão registrada em ata da comissão de óbitos. |
 | Anexo que comprova (nº SEI ou arquivo) (`i2_10_anexo`) | texto |  | 2.10 | Número do documento no SEI ou nome do arquivo que comprova o dado. Sem anexo, o item pode ficar sem pontuação. |
+| Relatório da Comissão de Óbitos (nº SEI ou arquivo) (`obitos_relatorio_comissao`) | texto |  | 2.10 | Obrigatório na lista da Secretaria: o relatório da comissão do mês, com a ata da revisão. Informe o número do documento no SEI ou o nome do arquivo. |
 | Prontuários revisados (amostra) (`prontuarios_amostra`) | inteiro | 0 a  |  | Quantos prontuários a comissão revisou no mês. |
 | Total de prontuários do mês (`prontuarios_total`) | inteiro | 0 a  |  | Base da amostra. O sistema calcula o percentual real da amostra. |
 | Percentual de amostra que o relatório declara (`prontuarios_amostra_pct_declarada`) | percentual | % |  | O que está escrito no relatório (ex.: "2%"). O sistema compara com a conta real. |
@@ -75,6 +76,7 @@ Indicadores: 2.11, 2.12, 2.13. Listas (linhas): Queixas e respostas.
 | Anexo que comprova (nº SEI ou arquivo) (`i2_12_anexo`) | texto |  | 2.12 | Número do documento no SEI ou nome do arquivo que comprova o dado. Sem anexo, o item pode ficar sem pontuação. |
 | Transparência: nível da ficha de avaliação (`i2_13_valor`) | selecao | Desejado / Moderado / Intermediário / Insuficiente / Crítico | 2.13 | Nível indicado na Ficha de Avaliação de Transparência do mês. |
 | Anexo que comprova (nº SEI ou arquivo) (`i2_13_anexo`) | texto |  | 2.13 | Número do documento no SEI ou nome do arquivo que comprova o dado. Sem anexo, o item pode ficar sem pontuação. |
+| Informações da publicação de transparência (`transparencia_publicacao`) | texto_longo |  | 2.13 | Obrigatório na lista da Secretaria: informações que permitam aferir a qualidade da publicação (endereço da página, data da publicação e o que foi publicado). Não cole dado de paciente. |
 | Observações da ouvidoria (`ouvidoria_obs`) | texto_longo |  |  |  |
 
 ### Educação permanente (`educacao`)
@@ -135,6 +137,34 @@ Indicadores: —. Listas (linhas): Quadro de pessoal.
 | Quadro administrativo ativo (pessoas) (`quadro_adm_ativos`) | inteiro | 0 a  |  |  |
 | Anexo das escalas (nº SEI ou arquivo) (`i_rh_anexo`) | texto |  |  | Escalas em planilha, não em foto ou impressão. |
 | Observações (`rh_obs`) | texto_longo |  |  |  |
+
+## Lista oficial de obrigatórios da UPA e checklist de recebimento
+
+Prazos: envio no **SEI até o dia 20** e no **SIMAS até o dia 25** do mês seguinte à competência. O monitoramento é mensal e a consolidação, trimestral. Atraso e alerta (a vencer em até 5 dias) aparecem no portal da unidade e no console da CTAI.
+
+Ao receber um envio, a CTAI preenche o checklist da Secretaria para cada item: **competência**, **data de recebimento**, **status** (recebido, pendente, incompleto, não aplicável), **responsável pelo envio**, **validação** (divergências e inconsistências) e **observações**. O sistema sugere o status pelo que a unidade informou; a decisão de quem confere prevalece e fica na trilha.
+
+| Item | Grupo | Indicadores | Comprovação exigida (campos) |
+|---|---|---|---|
+| Produção: relatório mensal de atendimentos | Produção | — | `i_bid_anexo` |
+| Eficiência assistencial: tempos da classificação ao atendimento (verde, amarelo, vermelho) | Qualidade | 2.1, 2.2, 2.3 | `i2_1_anexo`, `i2_2_anexo`, `i2_3_anexo` |
+| Eficiência assistencial: retorno em até 24 horas | Qualidade | 2.4 | `i2_4_anexo` |
+| Eficiência assistencial: relatório de segurança do paciente | Qualidade | 2.5 | `i2_5_anexo` |
+| Dor torácica: porta-ECG | Qualidade | 2.6 | `i2_6_anexo` |
+| Dor torácica: porta-saída do IAMCSST | Qualidade | 2.7 | `i2_7_anexo` |
+| AVE: admissão até avaliação médica | Qualidade | 2.8 | `i2_8_anexo` |
+| Sepse: porta-antibiótico | Qualidade | 2.9 | `i2_9_anexo` |
+| Vigilância de óbito: relatório da Comissão de Óbitos e percentual de óbitos revisados | Qualidade | 2.10 | `i2_10_anexo`, `obitos_relatorio_comissao` |
+| Atenção ao usuário: satisfação | Qualidade | 2.11 | `i2_11_anexo` |
+| Atenção ao usuário: aceite das queixas | Qualidade | 2.12 | `i2_12_anexo` |
+| Transparência: informações que permitam aferir a qualidade da publicação | Qualidade | 2.13 | `i2_13_anexo`, `transparencia_publicacao` |
+| Educação permanente: plano | Qualidade | 2.14 | `i2_14_anexo` |
+| Educação permanente: adesão da equipe assistencial | Qualidade | 2.15 | `i2_15_anexo` |
+| Educação permanente: adesão da equipe administrativa | Qualidade | 2.16 | `i2_16_anexo` |
+| Transferências (complementar) | Complementar | — | — |
+| Pessoal e escalas (complementar) | Complementar | — | `i_rh_anexo` |
+
+Transferências e Pessoal ficam como **complementares** (mantidos por decisão): entram no checklist, mas não contam no resumo dos obrigatórios.
 
 ## Listas de linhas (CSV ou digitação)
 
