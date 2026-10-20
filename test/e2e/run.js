@@ -264,6 +264,23 @@ let base;
     const colegaCart = await entrar(browser, 'colega1', 1280, true); paginas.push(colegaCart);
     await colegaCart.waitForSelector('#conteudo h1'); assert.doesNotMatch(await colegaCart.textContent('#conteudo'), /Olinda/); assert.equal(await colegaCart.locator('a.nav:has-text("Gestão CTAI")').count(), 0);
     log('Gestão CTAI: carteira, painel com filtros, PDF, produção, usuários e IA; o colega só vê a carteira dele');
+
+    // 7. Portal da Unidade: o gestor cuida da equipe; Gestão CTAI: aba Acessos
+    await ir(gest, '#/equipe', '#eq-l'); await gest.waitForSelector('text=Responsável por ficha');
+    await gest.fill('#eq-l', 'ouvidoria.nova'); await gest.fill('#eq-n', 'Nova da Ouvidoria'); await gest.check('#nv-ouvidoria'); await gest.check('#nv-educacao'); await gest.click('#eq-criar');
+    await gest.waitForSelector('td:has-text("ouvidoria.nova")', { timeout: 8000 });
+    await gest.selectOption('#rf-rh', { label: 'Nova da Ouvidoria' }); await gest.click('#rf-btn-rh'); await gest.waitForSelector('text=Responsável trocado.');
+    assert.equal(S.db.get("SELECT contrato_id, perfil FROM usuarios WHERE login='ouvidoria.nova'").contrato_id, 'DEMO-UPA');
+    await gest.setViewportSize({ width: 1280, height: 1500 }); await limpa(gest); await gest.screenshot({ path: path.join(CAP, '24-unidade-equipe.png') });
+    const respSetor = await entrar(browser, 'assistencia.demo', 1280, true); paginas.push(respSetor);
+    assert.equal(await respSetor.locator('a.nav:has-text("Equipe da unidade")').count(), 0, 'responsável de setor não vê o menu da equipe');
+    await ir(sup, '#/gestao/acessos', 'text=Registro somente de leitura'); await sup.waitForSelector('#conteudo tbody tr');
+    const txtAc = await sup.textContent('#conteudo'); assert.match(txtAc, /cadastro \(gestor\)/); assert.match(txtAc, /entrada/);
+    await sup.selectOption('#ga-ev', 'cadastro'); await sup.waitForTimeout(500);
+    await sup.setViewportSize({ width: 1280, height: 1000 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '25-gestao-acessos.png') });
+    const csvAc = await sup.evaluate(async () => { const r = await fetch(document.querySelector('#ga-csv').getAttribute('href')); return { ok: r.ok, t: (await r.text()).slice(0, 80) }; });
+    assert.ok(csvAc.ok && /data_hora;evento/.test(csvAc.t));
+    log('equipe da unidade pelo gestor e aba Acessos (CSV/PDF)');
     for (const p of paginas) assert.deepEqual(p.erros, [], 'erros de JavaScript na tela: ' + p.erros.join(' | '));
     console.log('\nE2E OK');
   } catch (e) {

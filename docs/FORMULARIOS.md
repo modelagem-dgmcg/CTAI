@@ -140,7 +140,7 @@ Indicadores: —. Listas (linhas): Quadro de pessoal.
 
 ## Lista oficial de obrigatórios da UPA e checklist de recebimento
 
-Prazos: envio no **SEI até o dia 20** e no **SIMAS até o dia 25** do mês seguinte à competência. O monitoramento é mensal e a consolidação, trimestral. Atraso e alerta (a vencer em até 5 dias) aparecem no portal da unidade e no console da CTAI.
+Prazos: envio no **SEI até o dia 20** e no **SIMAS até o dia 25** do mês seguinte à competência. O monitoramento é mensal e a consolidação, trimestral. Atraso e alerta (a vencer em até 5 dias) aparecem no Portal da Unidade e no console da CTAI.
 
 Ao receber um envio, a CTAI preenche o checklist da Secretaria para cada item: **competência**, **data de recebimento**, **status** (recebido, pendente, incompleto, não aplicável), **responsável pelo envio**, **validação** (divergências e inconsistências) e **observações**. O sistema sugere o status pelo que a unidade informou; a decisão de quem confere prevalece e fica na trilha.
 

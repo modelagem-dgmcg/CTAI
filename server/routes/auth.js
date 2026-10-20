@@ -4,24 +4,37 @@ const A = require('../auth');
 const trilha = require('../trilha');
 const U = require('../../core/util');
 const EX = require('../exposicao');
+const AC = require('../acessos');
 
 module.exports = (db) => {
   const r = express.Router();
-  const publico = (u) => ({ usuario_id: u.usuario_id, login: u.login, nome: u.nome, perfil: u.perfil, perfilNome: A.PERFIS[u.perfil], contrato_id: u.contrato_id, setor: u.setor, trocar_senha: !!u.trocar_senha });
+  const publico = (u) => ({ usuario_id: u.usuario_id, login: u.login, nome: u.nome, perfil: u.perfil, perfilNome: A.PERFIS[u.perfil], contrato_id: u.contrato_id, setor: u.setor, setores: A.setoresDe(u), trocar_senha: !!u.trocar_senha });
 
   r.post('/login', (req, res) => {
     const { login, senha } = req.body || {};
     const e = A.entrar(db, login, senha);
-    if (e.erro) { trilha.registrar(db, { usuario: String(login || '').slice(0, 40), tabela: 'sessoes', registro: 'login', campo: 'tentativa', valor_novo: 'falhou' }); return res.status(401).json({ erro: e.erro }); }
-    if (!EX.perfilPermitido(req, e.usuario.perfil)) { trilha.registrar(db, { usuario: e.usuario.login, tabela: 'sessoes', registro: 'login', campo: 'tentativa', valor_novo: 'recusada fora da rede interna' }); return res.status(401).json({ erro: 'Usuário ou senha incorretos.' }); }
+    const digitado = String(login || '').trim().toLowerCase().slice(0, 40);
+    const falha = (detalhe, conhecido, bloqueio) => {
+      const hash = trilha.registrar(db, { usuario: digitado, tabela: 'sessoes', registro: 'login', campo: 'tentativa', valor_novo: detalhe === 'recusada fora da rede interna' ? detalhe : 'falhou' });
+      AC.registrar(db, req, { evento: 'falha', login: digitado, usuario: conhecido, detalhe, hash_trilha: hash });
+      if (bloqueio) {
+        const h2 = trilha.registrar(db, { usuario: digitado, tabela: 'sessoes', registro: 'login', campo: 'bloqueio', valor_novo: '10 minutos', motivo: '5 tentativas erradas' });
+        AC.registrar(db, req, { evento: 'bloqueio', login: digitado, usuario: conhecido, detalhe: 'bloqueado por 10 minutos após 5 tentativas erradas', hash_trilha: h2 });
+      }
+    };
+    if (e.erro) { falha(e.motivo || 'falhou', e.conhecido, e.bloqueou); return res.status(401).json({ erro: e.erro }); }
+    if (!EX.perfilPermitido(req, e.usuario.perfil)) { falha('recusada fora da rede interna', e.usuario); return res.status(401).json({ erro: 'Usuário ou senha incorretos.' }); }
     const s = A.criarSessao(db, e.usuario.usuario_id);
     res.setHeader('Set-Cookie', A.cookieDe(s.token, s.expira));
-    trilha.registrar(db, { usuario: e.usuario.login, tabela: 'sessoes', registro: 'login', campo: 'entrada', valor_novo: 'ok' });
+    const hash = trilha.registrar(db, { usuario: e.usuario.login, tabela: 'sessoes', registro: 'login', campo: 'entrada', valor_novo: 'ok' });
+    AC.registrar(db, req, { evento: 'entrada', usuario: e.usuario, detalhe: 'entrada (' + EX.origemDe(req).motivo + ')', hash_trilha: hash });
     res.json({ usuario: publico(e.usuario) });
   });
 
   r.post('/logout', (req, res) => {
     const t = A.lerCookies(req).ctai_sid;
+    const quem = A.usuarioDaSessao(db, req);
+    if (quem) { const hash = trilha.registrar(db, { usuario: quem.login, tabela: 'sessoes', registro: 'login', campo: 'saida', valor_novo: 'ok' }); AC.registrar(db, req, { evento: 'saida', usuario: quem, detalhe: 'saída', hash_trilha: hash }); }
     if (t) db.run('DELETE FROM sessoes WHERE token_hash = ?', U.sha256(t));
     res.setHeader('Set-Cookie', 'ctai_sid=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
     res.json({ ok: true });

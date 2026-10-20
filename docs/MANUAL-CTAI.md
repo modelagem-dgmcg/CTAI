@@ -70,7 +70,7 @@ Cada competência com envio tem a aba **Checklist de recebimento** (console da C
 
 ## Gestão CTAI (superintendente e administrador)
 
-Menu **Gestão CTAI**, com cinco abas. Só a superintendente e o administrador veem esta área; as outras pessoas da CTAI não têm o menu e recebem "sem acesso" se tentarem pelo endereço.
+Menu **Gestão CTAI**, com seis abas (Painel, Produção, Carteira, Usuários, Acessos, IA). Só a superintendente e o administrador veem esta área; as outras pessoas da CTAI não têm o menu e recebem "sem acesso" se tentarem pelo endereço.
 
 **Painel.** A visão da superintendente num só lugar. Filtros por **trimestre, unidade e funcionário**; botão **Exportar PDF** gera o mesmo painel em PDF.
 - Cartões: unidades, envios recebidos, incompletos e pendentes, prazos vencidos / a vencer / com atraso, achados abertos e vencidos, pareceres em rascunho e congelados, unidades sem carteira.
@@ -88,6 +88,10 @@ Menu **Gestão CTAI**, com cinco abas. Só a superintendente e o administrador v
 - cada mudança entra no **histórico** (quem, quando, motivo) e na trilha.
 
 **Usuários.** Criar, editar nome e perfil, trocar senha (volta para a senha temporária e a pessoa troca no próximo acesso), ativar e desativar. Perfis: administrador, criador, colega, superintendente, gestor da unidade e responsável de setor. A superintendente não cria nem altera administradores. Tudo vai para a trilha; a senha nunca é gravada.
+
+**Acessos.** Registro **somente de leitura** de entradas, tentativas falhas, bloqueios (5 erros = 10 minutos), saídas e **cadastros feitos por gestores de unidade**. Cada linha mostra quando, evento, usuário, perfil, unidade, origem (**rede interna** ou **externa**), IP com o último trecho oculto, navegador e detalhe, e aponta para o evento da trilha encadeada (não dá para editar nem apagar, nem pelo banco). Filtros por período, unidade, usuário, evento e origem; **Exportar CSV** e **Exportar PDF**. Quem entra por túnel aparece como "externa"; usuários da CTAI recusados fora da rede interna aparecem como falha ("recusada fora da rede interna").
+
+**Equipe das unidades.** A CTAI cria só a **unidade e o gestor da unidade** (aba Usuários). Os responsáveis de setor são cadastrados pelo gestor, no Portal da Unidade. A superintendente enxerga o que eles fazem na aba Acessos.
 
 **IA.** Liga e desliga cada provedor, cadastra chave e modelo, testa a conexão e mostra o uso do mês (chamadas e falhas). Tudo começa desligado.
 - A chave é guardada **só no servidor, cifrada**, com o segredo `CTAI_SEGREDO` do `.env`. Ela nunca volta para a tela nem entra na trilha: aparece só "configurada" e os 4 últimos caracteres. Sem `CTAI_SEGREDO` o sistema não guarda chaves.

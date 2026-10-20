@@ -325,11 +325,48 @@
           h('div', { class: 'linha' }, h('button', { class: 'sec', onclick: () => rodar(true) }, 'Ver prévia (não grava)'), h('button', { onclick: () => rodar(false) }, 'Buscar e guardar como lote pendente')), saida) : aviso('info', 'A integração ainda não está ativa. Enquanto isso, use as fichas e as listas.')]);
   }
 
+  // ---------- Equipe da unidade (só o gestor da unidade) ----------
+  async function equipe() {
+    const e = await api('GET', '/api/unidade/equipe');
+    const nomeSetor = (id) => (e.setores.find((x) => x.id === id) || { nome: id }).nome;
+    const f = { login: h('input', { type: 'text', id: 'eq-l' }), nome: h('input', { type: 'text', id: 'eq-n' }) };
+    const caixas = (marcados, prefixo) => e.setores.map((s) => h('label', { class: 'ck', for: prefixo + s.id }, h('input', Object.assign({ type: 'checkbox', id: prefixo + s.id, value: s.id }, marcados.includes(s.id) ? { checked: true } : {})), ' ', s.nome));
+    const lidos = (cx) => cx.map((l) => l.querySelector('input')).filter((i) => i.checked).map((i) => i.value);
+    const novas = caixas([], 'nv-');
+    const editar = async (u) => {
+      const nome = h('input', { type: 'text', id: 'ed-n', value: u.nome });
+      const cx = caixas(u.setores, 'ed-');
+      const r = await janela('Editar ' + u.login, h('div', null, h('div', { class: 'campo' }, h('label', { for: 'ed-n' }, 'Nome'), nome), h('p', { class: 'mudo peq' }, 'Fichas que esta pessoa preenche:'), cx), [{ rotulo: 'Cancelar', valor: null, sec: true }, { rotulo: 'Salvar', valor: 'ok' }]);
+      if (r !== 'ok') return;
+      try { await api('PATCH', '/api/unidade/equipe/' + u.usuario_id, { nome: nome.value, setores: lidos(cx) }); toast('Pessoa atualizada.'); equipe(); } catch (x) { toast(x.message, true); }
+    };
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Equipe da unidade'), h('p', null, 'Quem preenche cada ficha. Você cuida só das pessoas da sua unidade; a CTAI cria a unidade e o gestor.'))),
+      h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Pessoas'),
+        tabela([{ t: 'Login' }, { t: 'Nome' }, { t: 'Fichas' }, { t: 'Situação' }, { t: '' }], e.usuarios.map((u) => [u.login, u.nome, u.somenteLeitura ? h('span', { class: 'mudo' }, 'gestor (todas)') : (u.setores.length ? u.setores.map((s) => h('span', { class: 'selo', style: 'margin-right:4px' }, nomeSetor(s).split(' (')[0])) : h('span', { class: 'mudo' }, 'nenhuma')),
+          u.ativo ? (u.trocar_senha ? selo('senha temporária', 'atencao') : selo('ativo', 'ok')) : selo('desativado', 'alta'),
+          u.somenteLeitura ? '' : h('div', { class: 'linha' }, h('button', { class: 'leve', onclick: () => editar(u) }, 'Editar'),
+            h('button', { class: 'leve', onclick: async () => { if (await confirmar('Definir senha temporária para ' + u.login + '?', 'A pessoa troca a senha no próximo acesso e as sessões abertas são encerradas.', 'Definir')) { try { const o = await api('POST', '/api/unidade/equipe/' + u.usuario_id + '/senha', {}); toast('Senha temporária: ' + (o.senhaTemporaria || '(definida)')); equipe(); } catch (x) { toast(x.message, true); } } } }, 'Senha temporária'),
+            h('button', { class: 'leve', onclick: async () => { try { await api('POST', '/api/unidade/equipe/' + u.usuario_id + '/ativo', { ativo: !u.ativo }); equipe(); } catch (x) { toast(x.message, true); } } }, u.ativo ? 'Desativar' : 'Ativar'))]))),
+      h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Responsável por ficha'), h('p', { class: 'mudo peq' }, 'Escolha quem passa a ser o responsável. Quem era responsável deixa de preencher essa ficha.'),
+        e.fichas.map((fi) => {
+          const sel = h('select', { id: 'rf-' + fi.id, 'aria-label': 'Responsável por ' + fi.nome }, [h('option', { value: '' }, '— escolher —')].concat(e.usuarios.filter((u) => !u.somenteLeitura && u.ativo).map((u) => h('option', { value: u.usuario_id }, u.nome))));
+          return h('div', { class: 'linha sem-carteira' }, h('strong', { style: 'min-width:260px' }, fi.nome), h('span', { class: 'mudo' }, fi.responsaveis.length ? fi.responsaveis.map((r) => r.nome).join(', ') : 'sem responsável'), sel,
+            h('button', { class: 'sec', id: 'rf-btn-' + fi.id, onclick: async () => { if (!sel.value) return toast('Escolha a pessoa.', true); try { await api('PUT', '/api/unidade/equipe/fichas/' + fi.id, { usuario_id: Number(sel.value) }); toast('Responsável trocado.'); equipe(); } catch (x) { toast(x.message, true); } } }, 'Trocar'));
+        })),
+      h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Nova pessoa'),
+        h('div', { class: 'duas' }, h('div', { class: 'campo' }, h('label', { for: 'eq-l' }, 'Login (letras minúsculas, números, ponto)'), f.login), h('div', { class: 'campo' }, h('label', { for: 'eq-n' }, 'Nome'), f.nome)),
+        h('p', { class: 'mudo peq' }, 'Fichas que esta pessoa preenche:'), novas,
+        h('button', { id: 'eq-criar', onclick: async () => { try { const o = await api('POST', '/api/unidade/equipe', { login: f.login.value, nome: f.nome.value, setores: lidos(novas) }); toast('Pessoa cadastrada. Senha temporária: ' + (o.senhaTemporaria || '(definida)')); equipe(); } catch (x) { toast(x.message, true); } } }, 'Cadastrar'),
+        h('p', { class: 'mudo peq' }, 'Tudo fica registrado na trilha, com o seu nome.')));
+  }
+
   async function iniciar() {
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Portal da unidade', perfis: ['gestor_unidade', 'setor_unidade'], itens: [{ href: '#/', rotulo: 'Meses' }, { href: '#/esclarecimentos', rotulo: 'Esclarecimentos' }, { href: '#/regras', rotulo: 'Regras de pontuação' }, { href: '#/integracao', rotulo: 'Integração' }] });
+    const me0 = await api('GET', '/api/auth/me').catch(() => null);
+    const extra = me0 && me0.usuario.perfil === 'gestor_unidade' ? [{ href: '#/equipe', rotulo: 'Equipe da unidade' }] : [];
+    EU = await casca({ titulo: 'CTAI', subtitulo: 'Portal da Unidade', perfis: ['gestor_unidade', 'setor_unidade'], itens: [{ href: '#/', rotulo: 'Meses' }, { href: '#/esclarecimentos', rotulo: 'Esclarecimentos' }, { href: '#/regras', rotulo: 'Regras de pontuação' }, { href: '#/integracao', rotulo: 'Integração' }].concat(extra) });
     if (!EU) return;
     try { const m = await api('GET', '/api/meta'); Object.entries(m.fontes).forEach(([k, v]) => { NOMES_FONTES[k] = v.nome; }); } catch (_) { /* segue */ }
-    rotear([['/', inicio], ['/c/:cid', competencia], ['/c/:cid/enviar', enviar], ['/c/:cid/envios', envios], ['/c/:cid/ficha/:setor', ficha], ['/c/:cid/lista/:fonte', lista], ['/esclarecimentos', esclarecimentos], ['/regras', regras], ['/integracao', integracao]], (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', inicio], ['/c/:cid', competencia], ['/c/:cid/enviar', enviar], ['/c/:cid/envios', envios], ['/c/:cid/ficha/:setor', ficha], ['/c/:cid/lista/:fonte', lista], ['/esclarecimentos', esclarecimentos], ['/regras', regras], ['/integracao', integracao]].concat(me0 && me0.usuario.perfil === 'gestor_unidade' ? [['/equipe', equipe]] : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();

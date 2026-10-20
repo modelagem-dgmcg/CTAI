@@ -73,7 +73,7 @@ function responder(db, achadoId, usuario, texto) {
   if (a.status !== 'encaminhado') throw erro(409, 'Este achado não está aguardando resposta.');
   if (!['gestor_unidade', 'setor_unidade', 'admin'].includes(usuario.perfil)) throw erro(403, 'Só a unidade responde.');
   if (usuario.perfil !== 'admin' && usuario.contrato_id !== a.contrato_id) throw erro(403, 'Este achado é de outra unidade.');
-  if (usuario.perfil === 'setor_unidade' && a.encaminhado_a && a.encaminhado_a !== usuario.setor) throw erro(403, 'Este achado foi encaminhado a outro setor. Peça ao gestor da unidade.');
+  if (usuario.perfil === 'setor_unidade' && a.encaminhado_a && !require('./auth').setoresDe(usuario).includes(a.encaminhado_a)) throw erro(403, 'Este achado foi encaminhado a outro setor. Peça ao gestor da unidade.');
   const resposta = String(texto || '').trim();
   if (!resposta) throw erro(400, 'Escreva a resposta.');
   if (resposta.length > 3000) throw erro(400, 'Resposta longa demais (máximo de 3.000 caracteres).');
@@ -86,7 +86,7 @@ function responder(db, achadoId, usuario, texto) {
 function daUnidade(db, usuario) {
   const lista = listar(db, { contrato_id: usuario.contrato_id }).filter((a) => ['encaminhado', 'respondido'].includes(a.status) || (a.status === 'fixado' && a.encaminhado_em));
   return lista
-    .filter((a) => usuario.perfil !== 'setor_unidade' || !a.encaminhado_a || a.encaminhado_a === usuario.setor)
+    .filter((a) => usuario.perfil !== 'setor_unidade' || !a.encaminhado_a || require('./auth').setoresDe(usuario).includes(a.encaminhado_a))
     .map((a) => ({ achado_id: a.achado_id, cid: a.cid, competencia_id: a.competencia_id, status: a.status, gravidade: a.gravidade, tipo: a.tipo, trecho: a.trecho, mensagem: a.mensagem,
       setor: a.encaminhado_a, prazo: a.prazo, encaminhado_em: a.encaminhado_em, resposta: a.resposta, respondido_por: a.respondido_por, respondido_em: a.respondido_em }));
 }

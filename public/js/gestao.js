@@ -2,7 +2,7 @@
   'use strict';
   // Gestão CTAI: painel da superintendente, produção, carteira, usuários e IA. Só superintendente e administrador.
   const { h, api, fmt, toast, janela, confirmar, selo, aviso, tabela, montar } = window.CTAI;
-  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['usuarios', 'Usuários'], ['ia', 'IA']];
+  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
   const kpi = (r, v, nota, tom) => h('div', { class: 'kpi' + (tom ? ' ' + tom : '') }, h('div', { class: 'r' }, r), h('div', { class: 'num-grande' }, String(v)), nota ? h('div', { class: 'r' }, nota) : null);
   const F = { trimestre: '', contrato: '', usuario_id: '' }; // filtros lembrados enquanto a página está aberta
   const qs = (o) => { const p = new URLSearchParams(); for (const k of Object.keys(o)) if (o[k]) p.set(k, o[k]); const s = p.toString(); return s ? '?' + s : ''; };
@@ -152,6 +152,32 @@
         h('p', { class: 'mudo peq' }, 'Tudo fica registrado na trilha. O sistema nunca guarda senha do SEI.')));
   }
 
+  // ---------- Acessos (somente leitura) ----------
+  const EV_TOM = { entrada: 'ok', saida: '', falha: 'atencao', bloqueio: 'alta', cadastro: '' };
+  const EV_ROT = { entrada: 'entrada', saida: 'saída', falha: 'falha', bloqueio: 'bloqueio', cadastro: 'cadastro (gestor)' };
+  async function acessos() {
+    F.ac = F.ac || { de: '', ate: '', contrato: '', usuario: '', evento: '', origem: '' };
+    const r = await api('GET', '/api/gestao/acessos' + qs(F.ac));
+    const c = r.contagens;
+    const campo = (id, rot, tipo, chave) => h('div', { class: 'campo filtro' }, h('label', { for: id }, rot), h('input', { type: tipo, id, value: F.ac[chave], onchange: (e) => { F.ac[chave] = e.target.value; acessos(); } }));
+    montar(cabecalho('acessos'),
+      aviso('info', h('strong', null, 'Registro somente de leitura. '), 'Cada linha aponta para um evento da trilha encadeada e não pode ser alterada nem apagada. O IP aparece com o último trecho oculto. Trilha: ' + (r.trilha.ok ? 'íntegra.' : 'COM FALHAS.')),
+      h('div', { class: 'filtros cartao' },
+        campo('ga-de', 'De', 'date', 'de'), campo('ga-ate', 'Até', 'date', 'ate'),
+        seletor('ga-un', 'Unidade', [['', 'Todas']].concat(r.contratos.map((u) => [u.contrato_id, u.unidade])), F.ac.contrato, (v) => { F.ac.contrato = v; acessos(); }),
+        campo('ga-us', 'Usuário', 'text', 'usuario'),
+        seletor('ga-ev', 'Evento', [['', 'Todos']].concat(r.eventos.map((v) => [v, EV_ROT[v]])), F.ac.evento, (v) => { F.ac.evento = v; acessos(); }),
+        seletor('ga-or', 'Origem', [['', 'Todas'], ['interna', 'Rede interna'], ['externa', 'Externa']], F.ac.origem, (v) => { F.ac.origem = v; acessos(); }),
+        h('div', { class: 'linha', style: 'margin-left:auto' }, h('a', { class: 'btn sec', id: 'ga-csv', href: '/api/gestao/acessos.csv' + qs(F.ac) }, 'Exportar CSV'), h('a', { class: 'btn', id: 'ga-pdf', href: '/api/gestao/acessos.pdf' + qs(F.ac), target: '_blank', rel: 'noopener' }, 'Exportar PDF'))),
+      h('div', { class: 'kpis' }, kpi('Entradas', c.entrada), kpi('Tentativas falhas', c.falha, 'senha errada ou usuário inexistente', c.falha ? 'atencao' : ''), kpi('Bloqueios', c.bloqueio, '5 erros = 10 minutos', c.bloqueio ? 'alta' : ''),
+        kpi('Saídas', c.saida), kpi('Cadastros por gestores', c.cadastro, 'equipe das unidades'), kpi('Origem externa', c.externas, 'pelo túnel / host público', c.externas ? 'atencao' : '')),
+      r.falhasPorLogin.length ? h('p', { class: 'mudo peq' }, 'Mais falhas: ' + r.falhasPorLogin.map((x) => (x.login || '—') + ' (' + x.n + ')').join(' · ')) : null,
+      h('div', { class: 'cartao' }, tabela([{ t: 'Quando' }, { t: 'Evento' }, { t: 'Usuário' }, { t: 'Perfil' }, { t: 'Unidade' }, { t: 'Origem' }, { t: 'Detalhe' }],
+        r.linhas.map((l) => [new Date(l.data_hora).toLocaleString('pt-BR', { timeZone: 'America/Recife' }), selo(EV_ROT[l.evento] || l.evento, EV_TOM[l.evento] || ''), l.login || '—', l.perfil ? ((window.__PERFIS && window.__PERFIS[l.perfil]) || l.perfil) : '—', l.unidade || '—',
+          h('span', { title: l.agente || '' }, selo(l.origem || '—', l.origem === 'externa' ? 'atencao' : ''), l.ip ? ' ' + l.ip : ''), l.detalhe || '']), { vazio: 'Nenhum registro para esse filtro.' }),
+        r.linhas.length >= 200 ? h('p', { class: 'mudo peq' }, 'Mostrando os 200 mais recentes. O CSV traz até 5.000.') : null));
+  }
+
   // ---------- IA ----------
   async function ia() {
     const e = await api('GET', '/api/gestao/ia');
@@ -205,6 +231,7 @@
     if (h2 === 'producao') return producao();
     if (h2 === 'carteira') return carteira();
     if (h2 === 'usuarios') return usuarios();
+    if (h2 === 'acessos') return acessos();
     if (h2 === 'ia') return ia();
     return painel();
   }

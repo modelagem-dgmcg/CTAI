@@ -129,6 +129,12 @@ CREATE TABLE IF NOT EXISTS integracao_log (
 CREATE TABLE IF NOT EXISTS lotes_api (
   lote_id INTEGER PRIMARY KEY AUTOINCREMENT, integracao_id INTEGER, cid INTEGER NOT NULL, fonte TEXT NOT NULL, criado_em TEXT, registros INTEGER, recusados INTEGER, status TEXT NOT NULL DEFAULT 'pendente'
 );
+-- Acessos: entradas, falhas, bloqueios, saídas e cadastros feitos por gestores de unidade. Só se acrescenta (gatilhos abaixo); cada linha aponta para o evento da trilha encadeada.
+CREATE TABLE IF NOT EXISTS acessos (
+  acesso_id INTEGER PRIMARY KEY AUTOINCREMENT, data_hora TEXT NOT NULL, evento TEXT NOT NULL, login TEXT, usuario_id INTEGER, perfil TEXT, contrato_id TEXT,
+  origem TEXT, ip TEXT, agente TEXT, detalhe TEXT, hash_trilha TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_acessos ON acessos (data_hora);
 -- Gestão CTAI: carteira (quais unidades cada funcionário acompanha, com histórico), configurações, IA (chave cifrada) e uso mensal.
 CREATE TABLE IF NOT EXISTS carteira (
   carteira_id INTEGER PRIMARY KEY AUTOINCREMENT, usuario_id INTEGER NOT NULL, contrato_id TEXT NOT NULL, desde TEXT NOT NULL, ate TEXT,
@@ -149,6 +155,8 @@ CREATE TABLE IF NOT EXISTS ia_uso (
 // Gatilhos que impedem alterar ou apagar o que precisa ficar imutável.
 // Em contrato de demonstração é permitido apagar (para limpar os dados fictícios).
 const GATILHOS = `
+CREATE TRIGGER IF NOT EXISTS trg_acessos_no_update BEFORE UPDATE ON acessos BEGIN SELECT RAISE(ABORT, 'O registro de acessos não pode ser alterado.'); END;
+CREATE TRIGGER IF NOT EXISTS trg_acessos_no_delete BEFORE DELETE ON acessos BEGIN SELECT RAISE(ABORT, 'O registro de acessos não pode ser apagado.'); END;
 CREATE TRIGGER IF NOT EXISTS trg_trilha_no_update BEFORE UPDATE ON trilha_auditoria BEGIN SELECT RAISE(ABORT, 'A trilha de auditoria não pode ser alterada.'); END;
 CREATE TRIGGER IF NOT EXISTS trg_trilha_no_delete BEFORE DELETE ON trilha_auditoria BEGIN SELECT RAISE(ABORT, 'A trilha de auditoria não pode ser apagada.'); END;
 CREATE TRIGGER IF NOT EXISTS trg_envios_no_update BEFORE UPDATE ON envios
@@ -179,6 +187,7 @@ CREATE TRIGGER IF NOT EXISTS trg_conf_no_delete BEFORE DELETE ON conferencias
 
 // Colunas acrescentadas depois da primeira versão (migração segura: só acrescenta, nunca altera o que existe).
 const COLUNAS_NOVAS = {
+  usuarios: ['setores TEXT'],
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
   achados: ['encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
 };

@@ -113,6 +113,28 @@ module.exports = (db) => {
   // ---------- Produção ----------
   r.get('/producao', (req, res) => res.json(G.producao(db, { trimestre: req.query.trimestre, de: req.query.de, ate: req.query.ate, contrato: req.query.contrato, usuario_id: req.query.usuario_id })));
 
+  // ---------- Acessos (somente leitura) ----------
+  const AC = require('../acessos');
+  const filtroAc = (q) => ({ de: q.de, ate: q.ate, contrato: q.contrato, usuario: q.usuario, evento: q.evento, origem: q.origem });
+  const validar = (f) => { for (const d of [f.de, f.ate]) if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw erro(400, 'Data inválida (use AAAA-MM-DD).'); if (f.evento && !AC.EVENTOS.includes(f.evento)) throw erro(400, 'Evento inválido.'); return f; };
+  r.get('/acessos', (req, res) => {
+    const f = validar(filtroAc(req.query));
+    res.json(Object.assign(AC.listar(db, f, req.query.limite), { filtros: f, eventos: AC.EVENTOS, contratos: db.all('SELECT contrato_id, unidade FROM contratos ORDER BY unidade'), trilha: { ok: trilha.verificar(db).ok } }));
+  });
+  r.get('/acessos.csv', (req, res) => {
+    const f = validar(filtroAc(req.query));
+    trilha.registrar(db, { usuario: req.usuario.login, tabela: 'gestao', registro: 'acessos', campo: 'exportacao', valor_novo: 'csv' });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8'); res.setHeader('Content-Disposition', 'attachment; filename="acessos-ctai.csv"');
+    res.send(AC.csv(AC.listar(db, f, 5000).linhas));
+  });
+  r.get('/acessos.pdf', async (req, res) => {
+    const f = validar(filtroAc(req.query));
+    const buf = await require('../pdf/acessos').gerar(AC.listar(db, f, 400), f, trilha.verificar(db).ok, req.usuario.nome);
+    trilha.registrar(db, { usuario: req.usuario.login, tabela: 'gestao', registro: 'acessos', campo: 'exportacao', valor_novo: 'pdf' });
+    res.setHeader('Content-Type', 'application/pdf'); res.setHeader('Content-Disposition', 'inline; filename="acessos-ctai.pdf"');
+    res.send(buf);
+  });
+
   // ---------- Painel da superintendente ----------
   const filtroPainel = (q) => ({ trimestre: q.trimestre, contrato: q.contrato, usuario_id: q.usuario_id });
   r.get('/painel', (req, res) => res.json(G.painel(db, filtroPainel(req.query))));

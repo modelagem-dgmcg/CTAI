@@ -117,3 +117,6 @@ label.ck{display:block;padding:5px 0;cursor:pointer}label.ck input{margin-right:
 .ia-card .r{font-size:12.5px;color:var(--cinza)}
 @media (max-width:640px){.unidades-grid{grid-template-columns:1fr}}
 .carga{min-width:210px;line-height:1.45}
+.sem-carteira select{width:auto;min-width:220px}
+.sem-carteira button{white-space:nowrap}
+td .linha{flex-wrap:nowrap;white-space:nowrap}

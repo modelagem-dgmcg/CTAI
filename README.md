@@ -16,7 +16,7 @@ cp .env.example .env # 2. (opcional) ajuste a porta, a senha temporária etc.
 npm start            # 3. sobe em http://localhost:3000
 ```
 
-- Portal da unidade: `http://localhost:3000/unidade`
+- Portal da Unidade: `http://localhost:3000/unidade`
 - Console da CTAI: `http://localhost:3000/ctai` (menu **Analista CTAI**: veja `docs/ANALISTA-CTAI.md`; menu **Gestão CTAI** para a superintendente: veja `docs/MANUAL-CTAI.md`)
 - Exposição por túnel (só o Portal da Unidade): `docs/EXPOSICAO.md`
 - Entrada comum: `http://localhost:3000/` (cada perfil vai para o seu lado)
@@ -54,7 +54,7 @@ server/        servidor (Express), banco, autenticação, trilha, envios, minuta
 core/          regras do IGQ, recálculo da CTAI, formulários, validação de linhas, dados sintéticos
 modules/analista/  ENCAIXE do Analista (regras locais + provedores de IA desligados sem chave)
 adapters/      entrada de dados: manual, CSV e o RACK da API do MV (com simulador)
-public/        telas (PWA, sem build): portal da unidade e console da CTAI
+public/        telas (PWA, sem build): Portal da Unidade e console da CTAI
 regras/        regra de pontuação versionada (igq_v1.json)
 carga/         dados reais já levantados (UPA Olinda) que alimentam o início do banco
 templates/     modelo do relatório em PDF

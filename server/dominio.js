@@ -41,7 +41,7 @@ function exigirContrato(usuario, contratoId) {
 
 function exigirSetor(usuario, setorId) {
   if (usuario.perfil === 'gestor_unidade' || usuario.perfil === 'admin') return;
-  if (usuario.perfil === 'setor_unidade' && usuario.setor === setorId) return;
+  if (usuario.perfil === 'setor_unidade' && A.setoresDe(usuario).includes(setorId)) return;
   throw erro(403, 'Você só pode preencher a ficha do seu setor.');
 }
 

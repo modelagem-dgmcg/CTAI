@@ -1,4 +1,4 @@
-# Manual da unidade (passo a passo)
+# Manual do Portal da Unidade (passo a passo)
 
 Endereço: `/unidade`. Quem usa: o **gestor da unidade** (vê tudo e envia) e os **responsáveis de setor** (preenchem só a ficha do seu setor).
 
@@ -67,6 +67,14 @@ Faça a correção nas fichas ou listas e volte em **Conferir e enviar**. O sist
 ## 7. Regras e integração
 - **Regras de pontuação**: mostra as faixas de cada indicador, para a unidade saber como será avaliada.
 - **Integração**: mostra o estado da ligação com o sistema da unidade (MV) e permite ver uma prévia (não grava) ou buscar (grava como lote pendente), se o administrador tiver ativado.
+
+## 7b. Equipe da unidade (só o gestor da unidade)
+
+Menu **Equipe da unidade**. A CTAI cria a unidade e o gestor; **a equipe é cuidada por você**:
+- **Cadastrar** uma pessoa (login em letras minúsculas, nome) e marcar **quais fichas ela preenche** (assistência, qualidade, ouvidoria, educação, BID, RH). Uma pessoa pode ter mais de uma ficha. Ela entra com a senha temporária e troca no primeiro acesso.
+- **Editar** nome e fichas, **definir senha temporária** (encerra as sessões abertas) e **ativar ou desativar**.
+- **Responsável por ficha**: escolha quem passa a ser o responsável; quem era deixa de preencher aquela ficha.
+- Você só vê e altera **a sua unidade**. Outras unidades e as pessoas da CTAI ficam fora do seu alcance. Tudo fica registrado na trilha, com o seu nome.
 
 ## 8. Celular
 O portal funciona no celular e pode ser instalado na tela inicial (PWA). Preencher ficha funciona bem; subir CSV é mais fácil no computador.

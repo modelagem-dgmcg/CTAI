@@ -1,5 +1,5 @@
 'use strict';
-// Portal da unidade: fichas por setor, listas (linhas brutas), conferência antes do envio, envio e PDF.
+// Portal da Unidade: fichas por setor, listas (linhas brutas), conferência antes do envio, envio e PDF.
 const express = require('express');
 const A = require('../auth');
 const D = require('../dominio');
@@ -23,6 +23,16 @@ module.exports = (db) => {
   // Contrato do usuário (admin escolhe com ?contrato=).
   const contratoDe = (req) => req.usuario.perfil === 'admin' ? (req.query.contrato || 'DEMO-UPA') : req.usuario.contrato_id;
   const comp = (req) => { const c = D.competenciaPorCid(db, req.params.cid); D.exigirContrato(req.usuario, c.contrato_id); return c; };
+
+  // ---------- Equipe da unidade (só o gestor da unidade; nunca outra unidade nem a CTAI) ----------
+  const EQ = require('../equipe');
+  const gestor = (req) => { if (req.usuario.perfil !== 'gestor_unidade') throw erro(403, 'Só o gestor da unidade cuida da equipe.'); return req.usuario; };
+  r.get('/equipe', (req, res) => res.json(EQ.listar(db, gestor(req))));
+  r.post('/equipe', (req, res) => res.json(EQ.criar(db, req, gestor(req), req.body || {})));
+  r.put('/equipe/fichas/:setor', (req, res) => { EQ.trocarResponsavel(db, req, gestor(req), req.params.setor, req.body && req.body.usuario_id); res.json(EQ.listar(db, req.usuario)); });
+  r.patch('/equipe/:id', (req, res) => { EQ.atualizar(db, req, gestor(req), req.params.id, req.body || {}); res.json({ ok: true }); });
+  r.post('/equipe/:id/ativo', (req, res) => { EQ.ativar(db, req, gestor(req), req.params.id, !!(req.body && req.body.ativo)); res.json({ ok: true }); });
+  r.post('/equipe/:id/senha', (req, res) => res.json(Object.assign({ ok: true }, EQ.senhaTemporaria(db, req, gestor(req), req.params.id, req.body && req.body.senha))));
 
   r.get('/competencias', (req, res) => {
     const contrato = contratoDe(req);
@@ -49,7 +59,7 @@ module.exports = (db) => {
       competencia: { cid: c.cid, competencia_id: c.competencia_id, status: c.status, mes_implantacao: c.mes_implantacao, unidade: c.unidade, oss: c.oss, demo: c.demo },
       setores: F.SETORES.map((st) => ({ id: st.id, nome: st.nome, resumo: st.resumo, indicadores: st.indicadores, fontes: st.fontes, status: s.fichas[st.id].status, atualizado_por: s.fichas[st.id].atualizado_por, atualizado_em: s.fichas[st.id].atualizado_em })),
       prazos: PZ.daCompetencia(db, c), contagem, consolidado: s.consolidado, pontos: s.pontos, avisos: s.avisos, bloqueios: s.bloqueios, envios, sei, lotes,
-      voce: { perfil: req.usuario.perfil, setor: req.usuario.setor, podeEnviar: req.usuario.perfil === 'gestor_unidade' || req.usuario.perfil === 'admin' },
+      voce: { perfil: req.usuario.perfil, setor: req.usuario.setor, setores: A.setoresDe(req.usuario), podeEnviar: req.usuario.perfil === 'gestor_unidade' || req.usuario.perfil === 'admin' },
     });
   });
 

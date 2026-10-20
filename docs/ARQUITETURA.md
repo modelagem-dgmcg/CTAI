@@ -82,3 +82,10 @@ Rotas em `server/routes/gestao.js` (`/api/gestao/*`, só superintendente e admin
 Tabelas novas (criadas por `CREATE IF NOT EXISTS`, sem alterar as existentes): `carteira`, `gestao_config`, `ia_config`, `ia_uso`.
 
 Decisões: (1) criador/colega **sem carteira** continuam vendo tudo, para não quebrar quem já usa; o modo estrito (`gestao_config.carteira_estrita`) inverte isso. (2) A produção só conta ações já gravadas. (3) Segredo e chaves nunca vão para o repositório, a tela, a trilha ou o log.
+
+
+## Exposição, equipe da unidade e acessos
+
+- `server/exposicao.js`: classifica cada requisição como interna ou externa (host público, cabeçalho de túnel, proxy desconhecido) e, em modo `restrita` (padrão), deixa a origem externa alcançar só o Portal da Unidade; o resto responde 404. Perfis da CTAI não autenticam por origem externa. Guia: `docs/EXPOSICAO.md`.
+- `server/equipe.js` + rotas `/api/unidade/equipe*`: o gestor da unidade cuida só de `setor_unidade` do próprio contrato (outros casos respondem 404). Fichas por pessoa em `usuarios.setores` (lista); `setor` guarda a primeira, por compatibilidade. `auth.setoresDe(u)` é a leitura única.
+- `server/acessos.js` + tabela `acessos`: entradas, falhas, bloqueios, saídas e cadastros de gestores, com origem, IP mascarado, agente e o hash do evento da trilha. Gatilhos impedem alterar ou apagar. Leitura, CSV e PDF em `/api/gestao/acessos*`.

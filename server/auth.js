@@ -65,7 +65,7 @@ function usuarioDaSessao(db, req) {
   const s = db.get('SELECT * FROM sessoes WHERE token_hash = ?', U.sha256(token));
   if (!s) return null;
   if (new Date(s.expira_em) < new Date()) { db.run('DELETE FROM sessoes WHERE token_hash = ?', s.token_hash); return null; }
-  const u = db.get('SELECT usuario_id, login, nome, perfil, contrato_id, setor, trocar_senha, ativo FROM usuarios WHERE usuario_id = ?', s.usuario_id);
+  const u = db.get('SELECT usuario_id, login, nome, perfil, contrato_id, setor, setores, trocar_senha, ativo FROM usuarios WHERE usuario_id = ?', s.usuario_id);
   if (!u || !u.ativo) return null;
   return u;
 }
@@ -73,13 +73,13 @@ function usuarioDaSessao(db, req) {
 // Tentativas de login: 5 erros bloqueiam por 10 minutos.
 function entrar(db, login, senha) {
   const u = db.get('SELECT * FROM usuarios WHERE login = ?', String(login || '').trim().toLowerCase());
-  if (!u || !u.ativo) { conferirSenha(senha || '', 'scrypt$16384$00$00'); return { erro: 'Usuário ou senha incorretos.' }; }
-  if (u.bloqueado_ate && new Date(u.bloqueado_ate) > new Date()) return { erro: 'Acesso bloqueado por tentativas erradas. Tente de novo em alguns minutos.' };
+  if (!u || !u.ativo) { conferirSenha(senha || '', 'scrypt$16384$00$00'); return { erro: 'Usuário ou senha incorretos.', motivo: u ? 'usuário desativado' : 'usuário inexistente', conhecido: u || null }; }
+  if (u.bloqueado_ate && new Date(u.bloqueado_ate) > new Date()) return { erro: 'Acesso bloqueado por tentativas erradas. Tente de novo em alguns minutos.', motivo: 'acesso bloqueado', conhecido: u };
   if (!conferirSenha(senha || '', u.senha_hash)) {
     const t = u.tentativas + 1;
     if (t >= 5) db.run('UPDATE usuarios SET tentativas = 0, bloqueado_ate = ? WHERE usuario_id = ?', new Date(Date.now() + 10 * 60000).toISOString(), u.usuario_id);
     else db.run('UPDATE usuarios SET tentativas = ? WHERE usuario_id = ?', t, u.usuario_id);
-    return { erro: 'Usuário ou senha incorretos.' };
+    return { erro: 'Usuário ou senha incorretos.', motivo: 'senha incorreta (tentativa ' + Math.min(t, 5) + ' de 5)', bloqueou: t >= 5, conhecido: u };
   }
   db.run('UPDATE usuarios SET tentativas = 0, bloqueado_ate = NULL, ultimo_login = ? WHERE usuario_id = ?', new Date().toISOString(), u.usuario_id);
   return { usuario: u };
@@ -92,10 +92,18 @@ function criarUsuario(db, dados, quem) {
   if (PERFIS_UNIDADE.includes(dados.perfil) && !dados.contrato_id) throw erro(400, 'Usuário de unidade precisa de contrato.');
   if (db.get('SELECT 1 FROM usuarios WHERE login = ?', login)) throw erro(409, 'Já existe usuário com esse login.');
   const senha = dados.senha || config.senhaTemporaria;
-  const r = db.run('INSERT INTO usuarios (login, nome, perfil, contrato_id, setor, senha_hash, trocar_senha, ativo, criado_em) VALUES (?,?,?,?,?,?,1,1,?)',
-    login, dados.nome, dados.perfil, dados.contrato_id || null, dados.setor || null, gerarHash(senha), new Date().toISOString());
+  const setores = Array.isArray(dados.setores) ? dados.setores : (dados.setor ? [dados.setor] : []);
+  const r = db.run('INSERT INTO usuarios (login, nome, perfil, contrato_id, setor, setores, senha_hash, trocar_senha, ativo, criado_em) VALUES (?,?,?,?,?,?,?,1,1,?)',
+    login, dados.nome, dados.perfil, dados.contrato_id || null, setores[0] || null, setores.length ? JSON.stringify(setores) : null, gerarHash(senha), new Date().toISOString());
   trilha.registrar(db, { usuario: quem || 'sistema', tabela: 'usuarios', registro: login, campo: 'perfil', valor_novo: dados.perfil, motivo: 'Usuário criado' });
   return Number(r.lastInsertRowid);
+}
+
+// Setores (fichas) que a pessoa preenche: lista nova (setores) ou o setor único antigo.
+function setoresDe(u) {
+  if (!u) return [];
+  if (u.setores) { try { const l = JSON.parse(u.setores); if (Array.isArray(l)) return l; } catch (_) { /* usa o antigo */ } }
+  return u.setor ? [u.setor] : [];
 }
 
 function erro(status, mensagem) { const e = new Error(mensagem); e.status = status; return e; }
@@ -113,4 +121,4 @@ function exigir(db, perfis) {
   };
 }
 
-module.exports = { PERFIS, PERFIS_CTAI, PERFIS_UNIDADE, gerarHash, conferirSenha, validarForcaSenha, lerCookies, criarSessao, cookieDe, usuarioDaSessao, entrar, criarUsuario, exigir, erro };
+module.exports = { setoresDe, PERFIS, PERFIS_CTAI, PERFIS_UNIDADE, gerarHash, conferirSenha, validarForcaSenha, lerCookies, criarSessao, cookieDe, usuarioDaSessao, entrar, criarUsuario, exigir, erro };

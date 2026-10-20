@@ -23,7 +23,7 @@ for (const s of F.SETORES) {
   o += '\n';
 }
 o += '## Lista oficial de obrigatórios da UPA e checklist de recebimento\n\n';
-o += 'Prazos: envio no **SEI até o dia ' + PZ.DIA_SEI + '** e no **SIMAS até o dia ' + PZ.DIA_SIMAS + '** do mês seguinte à competência. O monitoramento é mensal e a consolidação, trimestral. Atraso e alerta (a vencer em até ' + PZ.AVISO_DIAS + ' dias) aparecem no portal da unidade e no console da CTAI.\n\n';
+o += 'Prazos: envio no **SEI até o dia ' + PZ.DIA_SEI + '** e no **SIMAS até o dia ' + PZ.DIA_SIMAS + '** do mês seguinte à competência. O monitoramento é mensal e a consolidação, trimestral. Atraso e alerta (a vencer em até ' + PZ.AVISO_DIAS + ' dias) aparecem no Portal da Unidade e no console da CTAI.\n\n';
 o += 'Ao receber um envio, a CTAI preenche o checklist da Secretaria para cada item: **competência**, **data de recebimento**, **status** (' + O.STATUS.join(', ') + '), **responsável pelo envio**, **validação** (divergências e inconsistências) e **observações**. O sistema sugere o status pelo que a unidade informou; a decisão de quem confere prevalece e fica na trilha.\n\n';
 o += '| Item | Grupo | Indicadores | Comprovação exigida (campos) |\n|---|---|---|---|\n';
 for (const i of O.ITENS) o += '| ' + i.titulo + ' | ' + i.grupo + ' | ' + (i.indicadores.join(', ') || '—') + ' | ' + ((i.docs || []).map((d) => '`' + d + '`').join(', ') || '—') + ' |\n';

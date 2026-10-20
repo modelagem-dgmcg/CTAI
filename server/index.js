@@ -11,6 +11,6 @@ if (config.semear && seed.semear(db)) {
 }
 const app = criarApp(db);
 const servidor = app.listen(config.porta, () => {
-  console.log('Sistema CTAI em http://localhost:' + config.porta + '  (Portal da unidade: /unidade · Console da CTAI: /ctai)');
+  console.log('Sistema CTAI em http://localhost:' + config.porta + '  (Portal da Unidade: /unidade · Console da CTAI: /ctai)');
 });
 for (const sinal of ['SIGINT', 'SIGTERM']) process.on(sinal, () => { servidor.close(() => { db.fechar(); process.exit(0); }); });
