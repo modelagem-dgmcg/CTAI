@@ -108,6 +108,11 @@ CREATE TABLE IF NOT EXISTS achados (
   sugestao TEXT, setor_sugerido TEXT, provedor TEXT, status TEXT NOT NULL DEFAULT 'novo', fixado_por TEXT, criado_em TEXT, atualizado_em TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_ach ON achados (origem_tipo, origem_id);
+-- Normas por unidade: o que vale para cada contrato (cláusula, portaria, regra do IGQ). O Analista as sugere junto de cada achado.
+CREATE TABLE IF NOT EXISTS normas (
+  norma_id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT, titulo TEXT NOT NULL, referencia TEXT, tema TEXT, texto TEXT NOT NULL,
+  vigente INTEGER NOT NULL DEFAULT 1, demo INTEGER NOT NULL DEFAULT 0, criado_por TEXT, criado_em TEXT, atualizado_em TEXT
+);
 CREATE TABLE IF NOT EXISTS integracoes (
   integracao_id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, tipo TEXT NOT NULL, nome TEXT NOT NULL, config TEXT NOT NULL DEFAULT '{}', ativo INTEGER NOT NULL DEFAULT 0,
   estado TEXT NOT NULL DEFAULT 'não configurada', ultima_sync TEXT, ultimo_erro TEXT
@@ -151,10 +156,22 @@ CREATE TRIGGER IF NOT EXISTS trg_conf_no_delete BEFORE DELETE ON conferencias
   BEGIN SELECT RAISE(ABORT, 'O registro de conferência não pode ser apagado.'); END;
 `;
 
+// Colunas acrescentadas depois da primeira versão (migração segura: só acrescenta, nunca altera o que existe).
+const COLUNAS_NOVAS = {
+  achados: ['encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
+};
+function migrar(db) {
+  for (const [tabela, colunas] of Object.entries(COLUNAS_NOVAS)) {
+    const existentes = new Set(db.prepare('PRAGMA table_info(' + tabela + ')').all().map((c) => c.name));
+    for (const def of colunas) if (!existentes.has(def.split(' ')[0])) db.exec('ALTER TABLE ' + tabela + ' ADD COLUMN ' + def);
+  }
+}
+
 function abrir(arquivo) {
   const db = new DatabaseSync(arquivo || config.arquivoBanco);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL; PRAGMA busy_timeout = 5000;');
   db.exec(SCHEMA);
+  migrar(db);
   db.exec(GATILHOS);
   return db;
 }

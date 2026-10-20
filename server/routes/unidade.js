@@ -8,6 +8,7 @@ const L = require('../../core/linhas');
 const U = require('../../core/util');
 const E = require('../envios');
 const SEI = require('../sei');
+const achadosDb = require('../achados');
 const trilha = require('../trilha');
 const sync = require('../../adapters/mv/sync');
 
@@ -117,6 +118,10 @@ module.exports = (db) => {
   });
 
   // ---------- Linhas (listas) ----------
+  // Esclarecimentos que a CTAI pediu à unidade (achados encaminhados). A unidade vê só o que foi encaminhado a ela.
+  r.get('/achados', (req, res) => res.json({ achados: achadosDb.daUnidade(db, Object.assign({}, req.usuario, { contrato_id: contratoDe(req) })) }));
+  r.post('/achados/:id/responder', (req, res) => { achadosDb.responder(db, req.params.id, req.usuario, req.body && req.body.resposta); res.json({ ok: true }); });
+
   r.get('/fontes', (req, res) => res.json({ fontes: Object.entries(F.FONTES).map(([id, f]) => ({ id, nome: f.nome, setor: f.setor, indicadores: f.indicadores, ajuda: f.ajuda, colunas: f.colunas })), colunasProibidas: L.COLUNAS_PROIBIDAS }));
 
   r.get('/fontes/:fonte/modelo.csv', (req, res) => {

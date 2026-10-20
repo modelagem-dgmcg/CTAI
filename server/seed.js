@@ -87,6 +87,15 @@ function semearDemo(db) {
   db.run("INSERT INTO competencias (competencia_id, contrato_id, regra_id, mes_implantacao, processo_sei, status, aberta_por, aberta_em) VALUES ('2026-07',?, 'igq_v1-demo',0,'SEI DEMO','aberta','carga',?)", DEMO, agora());
   preencherDemo(db, Number(c6.lastInsertRowid), '2026-06', 'carga');
   db.run("INSERT INTO integracoes (contrato_id, tipo, nome, config, ativo, estado) VALUES (?,?,?,?,0,'não configurada')", DEMO, 'mv-api', 'API de teste (dados fictícios)', JSON.stringify({ baseUrl: 'http://127.0.0.1:4010', auth: { tipo: 'bearer', tokenEnv: 'MV_API_TOKEN' }, mapeamento: 'adapters/mv/mapeamento.json', timeoutMs: 15000 }));
+  // Fonte de conferência (acervo/SIMAS) em modo demonstração: valores fictícios.
+  db.run("INSERT INTO integracoes (contrato_id, tipo, nome, config, ativo, estado) VALUES (?,?,?,?,1,'demonstração')", DEMO, 'acervo', 'Acervo fictício (demonstração)', JSON.stringify({ demo: true }));
+  // Normas de EXEMPLO (texto inventado para demonstrar a consulta). Substitua pela redação real do contrato de cada unidade.
+  const ex = 'Texto de exemplo, sem valor normativo. Substitua pela redação real. ';
+  const n = (titulo, ref, tema, texto) => db.run('INSERT INTO normas (contrato_id, titulo, referencia, tema, texto, vigente, demo, criado_por, criado_em, atualizado_em) VALUES (?,?,?,?,?,1,1,?,?,?)', DEMO, titulo, ref, tema, ex + texto, 'carga', agora(), agora());
+  n('Tempo de espera por classificação de risco (exemplo)', 'Cláusula de exemplo A', 'tempo de espera', 'O tempo vermelho, amarelo e verde de espera até o primeiro atendimento é medido em minutos, da classificação ao atendimento médico, e informado por mês.');
+  n('Transparência ao cidadão (exemplo)', 'Cláusula de exemplo B', 'transparência', 'A unidade mantém informação pública sobre serviços e indicadores, com nível de transparência declarado e comprovado por documento.');
+  n('Transferência de pacientes (exemplo)', 'Cláusula de exemplo C', 'transferência', 'O tempo da transferência de pacientes entre unidades é medido da solicitação à saída e conferido contra as linhas registradas.');
+  n('Queixas e respostas ao usuário (exemplo)', 'Cláusula de exemplo D', 'ouvidoria', 'As queixas recebidas pela ouvidoria são respondidas dentro do prazo, com resposta própria da unidade e protocolo.');
 }
 
 function semearUsuarios(db) {
@@ -129,6 +138,7 @@ function limparDemo(db) {
     if (cids.length) {
       for (const t of ['linhas_brutas', 'envio_sei', 'envios', 'indicadores_oss', 'indicadores_ctai', 'evidencias', 'linhas_rascunho', 'divergencias', 'pareceres_descontos', 'totais_igq', 'fichas', 'lotes_api', 'achados', 'avaliacoes_linha']) db.run('DELETE FROM ' + t + ' WHERE cid IN ' + em(cids.length), ...cids);
     }
+    db.run('DELETE FROM normas WHERE contrato_id = ?', DEMO);
     db.run('DELETE FROM integracao_log WHERE integracao_id IN (SELECT integracao_id FROM integracoes WHERE contrato_id = ?)', DEMO);
     db.run('DELETE FROM integracoes WHERE contrato_id = ?', DEMO);
     db.run('DELETE FROM decisoes_regra WHERE contrato_id = ?', DEMO);

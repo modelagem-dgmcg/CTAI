@@ -14,6 +14,7 @@ function descrever() {
   return [
     { tipo: 'manual', nome: manual.nome, estado: 'ativa', descricao: 'O gestor e os setores preenchem as fichas e as listas no portal.' },
     { tipo: 'csv', nome: csv.nome, estado: 'ativa', descricao: 'Envio de arquivo por fonte. Colunas de dado pessoal recusam o arquivo inteiro.' },
+    { tipo: 'acervo', nome: 'Acervo / SIMAS (conferência)', estado: 'opcional', descricao: 'Fonte de conferência, só leitura: compara o recálculo da CTAI com o que o acervo tem do mesmo mês.' },
     { tipo: 'mv-api', nome: 'API do sistema da unidade (MV)', estado: 'pronta para configurar', descricao: 'Trazer as linhas direto do sistema. Fica aguardando acesso e o dicionário de campos.' },
   ];
 }

@@ -6,6 +6,9 @@ const D = require('../dominio');
 const E = require('../envios');
 const M = require('../minuta');
 const achadosDb = require('../achados');
+const normasDb = require('../normas');
+const acervoSrv = require('../acervo');
+const trilha = require('../trilha');
 const analista = require('../../modules/analista');
 
 const { erro } = A;
@@ -53,8 +56,64 @@ module.exports = (db) => {
     res.json(Object.assign(out, { salvos }));
   });
 
-  r.get('/achados', (req, res) => res.json({ achados: achadosDb.listar(db, { cid: req.query.cid, origem_tipo: req.query.origem_tipo, origem_id: req.query.origem_id, status: req.query.status }) }));
+  const soEquipe = (u) => { if (!['criador', 'admin', 'superintendente'].includes(u.perfil)) throw erro(403, 'Só a equipe que monta o parecer (criador, superintendente) faz esta alteração.'); };
+
+  // ---------- Achados: lista, fixar/descartar, encaminhar à unidade ----------
+  r.get('/achados', (req, res) => {
+    const lista = achadosDb.listar(db, { cid: req.query.cid, origem_tipo: req.query.origem_tipo, origem_id: req.query.origem_id, status: req.query.status, contrato_id: req.query.contrato });
+    if (req.query.normas) for (const a of lista) a.normas = normasDb.paraAchado(db, a, a.contrato_id);
+    res.json({ achados: lista });
+  });
   r.patch('/achados/:id', (req, res) => { achadosDb.mudarStatus(db, req.params.id, req.body && req.body.status, req.usuario, req.body && req.body.motivo); res.json({ ok: true }); });
+  r.post('/achados/:id/encaminhar', (req, res) => { soEquipe(req.usuario); achadosDb.encaminhar(db, req.params.id, req.usuario, req.body || {}); res.json({ ok: true }); });
+
+  // Painel do Analista da CTAI: o que pede ação agora, em todas as unidades.
+  r.get('/painel', (req, res) => {
+    const contagens = achadosDb.contagens(db);
+    const hoje = new Date().toISOString().slice(0, 10);
+    const fila = achadosDb.listar(db, {}).filter((a) => ['novo', 'encaminhado', 'respondido'].includes(a.status)).slice(0, 60)
+      .map((a) => Object.assign(a, { vencido: a.status === 'encaminhado' && !!a.prazo && a.prazo < hoje }));
+    const contratos = db.all('SELECT contrato_id, unidade, demo FROM contratos ORDER BY demo, unidade').map((c) => {
+      const integ = acervoSrv.integracaoDoContrato(db, c.contrato_id);
+      return { contrato_id: c.contrato_id, unidade: c.unidade, demo: !!c.demo, acervo: integ ? { ativo: !!integ.ativo, estado: integ.estado, ultima_sync: integ.ultima_sync } : null,
+        competencias: db.all('SELECT cid, competencia_id, status FROM competencias WHERE contrato_id = ? ORDER BY competencia_id DESC', c.contrato_id).map((k) => Object.assign(k, { temEnvio: !!D.ultimoEnvio(db, k.cid) })) };
+    });
+    res.json({ contagens, fila, contratos, normas: db.get('SELECT COUNT(*) AS n FROM normas WHERE vigente = 1').n });
+  });
+
+  // ---------- Normas por unidade ----------
+  r.get('/normas', (req, res) => res.json({ normas: normasDb.listar(db, { contrato_id: req.query.contrato, q: req.query.q, somenteVigentes: req.query.vigentes === '1' }) }));
+  r.post('/normas', (req, res) => { soEquipe(req.usuario); res.json({ norma_id: normasDb.criar(db, req.usuario, req.body || {}) }); });
+  r.patch('/normas/:id', (req, res) => { soEquipe(req.usuario); normasDb.atualizar(db, req.usuario, req.params.id, req.body || {}); res.json({ ok: true }); });
+
+  // ---------- Conferência com o acervo (fonte opcional) ----------
+  r.post('/competencias/:cid/acervo/conferir', (req, res) => {
+    if (req.usuario.perfil === 'colega') throw erro(403, 'A conferência com o acervo é feita pelo criador do parecer ou pelo administrador.');
+    res.json(acervoSrv.conferir(db, req.params.cid, req.usuario));
+  });
+
+  // ---------- Relatório trimestral da unidade: abre a minuta com as competências do trimestre e a sugestão de texto ----------
+  // A pessoa edita o texto antes de congelar. Depois de congelado, a versão é imutável (nova versão exige novo congelamento).
+  r.post('/relatorio-trimestral', (req, res) => {
+    const b = req.body || {};
+    if (!['criador', 'admin'].includes(req.usuario.perfil)) throw erro(403, 'Só quem cria o parecer (perfil criador) monta o relatório trimestral.');
+    const m = /^(\d{4})-T([1-4])$/.exec(String(b.trimestre || '').trim());
+    if (!m) throw erro(400, 'Informe o trimestre no formato 2026-T2.');
+    const meses = [0, 1, 2].map((i) => m[1] + '-' + String((Number(m[2]) - 1) * 3 + 1 + i).padStart(2, '0'));
+    const comps = db.all('SELECT competencia_id FROM competencias WHERE contrato_id = ? ORDER BY competencia_id', String(b.contrato_id || '')).map((x) => x.competencia_id).filter((c) => meses.includes(c));
+    if (!comps.length) throw erro(404, 'Não há competências deste contrato em ' + b.trimestre + '.');
+    let p = db.get('SELECT parecer_id FROM pareceres WHERE contrato_id = ? AND trimestre = ?', String(b.contrato_id), m[0]);
+    const jaExistia = !!p;
+    const id = p ? p.parecer_id : M.criar(db, req.usuario, { contrato_id: b.contrato_id, trimestre: m[0], competencias: comps, numero_parecer: b.numero_parecer || null });
+    const parecer = M.obter(db, id);
+    const sugestao = M.rascunhoDeTexto(M.conteudoAtual(db, id));
+    const atual = parecer.blocos.texto || {};
+    const novo = {};
+    for (const k of Object.keys(sugestao)) if (!String(atual[k] || '').trim()) novo[k] = sugestao[k];
+    if (Object.keys(novo).length) M.salvarTexto(db, id, req.usuario, novo);
+    trilha.registrar(db, { usuario: req.usuario.login, tabela: 'pareceres', registro: id, campo: 'relatorio_trimestral', valor_novo: { competencias: comps, jaExistia } });
+    res.json({ parecer_id: id, competencias: comps, jaExistia, faltam: meses.filter((x) => !comps.includes(x)) });
+  });
 
   return r;
 };

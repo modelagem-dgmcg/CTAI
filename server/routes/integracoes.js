@@ -18,7 +18,7 @@ module.exports = (db) => {
   const podeOperar = (u, i) => { if (u.perfil === 'admin') return; if (u.perfil === 'gestor_unidade' && u.contrato_id === i.contrato_id) return; throw erro(403, 'Só o administrador ou o gestor da unidade operam a integração.'); };
 
   r.get('/', (req, res) => {
-    const todas = db.all('SELECT * FROM integracoes ORDER BY integracao_id').filter((i) => A.PERFIS_CTAI.includes(req.usuario.perfil) || i.contrato_id === req.usuario.contrato_id);
+    const todas = db.all("SELECT * FROM integracoes WHERE tipo <> 'acervo' ORDER BY integracao_id").filter((i) => A.PERFIS_CTAI.includes(req.usuario.perfil) || i.contrato_id === req.usuario.contrato_id);
     const itens = todas.map((i) => {
       const cfg = D.json(i.config, {});
       const envDefinida = cfg.auth && (cfg.auth.tokenEnv || cfg.auth.chaveEnv || cfg.auth.usuarioEnv) ? !!require('../config').env(cfg.auth.tokenEnv || cfg.auth.chaveEnv || cfg.auth.usuarioEnv, '') : false;

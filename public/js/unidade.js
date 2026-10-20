@@ -17,8 +17,10 @@
   async function inicio() {
     await carregarInfo();
     const c = INFO.contrato;
+    const pendEsc = (await api('GET', '/api/unidade/achados').catch(() => ({ achados: [] }))).achados.filter((a) => a.status === 'encaminhado').length;
     montar(faixaDemo(),
       h('div', { class: 'topo' }, h('div', null, h('h1', null, c.unidade), h('p', null, c.oss + ' · Contrato de Gestão ' + (c.numero_cg || '')))),
+      pendEsc ? h('div', { class: 'aviso atencao' }, h('strong', null, pendEsc + ' esclarecimento(s) pedido(s) pela CTAI. '), h('a', { href: '#/esclarecimentos' }, 'Responder')) : null,
       h('div', { class: 'aviso info' }, 'Cada mês tem seis fichas (uma por setor) e algumas listas. Quando todas estiverem prontas, o gestor confere e envia: o sistema gera o PDF que segue para o SEI e a CTAI recebe e recalcula.'),
       h('div', { class: 'grade' }, INFO.competencias.map((k) => h('div', { class: 'cartao' },
         h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, fmt.comp(k.competencia_id)), k.mes_implantacao ? selo('implantação', 'atencao') : null),
@@ -27,6 +29,27 @@
         h('div', { class: 'barra', role: 'img', 'aria-label': k.fichasProntas + ' de ' + k.fichasTotal + ' fichas prontas' }, h('i', { style: 'width:' + Math.round((k.fichasProntas / k.fichasTotal) * 100) + '%' })),
         h('p', { class: 'peq mudo' }, k.fichasProntas + ' de ' + k.fichasTotal + ' fichas prontas'),
         h('a', { class: 'btn', href: '#/c/' + k.cid }, 'Abrir o mês')))));
+  }
+
+  // ---------- Esclarecimentos pedidos pela CTAI ----------
+  async function esclarecimentos() {
+    const r = await api('GET', '/api/unidade/achados');
+    const hoje = new Date().toISOString().slice(0, 10);
+    const NOME = { assistencia: 'Assistência', qualidade: 'Qualidade', ouvidoria: 'Ouvidoria', educacao: 'Educação permanente', bid: 'BID / transferências', rh: 'Recursos humanos' };
+    const responder = async (a) => {
+      const t = await perguntar('Responder à CTAI', 'Escreva o esclarecimento. Não coloque dado de paciente.', { longo: true, botao: 'Enviar resposta' });
+      if (!t) return;
+      try { await api('POST', '/api/unidade/achados/' + a.achado_id + '/responder', { resposta: t }); toast('Resposta enviada.'); esclarecimentos(); } catch (e) { toast(e.message, true); }
+    };
+    const abertos = r.achados.filter((a) => a.status === 'encaminhado');
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Esclarecimentos'), h('p', null, 'Pontos que a CTAI pediu para a unidade esclarecer. A resposta fica registrada com data e nome.'))),
+      abertos.length ? aviso('atencao', h('strong', null, abertos.length + ' aguardando resposta.')) : aviso('ok', 'Nada aguardando resposta.'),
+      r.achados.length ? r.achados.map((a) => h('div', { class: 'item-mesa ' + (a.status === 'encaminhado' ? '' : 'ok') },
+        h('div', { class: 'linha espaco' }, h('strong', null, (a.tipo || 'Ponto a esclarecer') + (a.competencia_id ? ' · ' + fmt.comp(a.competencia_id) : '')), h('div', { class: 'linha' }, seloGrav(a.gravidade), selo(a.status === 'encaminhado' ? 'aguarda resposta' : 'respondido', a.status === 'encaminhado' ? 'atencao' : 'ok'), a.setor ? selo(NOME[a.setor] || a.setor) : null)),
+        a.trecho ? h('blockquote', { style: 'margin:8px 0;padding:6px 12px;border-left:3px solid var(--borda);color:var(--cinza)' }, a.trecho) : null,
+        h('p', { class: 'peq', style: 'margin:4px 0' }, h('strong', null, 'Pedido da CTAI: '), a.mensagem), h('p', { class: 'peq mudo', style: 'margin:2px 0' }, 'Em ' + fmt.data(a.encaminhado_em) + (a.prazo ? ' · prazo ' + fmt.data(a.prazo) : ''), a.status === 'encaminhado' && a.prazo && a.prazo < hoje ? [' ', selo('prazo vencido', 'alta')] : null),
+        a.resposta ? h('div', { class: 'aviso ok', style: 'margin:8px 0' }, h('strong', null, 'Resposta: '), a.resposta, h('div', { class: 'peq mudo' }, a.respondido_por + ' em ' + fmt.data(a.respondido_em))) : h('button', { onclick: () => responder(a) }, 'Responder')))
+        : h('p', { class: 'vazio' }, 'A CTAI ainda não pediu nenhum esclarecimento.'));
   }
 
   // ---------- Competência ----------
@@ -277,10 +300,10 @@
   }
 
   async function iniciar() {
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Portal da unidade', perfis: ['gestor_unidade', 'setor_unidade'], itens: [{ href: '#/', rotulo: 'Meses' }, { href: '#/regras', rotulo: 'Regras de pontuação' }, { href: '#/integracao', rotulo: 'Integração' }] });
+    EU = await casca({ titulo: 'CTAI', subtitulo: 'Portal da unidade', perfis: ['gestor_unidade', 'setor_unidade'], itens: [{ href: '#/', rotulo: 'Meses' }, { href: '#/esclarecimentos', rotulo: 'Esclarecimentos' }, { href: '#/regras', rotulo: 'Regras de pontuação' }, { href: '#/integracao', rotulo: 'Integração' }] });
     if (!EU) return;
     try { const m = await api('GET', '/api/meta'); Object.entries(m.fontes).forEach(([k, v]) => { NOMES_FONTES[k] = v.nome; }); } catch (_) { /* segue */ }
-    rotear([['/', inicio], ['/c/:cid', competencia], ['/c/:cid/enviar', enviar], ['/c/:cid/envios', envios], ['/c/:cid/ficha/:setor', ficha], ['/c/:cid/lista/:fonte', lista], ['/regras', regras], ['/integracao', integracao]], (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', inicio], ['/c/:cid', competencia], ['/c/:cid/enviar', enviar], ['/c/:cid/envios', envios], ['/c/:cid/ficha/:setor', ficha], ['/c/:cid/lista/:fonte', lista], ['/esclarecimentos', esclarecimentos], ['/regras', regras], ['/integracao', integracao]], (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();

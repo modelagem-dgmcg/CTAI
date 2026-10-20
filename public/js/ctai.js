@@ -105,14 +105,43 @@
     try { await api('PUT', '/api/ctai/competencias/' + p.cid + '/evidencias/' + i.id, Object.assign({ documento_id: doc.value, observacao: obs.value }, Object.fromEntries(Object.keys(campos).map((k) => [k, caixas[k].checked])))); toast('Leitura registrada.'); competencia(p); } catch (er) { toast(er.message, true); }
   }
 
+  const SETOR_NOME = { assistencia: 'Assistência', qualidade: 'Qualidade', ouvidoria: 'Ouvidoria', educacao: 'Educação permanente', bid: 'BID / transferências', rh: 'Recursos humanos' };
+  const STATUS_TIPO = { fixado: 'ok', encaminhado: 'atencao', respondido: 'ok' };
+  async function encaminhar(a, recarregar) {
+    const setor = h('select', { id: 'en-s' }, [h('option', { value: '' }, 'Gestor da unidade (qualquer setor)')].concat(Object.entries(SETOR_NOME).map(([k, v]) => h('option', { value: k, selected: a.setor_sugerido === k }, v))));
+    const prazo = h('input', { type: 'date', id: 'en-p' });
+    const msg = h('textarea', { id: 'en-m', rows: 5, maxlength: 1500 });
+    msg.value = a.sugestao ? 'Esclarecer: ' + a.sugestao : '';
+    const erroMsg = h('div', { class: 'msg-erro' });
+    const corpo = h('div', null, h('p', { class: 'peq mudo' }, 'A unidade verá o tipo do achado, o trecho e a sua mensagem. Não escreva dado de paciente.'),
+      h('div', { class: 'campo' }, h('label', { for: 'en-s' }, 'Quem responde'), setor), h('div', { class: 'campo' }, h('label', { for: 'en-p' }, 'Prazo (opcional)'), prazo),
+      h('div', { class: 'campo' }, h('label', { for: 'en-m' }, 'O que a unidade deve esclarecer'), msg), erroMsg);
+    for (;;) {
+      const r = await janela('Encaminhar à unidade', corpo, [{ rotulo: 'Cancelar', valor: null, sec: true }, { rotulo: 'Encaminhar', valor: 'ok' }]);
+      if (r !== 'ok') return;
+      try { await api('POST', '/api/analista/achados/' + a.achado_id + '/encaminhar', { setor: setor.value || null, prazo: prazo.value || null, mensagem: msg.value }); toast('Encaminhado à unidade.'); recarregar(); return; } catch (e) { erroMsg.textContent = e.message; }
+    }
+  }
   function achadoCard(a, recarregar) {
     const mudar = async (status) => { let motivo = null; if (status === 'descartado') { motivo = await perguntar('Descartar o achado', 'Por que descartar?', { longo: true }); if (!motivo) return; } try { await api('PATCH', '/api/analista/achados/' + a.achado_id, { status, motivo }); recarregar(); } catch (e) { toast(e.message, true); } };
-    return h('div', { class: 'item-mesa ' + (a.status === 'fixado' ? 'ok' : '') },
-      h('div', { class: 'linha espaco' }, h('strong', null, a.tipo || 'Ponto a conferir'), h('div', { class: 'linha' }, seloGrav(a.gravidade), a.status !== 'novo' ? selo(a.status, a.status === 'fixado' ? 'ok' : '') : null, a.setor_sugerido ? selo('setor: ' + a.setor_sugerido) : null)),
+    const podeEncaminhar = recarregar && a.cid && ['novo', 'fixado', 'respondido'].includes(a.status) && ['criador', 'admin', 'superintendente'].includes(EU.perfil);
+    const hoje = new Date().toISOString().slice(0, 10);
+    return h('div', { class: 'item-mesa ' + (a.status === 'fixado' || a.status === 'respondido' ? 'ok' : '') },
+      h('div', { class: 'linha espaco' }, h('strong', null, a.tipo || 'Ponto a conferir'), h('div', { class: 'linha' }, seloGrav(a.gravidade), a.status && a.status !== 'novo' ? selo(a.status, STATUS_TIPO[a.status] || '') : null, a.setor_sugerido ? selo('setor: ' + a.setor_sugerido) : null)),
+      a.unidade ? h('p', { class: 'peq mudo', style: 'margin:2px 0' }, a.unidade + (a.competencia_id ? ' · ' + fmt.comp(a.competencia_id) : '')) : null,
       a.trecho ? h('blockquote', { style: 'margin:8px 0;padding:6px 12px;border-left:3px solid var(--borda);color:var(--cinza)' }, a.trecho) : null,
       a.risco ? h('p', { class: 'peq', style: 'margin:4px 0' }, h('strong', null, 'Por que importa: '), a.risco) : null,
       a.sugestao ? h('p', { class: 'peq', style: 'margin:4px 0' }, h('strong', null, 'O que pedir: '), a.sugestao) : null,
-      recarregar ? h('div', { class: 'linha', style: 'margin-top:6px' }, a.status !== 'fixado' ? h('button', { class: 'sec', onclick: () => mudar('fixado') }, 'Fixar na mesa') : h('button', { class: 'sec', onclick: () => mudar('novo') }, 'Desafixar'), a.status !== 'descartado' ? h('button', { class: 'leve', onclick: () => mudar('descartado') }, 'Descartar') : h('button', { class: 'leve', onclick: () => mudar('novo') }, 'Reabrir'), h('span', { class: 'mudo peq' }, 'lido por: ' + (a.provedor || '—'))) : null);
+      a.normas && a.normas.length ? h('p', { class: 'peq', style: 'margin:4px 0' }, h('strong', null, 'Normas ligadas: '), a.normas.map((n, i) => [i ? '; ' : '', h('a', { href: '#/analista/normas' }, n.titulo + (n.referencia ? ' (' + n.referencia + ')' : ''))])) : null,
+      a.mensagem ? h('div', { class: 'aviso info', style: 'margin:8px 0' }, h('strong', null, 'Pedido à unidade' + (a.encaminhado_a ? ' (' + (SETOR_NOME[a.encaminhado_a] || a.encaminhado_a) + ')' : '') + ': '), a.mensagem,
+        h('div', { class: 'peq mudo' }, 'por ' + a.encaminhado_por + ' em ' + fmt.data(a.encaminhado_em) + (a.prazo ? ' · prazo ' + fmt.data(a.prazo) : ''), a.status === 'encaminhado' && a.prazo && a.prazo < hoje ? [' ', selo('prazo vencido', 'alta')] : null)) : null,
+      a.resposta ? h('div', { class: 'aviso ok', style: 'margin:8px 0' }, h('strong', null, 'Resposta da unidade: '), a.resposta, h('div', { class: 'peq mudo' }, 'por ' + a.respondido_por + ' em ' + fmt.data(a.respondido_em))) : null,
+      recarregar ? h('div', { class: 'linha', style: 'margin-top:6px' },
+        a.status === 'encaminhado' ? h('span', { class: 'mudo peq' }, 'Aguardando a resposta da unidade.') : [
+          a.status !== 'fixado' ? h('button', { class: 'sec', onclick: () => mudar('fixado') }, a.status === 'respondido' ? 'Aceitar e fixar na mesa' : 'Fixar na mesa') : h('button', { class: 'sec', onclick: () => mudar('novo') }, 'Desafixar'),
+          podeEncaminhar ? h('button', { class: 'sec', onclick: () => encaminhar(a, recarregar) }, a.status === 'respondido' ? 'Pedir novo esclarecimento' : 'Encaminhar à unidade') : null,
+          a.status !== 'descartado' ? h('button', { class: 'leve', onclick: () => mudar('descartado') }, 'Descartar') : h('button', { class: 'leve', onclick: () => mudar('novo') }, 'Reabrir')],
+        h('span', { class: 'mudo peq' }, 'lido por: ' + (a.provedor || '—'))) : null);
   }
 
   function abaAchados(d, p) {
@@ -120,7 +149,7 @@
     return [h('div', { class: 'linha espaco' }, h('p', { class: 'mudo', style: 'margin:0' }, 'O Analista lê o texto do relatório enviado e aponta o que merece conferência. Quem decide é a equipe: fixe o que vale para a mesa.'),
       ult ? h('button', { class: 'sec', onclick: async () => { try { const o = await api('POST', '/api/analista/envios/' + ult.envio_id + '/analisar', {}); toast(o.achados + ' achado(s) · ' + o.provedor); competencia(p); } catch (e) { toast(e.message, true); } } }, 'Analisar o último envio') : null),
       h('div', { style: 'margin-top:12px' }, d.achados.length ? d.achados.map((a) => achadoCard(a, () => competencia(p))) : h('p', { class: 'vazio' }, 'Nenhum achado ainda.')),
-      h('p', { class: 'peq' }, h('a', { href: '#/analista' }, 'Analisar outro texto (relatório da OSS colado)')) ];
+      h('p', { class: 'peq' }, h('a', { href: '#/analista/ler' }, 'Analisar outro texto (relatório da OSS colado)')) ];
   }
 
   // Os dois canais lado a lado: o que chegou ao sistema e o que a unidade registrou como documento no SEI.
@@ -308,8 +337,68 @@
   }
 
   // ---------- Analista ----------
-  async function analista() {
-    const [est, cs] = await Promise.all([api('GET', '/api/analista/estado'), api('GET', '/api/ctai/contratos')]);
+  const ABAS_AN = [['', 'Fila'], ['relatorio', 'Relatório trimestral'], ['conferencia', 'Conferência com o acervo'], ['ler', 'Ler um texto'], ['normas', 'Normas por unidade']];
+  async function analista(p) {
+    const aba = (p && p.aba) || '';
+    const topo = [h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Analista CTAI'), h('p', null, 'Lê o que a unidade enviou, confere contra o recálculo e o acervo, aponta o que merece esclarecimento e monta o relatório trimestral. Quem decide é a equipe.'))),
+      h('div', { class: 'abas' }, ABAS_AN.map(([k, r]) => h('a', { href: '#/analista' + (k ? '/' + k : ''), class: aba === k ? 'ativo' : '' }, r)))];
+    const corpo = { '': anFila, relatorio: anRelatorio, conferencia: anConferencia, ler: anLer, normas: anNormas }[aba];
+    if (!corpo) throw new Error('Página não encontrada.');
+    montar(topo, await corpo());
+  }
+
+  async function anFila() {
+    const [pn, est] = await Promise.all([api('GET', '/api/analista/painel'), api('GET', '/api/analista/estado')]);
+    const c = pn.contagens;
+    const recarregar = () => analista({ aba: '' });
+    return [
+      h('div', { class: 'kpis' }, kpi('Novos', String(c.novo), 'a decidir'), kpi('Aguardando a unidade', String(c.encaminhado), c.vencidos ? c.vencidos + ' com prazo vencido' : 'dentro do prazo'), kpi('Respondidos', String(c.respondido), 'a avaliar'), kpi('Fixados na mesa', String(c.fixado)), kpi('Normas vigentes', String(pn.normas))),
+      h('div', { class: 'cartao' }, h('h3', null, 'O que pede ação'),
+        pn.fila.length ? pn.fila.map((a) => achadoCard(a, recarregar)) : h('p', { class: 'vazio' }, 'Nada pendente. Os achados aparecem aqui quando a unidade envia um relatório ou quando você lê um texto e o guarda numa competência.')),
+      h('div', { class: 'cartao' }, h('h3', null, 'Leitores'),
+        h('p', { class: 'peq' }, 'As verificações locais funcionam sempre, sem internet e sem chave. Leitores de IA ficam desligados sem chave no .env; à nuvem só vai texto mascarado e só com ', h('code', null, 'ANALISTA_ENVIAR_NUVEM=sim'), '. Envio à nuvem agora: ', selo(est.enviarNuvem ? 'ligado' : 'desligado', est.enviarNuvem ? 'atencao' : 'ok')),
+        tabela([{ t: 'Leitor' }, { t: 'Onde roda' }, { t: 'Chave' }, { t: 'Disponível' }], [['regras locais', 'neste servidor', 'não precisa', selo('sempre', 'ok')]].concat(est.provedores.map((x) => [x.nome, x.nuvem ? 'nuvem' : 'rede local', x.comChave ? 'sim' : 'não', selo(x.disponivel ? 'sim' : 'desligado', x.disponivel ? 'ok' : '')]))))];
+  }
+
+  async function anRelatorio() {
+    const pn = await api('GET', '/api/analista/painel');
+    const un = h('select', { id: 'rt-u' }, pn.contratos.map((c) => h('option', { value: c.contrato_id }, c.unidade)));
+    const ano = new Date().getFullYear();
+    const tri = h('select', { id: 'rt-t' }, [1, 2, 3, 4].map((t) => h('option', { value: ano + '-T' + t, selected: t === Math.ceil((new Date().getMonth() + 1) / 3) }, ano + ' · ' + t + 'º trimestre')));
+    const num = h('input', { id: 'rt-n', placeholder: 'Ex.: 204/2026 (opcional)' });
+    const out = h('div');
+    const montarRel = async () => {
+      try {
+        const o = await api('POST', '/api/analista/relatorio-trimestral', { contrato_id: un.value, trimestre: tri.value, numero_parecer: num.value || null });
+        troca(out, aviso('ok', (o.jaExistia ? 'Já existia uma minuta deste trimestre; completei só os trechos vazios. ' : 'Minuta aberta com as competências ' + o.competencias.join(', ') + '. '), o.faltam.length ? 'Sem competência cadastrada em: ' + o.faltam.join(', ') + '. ' : '', h('a', { href: '#/p/' + o.parecer_id }, 'Abrir para editar e congelar')));
+      } catch (e) { troca(out, aviso('erro', e.message)); }
+    };
+    return [h('div', { class: 'cartao' }, h('h3', null, 'Montar o relatório trimestral da unidade'),
+      h('p', { class: 'peq mudo' }, 'O Analista reúne as competências do trimestre, traz os números conferidos (declarado × recalculado × adotado), as divergências, o desconto e os achados fixados, e escreve uma primeira versão do texto. Você edita à vontade. Ao congelar, a versão fica imutável, passa pela mesa de conferência e sai em PDF.'),
+      h('div', { class: 'grade' }, h('div', { class: 'campo' }, h('label', { for: 'rt-u' }, 'Unidade'), un), h('div', { class: 'campo' }, h('label', { for: 'rt-t' }, 'Trimestre'), tri), h('div', { class: 'campo' }, h('label', { for: 'rt-n' }, 'Número do parecer'), num)),
+      EU.perfil === 'criador' || EU.perfil === 'admin' ? h('button', { onclick: montarRel }, 'Montar a minuta') : aviso('info', 'Só quem cria o parecer (perfil criador) monta a minuta.'), out)];
+  }
+
+  async function anConferencia() {
+    const pn = await api('GET', '/api/analista/painel');
+    const saida = h('div');
+    const conferir = async (cid) => {
+      troca(saida, h('p', { class: 'mudo' }, 'Comparando com o acervo…'));
+      try {
+        const o = await api('POST', '/api/analista/competencias/' + cid + '/acervo/conferir', {});
+        troca(saida, h('div', { class: 'cartao' }, h('h3', null, 'Resultado'), h('p', { class: 'peq mudo' }, 'Fonte: ' + o.fonte + ' · ' + o.comparados + ' indicador(es) comparado(s) · ' + o.divergentes + ' divergente(s). As divergências foram para a aba Divergências da competência.'),
+          tabela([{ t: 'Item' }, { t: 'No sistema da CTAI', n: true }, { t: 'No acervo', n: true }, { t: 'Diferença', n: true }, { t: 'Situação' }], o.itens.map((x) => [x.indicador_id, fmt.valor(x.sistema), fmt.valor(x.acervo), String(x.diferenca), x.confere ? selo('confere', 'ok') : selo('divergente', 'atencao')]), { vazio: 'Nenhum indicador em comum.' })));
+      } catch (e) { troca(saida, aviso('erro', e.message)); }
+    };
+    return [aviso('info', 'O acervo é uma fonte ', h('strong', null, 'opcional'), ' de conferência (SIMAS ou outro banco da SES), só leitura. O sistema compara o que a unidade enviou, já recalculado pela CTAI, com o que o acervo tem do mesmo mês.'),
+      pn.contratos.map((c) => h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null),
+        c.acervo && c.acervo.ativo ? selo('acervo ativo' + (c.acervo.ultima_sync ? ' · última conferência ' + fmt.data(c.acervo.ultima_sync) : ''), 'ok') : selo('acervo não configurado')),
+        c.competencias.length ? tabela([{ t: 'Mês' }, { t: 'Situação' }, { t: '' }], c.competencias.map((k) => [fmt.comp(k.competencia_id), k.status, k.temEnvio && c.acervo && c.acervo.ativo && EU.perfil !== 'colega' ? h('button', { class: 'sec', onclick: () => conferir(k.cid) }, 'Conferir com o acervo') : h('span', { class: 'mudo peq' }, k.temEnvio ? 'sem acervo ativo' : 'sem envio')])) : h('p', { class: 'vazio' }, 'Sem competências.'))),
+      saida];
+  }
+
+  async function anLer() {
+    const cs = await api('GET', '/api/ctai/contratos');
     const comp = h('select', { id: 'an-c' }, [h('option', { value: '' }, '— sem competência (só o texto) —')].concat(cs.contratos.flatMap((c) => c.competencias.map((k) => h('option', { value: k.cid }, c.unidade + ' · ' + k.competencia_id)))));
     const texto = h('textarea', { id: 'an-t', rows: 12, placeholder: 'Cole aqui o texto do relatório da OSS (copiado do PDF ou do Word).' });
     const guardar = h('input', { type: 'checkbox', id: 'an-g' });
@@ -323,15 +412,39 @@
           o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'O Analista não encontrou inconsistências neste texto. Isso não substitui a conferência humana.'));
       } catch (e) { troca(saida, aviso('erro', e.message)); }
     };
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Analista'), h('p', null, 'Lê o texto de um relatório e aponta o que merece conferência: números que não fecham, mês errado, trecho copiado, nível de transparência diferente da ficha.'))),
-      h('div', { class: 'cartao' }, h('h3', null, 'Situação dos leitores'),
-        h('p', { class: 'peq' }, 'As verificações locais (regras) funcionam sempre, sem internet e sem chave. Leitores de IA ficam desligados enquanto não houver chave no .env. Para a nuvem, só vai texto com os dados pessoais mascarados, e só se ',
-          h('code', null, 'ANALISTA_ENVIAR_NUVEM=sim'), '. Envio à nuvem agora: ', selo(est.enviarNuvem ? 'ligado' : 'desligado', est.enviarNuvem ? 'atencao' : 'ok')),
-        tabela([{ t: 'Leitor' }, { t: 'Onde roda' }, { t: 'Chave' }, { t: 'Disponível' }], [['regras locais', 'neste servidor', 'não precisa', selo('sempre', 'ok')]].concat(est.provedores.map((x) => [x.nome, x.nuvem ? 'nuvem' : 'rede local', x.comChave ? 'sim' : 'não', selo(x.disponivel ? 'sim' : 'desligado', x.disponivel ? 'ok' : '')]))),
-        h('p', { class: 'peq mudo' }, 'Ordem de tentativa dos leitores de IA: ' + (est.ordem.join(' → ') || '—') + '. O Analista que já existe entra aqui: veja docs/DNA-ANALISTA.md.')),
-      h('div', { class: 'cartao' }, h('h3', null, 'Analisar um texto'), aviso('atencao', 'Não cole dados de paciente. Se colar por engano, CPF, cartão SUS, e-mail e telefone são mascarados antes de qualquer envio à nuvem.'),
-        h('div', { class: 'campo' }, h('label', { for: 'an-c' }, 'Competência (dá o contexto: mês, valores por cor, transparência)'), comp), h('div', { class: 'campo' }, h('label', { for: 'an-t' }, 'Texto do documento'), texto),
-        h('div', { class: 'linha' }, h('button', { onclick: analisar }, 'Analisar'), h('label', { style: 'font-weight:400;margin:0' }, guardar, ' Guardar os achados na competência (para fixar na mesa)')), saida));
+    return [h('div', { class: 'cartao' }, h('h3', null, 'Analisar um texto'), aviso('atencao', 'Não cole dados de paciente. Se colar por engano, CPF, cartão SUS, e-mail e telefone são mascarados antes de qualquer envio à nuvem.'),
+      h('div', { class: 'campo' }, h('label', { for: 'an-c' }, 'Competência (dá o contexto: mês, valores por cor, transparência)'), comp), h('div', { class: 'campo' }, h('label', { for: 'an-t' }, 'Texto do documento'), texto),
+      h('div', { class: 'linha' }, h('button', { onclick: analisar }, 'Analisar'), h('label', { style: 'font-weight:400;margin:0' }, guardar, ' Guardar os achados na competência (para fixar na mesa ou encaminhar à unidade)')), saida)];
+  }
+
+  async function anNormas() {
+    const [cs, rn] = await Promise.all([api('GET', '/api/ctai/contratos'), api('GET', '/api/analista/normas')]);
+    const nomeContrato = Object.fromEntries(cs.contratos.map((c) => [c.contrato_id, c.unidade]));
+    const podeEditar = ['criador', 'admin', 'superintendente'].includes(EU.perfil);
+    const busca = h('input', { type: 'search', id: 'nb', placeholder: 'Buscar por palavra (ex.: transparência, prazo, transferência)', 'aria-label': 'Buscar normas' });
+    const lista = h('div');
+    const desenhar = async () => {
+      const r = await api('GET', '/api/analista/normas?q=' + encodeURIComponent(busca.value));
+      troca(lista, tabela([{ t: 'Norma' }, { t: 'Vale para' }, { t: 'Tema' }, { t: 'Situação' }, { t: '' }], r.normas.map((n) => [
+        h('div', null, h('strong', null, n.titulo), n.referencia ? h('div', { class: 'peq mudo' }, n.referencia) : null, h('div', { class: 'peq' }, n.texto.length > 220 ? n.texto.slice(0, 220) + '…' : n.texto)),
+        n.contrato_id ? nomeContrato[n.contrato_id] || n.contrato_id : 'todas as unidades', n.tema || '—', n.vigente ? selo('vigente', 'ok') : selo('revogada'),
+        podeEditar ? h('button', { class: 'leve', onclick: async () => { try { await api('PATCH', '/api/analista/normas/' + n.norma_id, { vigente: !n.vigente, motivo: n.vigente ? 'Marcada como revogada' : 'Marcada como vigente' }); desenhar(); } catch (e) { toast(e.message, true); } } }, n.vigente ? 'Marcar como revogada' : 'Marcar como vigente') : '']), { vazio: 'Nenhuma norma encontrada.' }));
+    };
+    busca.addEventListener('input', () => { clearTimeout(busca._t); busca._t = setTimeout(desenhar, 250); });
+    const nova = async () => {
+      const un = h('select', { id: 'nn-u' }, [h('option', { value: '' }, 'Todas as unidades')].concat(cs.contratos.map((c) => h('option', { value: c.contrato_id }, c.unidade))));
+      const tit = h('input', { id: 'nn-t' }), ref = h('input', { id: 'nn-r', placeholder: 'Ex.: cláusula, portaria, item da regra' }), tema = h('input', { id: 'nn-m' }), txt = h('textarea', { id: 'nn-x', rows: 6 }), msg = h('div', { class: 'msg-erro' });
+      const corpo = h('div', null, h('div', { class: 'campo' }, h('label', { for: 'nn-u' }, 'Vale para'), un), h('div', { class: 'campo' }, h('label', { for: 'nn-t' }, 'Título'), tit), h('div', { class: 'campo' }, h('label', { for: 'nn-r' }, 'Referência'), ref),
+        h('div', { class: 'campo' }, h('label', { for: 'nn-m' }, 'Tema'), tema), h('div', { class: 'campo' }, h('label', { for: 'nn-x' }, 'Texto ou resumo'), txt), msg);
+      for (;;) {
+        const r = await janela('Nova norma', corpo, [{ rotulo: 'Cancelar', valor: null, sec: true }, { rotulo: 'Guardar', valor: 'ok' }]);
+        if (r !== 'ok') return;
+        try { await api('POST', '/api/analista/normas', { contrato_id: un.value || null, titulo: tit.value, referencia: ref.value, tema: tema.value, texto: txt.value }); toast('Norma guardada.'); desenhar(); return; } catch (e) { msg.textContent = e.message; }
+      }
+    };
+    await desenhar();
+    return [h('div', { class: 'linha espaco' }, h('p', { class: 'mudo', style: 'margin:0' }, 'O que vale para cada unidade. O Analista sugere as normas mais ligadas a cada achado; é apoio de consulta, não parecer jurídico. Cole o texto vigente do contrato.'), podeEditar ? h('button', { onclick: nova }, 'Nova norma') : null),
+      h('div', { class: 'campo', style: 'margin-top:12px' }, h('label', { for: 'nb' }, 'Buscar'), busca), h('div', { class: 'cartao' }, lista)];
   }
 
   // ---------- Integrações ----------
@@ -388,11 +501,11 @@
   }
 
   async function iniciar() {
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/', rotulo: 'Painel' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }].concat([]) });
+    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/', rotulo: 'Painel' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }].concat([]) });
     if (!EU) return;
     if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), nav); }
     META = await api('GET', '/api/meta');
-    rotear([['/', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]], (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]], (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();
