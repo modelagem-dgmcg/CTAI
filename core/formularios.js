@@ -86,6 +86,7 @@ const CAMPOS = {
     campo('obitos_24h', 'Óbitos com 24 horas ou mais de internação', 'inteiro', { indicador: '2.10', min: 0, ajuda: 'Conte só os que ficaram 24 horas ou mais entre a admissão e o óbito.' }),
     campo('obitos_24h_revisados', 'Desses, quantos foram revisados pela comissão', 'inteiro', { indicador: '2.10', min: 0, ajuda: 'Revisão registrada em ata da comissão de óbitos.' }),
     anexo('2.10'),
+    campo('obitos_relatorio_comissao', 'Relatório da Comissão de Óbitos (nº SEI ou arquivo)', 'texto', { indicador: '2.10', ajuda: 'Obrigatório na lista da Secretaria: o relatório da comissão do mês, com a ata da revisão. Informe o número do documento no SEI ou o nome do arquivo.' }),
     campo('prontuarios_amostra', 'Prontuários revisados (amostra)', 'inteiro', { min: 0, ajuda: 'Quantos prontuários a comissão revisou no mês.' }),
     campo('prontuarios_total', 'Total de prontuários do mês', 'inteiro', { min: 0, ajuda: 'Base da amostra. O sistema calcula o percentual real da amostra.' }),
     campo('prontuarios_amostra_pct_declarada', 'Percentual de amostra que o relatório declara', 'percentual', { unidade: '%', ajuda: 'O que está escrito no relatório (ex.: "2%"). O sistema compara com a conta real.' }),
@@ -104,6 +105,7 @@ const CAMPOS = {
     anexo('2.12'),
     campo('i2_13_valor', 'Transparência: nível da ficha de avaliação', 'selecao', { indicador: '2.13', opcoes: CATEGORIAS_TRANSPARENCIA, ajuda: 'Nível indicado na Ficha de Avaliação de Transparência do mês.' }),
     anexo('2.13'),
+    campo('transparencia_publicacao', 'Informações da publicação de transparência', 'texto_longo', { indicador: '2.13', ajuda: 'Obrigatório na lista da Secretaria: informações que permitam aferir a qualidade da publicação (endereço da página, data da publicação e o que foi publicado). Não cole dado de paciente.' }),
     campo('ouvidoria_obs', 'Observações da ouvidoria', 'texto_longo', {}),
   ],
   educacao: [

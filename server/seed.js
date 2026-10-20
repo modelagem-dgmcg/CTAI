@@ -136,7 +136,7 @@ function limparDemo(db) {
       db.run('DELETE FROM pareceres WHERE parecer_id IN ' + em(pids.length), ...pids);
     }
     if (cids.length) {
-      for (const t of ['linhas_brutas', 'envio_sei', 'envios', 'indicadores_oss', 'indicadores_ctai', 'evidencias', 'linhas_rascunho', 'divergencias', 'pareceres_descontos', 'totais_igq', 'fichas', 'lotes_api', 'achados', 'avaliacoes_linha']) db.run('DELETE FROM ' + t + ' WHERE cid IN ' + em(cids.length), ...cids);
+      for (const t of ['linhas_brutas', 'envio_sei', 'envios', 'indicadores_oss', 'indicadores_ctai', 'evidencias', 'linhas_rascunho', 'divergencias', 'pareceres_descontos', 'totais_igq', 'fichas', 'lotes_api', 'achados', 'avaliacoes_linha', 'checklist_itens']) db.run('DELETE FROM ' + t + ' WHERE cid IN ' + em(cids.length), ...cids);
     }
     db.run('DELETE FROM normas WHERE contrato_id = ?', DEMO);
     db.run('DELETE FROM integracao_log WHERE integracao_id IN (SELECT integracao_id FROM integracoes WHERE contrato_id = ?)', DEMO);

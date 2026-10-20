@@ -18,6 +18,8 @@ const { erro } = A;
 module.exports = (db) => {
   const r = express.Router();
   r.use(A.exigir(db, A.PERFIS_CTAI));
+  const CL = require('../checklist');
+  const PZ = require('../prazos');
   const soCriadorOuAdmin = (u) => { if (!['criador', 'admin'].includes(u.perfil)) throw erro(403, 'Esta ação é de quem cria o parecer.'); };
 
   // ---------- Painel ----------
@@ -26,7 +28,7 @@ module.exports = (db) => {
       const comps = db.all('SELECT cid, competencia_id, status, mes_implantacao FROM competencias WHERE contrato_id = ? ORDER BY competencia_id', c.contrato_id).map((k) => {
         const ult = D.ultimoEnvio(db, k.cid);
         const div = db.get("SELECT COUNT(*) AS n FROM divergencias WHERE cid = ? AND status = 'aberta'", k.cid).n;
-        return Object.assign(k, { mes_implantacao: !!k.mes_implantacao, versaoEnvio: ult ? ult.versao : null, recebido_em: ult ? ult.recebido_em : null, divergenciasAbertas: div, seiAlertas: SEI.resumoAlertas(db, k.cid) });
+        return Object.assign(k, { mes_implantacao: !!k.mes_implantacao, versaoEnvio: ult ? ult.versao : null, recebido_em: ult ? ult.recebido_em : null, divergenciasAbertas: div, seiAlertas: SEI.resumoAlertas(db, k.cid), prazos: PZ.resumo(PZ.daCompetencia(db, Object.assign({ contrato_id: c.contrato_id }, k))) });
       });
       const { regras } = D.regrasDoContrato(db, c.contrato_id);
       const p = D.pendenciasDeRegra(db, c.contrato_id, regras);
@@ -49,10 +51,15 @@ module.exports = (db) => {
     res.json({
       competencia: { cid: c.cid, competencia_id: c.competencia_id, status: c.status, mes_implantacao: c.mes_implantacao, unidade: c.unidade, oss: c.oss, demo: c.demo, contrato_id: c.contrato_id, processo_sei: c.processo_sei },
       regras: { versao: regras.versao, indicadores: regras.indicadores.map((i) => Object.assign({}, i, { faixasTexto: R.descricaoFaixas(i) })), faixas_pagamento: regras.faixas_pagamento },
-      envios, canais: SEI.canais(db, c.cid), recalculo, divergencias, achados, evidencias, indicadores_ctai: ctai, indicadores_oss: oss, totais: tot,
+      envios, canais: SEI.canais(db, c.cid), prazos: PZ.daCompetencia(db, c), checklist: CL.listar(db, c.cid), recalculo, divergencias, achados, evidencias, indicadores_ctai: ctai, indicadores_oss: oss, totais: tot,
       decisoes: Object.values(D.decisoes(db, c.contrato_id)),
     });
   });
+
+  // ---------- Checklist de recebimento ----------
+  r.get('/competencias/:cid/checklist', (req, res) => { const c = D.competenciaPorCid(db, req.params.cid); res.json(CL.listar(db, c.cid)); });
+  r.put('/competencias/:cid/checklist/:item', (req, res) => { CL.atualizar(db, req.usuario, req.params.cid, req.params.item, req.body || {}); res.json(CL.listar(db, req.params.cid)); });
+  r.post('/competencias/:cid/checklist/:item/restaurar', (req, res) => { CL.restaurarSugestao(db, req.usuario, req.params.cid, req.params.item); res.json(CL.listar(db, req.params.cid)); });
 
   // ---------- Divergências, evidências, avaliações ----------
   r.patch('/divergencias/:id', (req, res) => {

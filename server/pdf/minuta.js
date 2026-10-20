@@ -2,6 +2,7 @@
 // PDF da minuta (uma versão congelada). É a base para o parecer que a CTAI assina no SEI.
 const U = require('../../core/util');
 const render = require('./render');
+const dataBr = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
 
 const num = (v, c) => (v === null || v === undefined || v === '' ? '—' : (typeof v === 'number' ? U.formatarNumero(v, c === undefined ? 2 : c) : String(v)));
 
@@ -36,6 +37,25 @@ function construirMinuta(conteudo, versao, estado) {
     blocos.push({ tipo: 'chaveValor', itens: [['IGQ declarado pela OSS', num(c.igq.oss, 0)], ['IGQ recalculado pela CTAI', num(c.igq.recalculado, 0)], ['IGQ adotado', num(c.igq.adotado, 0)]] });
     const ajustes = c.indicadores.filter((i) => i.origem && i.origem !== 'recalculo');
     if (ajustes.length) blocos.push({ tipo: 'lista', itens: ajustes.map((i) => 'Indicador ' + i.id + ' – ' + i.pontos_adotados + ' ponto(s), origem: ' + i.origem + '. ' + (i.justificativa || '') + (i.motivo_do_zero ? ' Motivo do zero: ' + i.motivo_do_zero : '')) });
+  }
+
+  const comCheck = conteudo.indicadores.competencias.filter((c) => c.checklist || c.prazos);
+  if (comCheck.length) {
+    blocos.push({ tipo: 'titulo', nivel: 1, texto: 'Checklist de recebimento e prazos' });
+    for (const c of comCheck) {
+      blocos.push({ tipo: 'titulo', nivel: 2, texto: 'Competência ' + c.competencia });
+      if (c.prazos) blocos.push({ tipo: 'chaveValor', itens: [
+        ['Prazo no SEI (dia 20)', dataBr(c.prazos.sei.prazo) + ' · ' + c.prazos.sei.situacao + (c.prazos.sei.entregue_em ? ' em ' + dataBr(c.prazos.sei.entregue_em) : '') + (c.prazos.sei.dias && c.prazos.sei.situacao !== 'no prazo' ? ' (' + c.prazos.sei.dias + ' dia(s))' : '')],
+        ['Prazo no SIMAS (dia 25)', dataBr(c.prazos.simas.prazo) + ' · ' + c.prazos.simas.situacao + (c.prazos.simas.entregue_em ? ' em ' + dataBr(c.prazos.simas.entregue_em) : '') + (c.prazos.simas.dias && c.prazos.simas.situacao !== 'no prazo' ? ' (' + c.prazos.simas.dias + ' dia(s))' : '')],
+      ] });
+      if (c.checklist) {
+        const k = c.checklist;
+        blocos.push({ tipo: 'chaveValor', itens: [['Data de recebimento', dataBr(k.data_recebimento)], ['Responsável pelo envio', k.responsavel_envio || '—'], ['Versão recebida', k.versao ? 'v' + k.versao : '—'],
+          ['Resumo (itens obrigatórios)', k.resumo.recebido + ' recebido(s) · ' + k.resumo.incompleto + ' incompleto(s) · ' + k.resumo.pendente + ' pendente(s) · ' + k.resumo['não aplicável'] + ' não aplicável(is)']] });
+        blocos.push({ tipo: 'tabela', colunas: [{ rotulo: 'Item', largura: 3.4 }, { rotulo: 'Status', largura: 1.1 }, { rotulo: 'Recebido em', largura: 1.1 }, { rotulo: 'Responsável', largura: 1.3 }, { rotulo: 'Validação', largura: 1.4 }, { rotulo: 'Observações', largura: 2 }],
+          linhas: k.itens.map((i) => [i.titulo, i.status, dataBr(i.data_recebimento), i.responsavel || '—', (i.validacao || 'não registrada') + (i.divergencias_abertas ? ' (' + i.divergencias_abertas + ' divergência(s) aberta(s))' : ''), i.observacao || '—']) });
+      }
+    }
   }
 
   blocos.push({ tipo: 'titulo', nivel: 1, texto: 'Divergências' });

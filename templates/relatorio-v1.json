@@ -16,38 +16,43 @@
       "ativa": true
     },
     {
+      "id": "documentos",
+      "titulo": "3. Documentos obrigatórios do mês",
+      "ativa": true
+    },
+    {
       "id": "bid",
-      "titulo": "3. Boletim de Informação Diária (BID)",
+      "titulo": "4. Boletim de Informação Diária (BID)",
       "ativa": true
     },
     {
       "id": "tempos",
-      "titulo": "4. Tempos medidos a partir das linhas",
+      "titulo": "5. Tempos medidos a partir das linhas",
       "ativa": true
     },
     {
       "id": "educacao",
-      "titulo": "5. Educação permanente",
+      "titulo": "6. Educação permanente",
       "ativa": true
     },
     {
       "id": "queixas",
-      "titulo": "6. Queixas e respostas",
+      "titulo": "7. Queixas e respostas",
       "ativa": true
     },
     {
       "id": "transferencias",
-      "titulo": "7. Transferências",
+      "titulo": "8. Transferências",
       "ativa": true
     },
     {
       "id": "pessoal",
-      "titulo": "8. Pessoal e escalas",
+      "titulo": "9. Pessoal e escalas",
       "ativa": true
     },
     {
       "id": "conferencias",
-      "titulo": "9. Conferências automáticas do sistema",
+      "titulo": "10. Conferências automáticas do sistema",
       "ativa": true
     },
     {
@@ -57,7 +62,7 @@
     },
     {
       "id": "declaracao",
-      "titulo": "10. Declaração e assinatura",
+      "titulo": "11. Declaração e assinatura",
       "ativa": true
     }
   ],

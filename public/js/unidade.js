@@ -13,6 +13,31 @@
 
   async function carregarInfo() { INFO = await api('GET', '/api/unidade/competencias'); return INFO; }
 
+  // ---------- Prazos de entrega (SEI até o dia 20, SIMAS até o dia 25 do mês seguinte) ----------
+  const dataBr = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
+  const tipoSelo = (nivel) => (nivel === 'alta' ? 'alta' : (nivel === 'atencao' ? 'atencao' : (nivel === 'ok' ? 'ok' : '')));
+  const seloPrazo = (x, canal) => selo(canal + ': ' + x.situacao + (['vencido', 'entregue com atraso', 'a vencer'].includes(x.situacao) ? ' (' + x.dias + ' d)' : ''), tipoSelo(x.nivel));
+  function cartaoPrazos(pz, cid, recarregar) {
+    if (!pz) return null;
+    const registrar = async () => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      const campo = h('input', { type: 'date', id: 'simas-d', max: hoje, value: pz.simas.entregue_em || '' });
+      const motivo = h('input', { type: 'text', id: 'simas-m', placeholder: 'Motivo da correção', style: pz.simas.entregue_em ? '' : 'display:none' });
+      const msg = h('div', { class: 'msg-erro' });
+      const corpo = h('div', null, h('p', { class: 'peq' }, 'Informe o dia em que o relatório foi enviado ao SIMAS. O prazo é o dia 25 do mês seguinte.'), h('div', { class: 'campo' }, h('label', { for: 'simas-d' }, 'Data de envio ao SIMAS'), campo), pz.simas.entregue_em ? h('div', { class: 'campo' }, h('label', { for: 'simas-m' }, 'Motivo da correção'), motivo) : null, msg);
+      for (;;) {
+        const r = await janela('Envio ao SIMAS', corpo, [{ rotulo: 'Cancelar', valor: null, sec: true }, { rotulo: 'Registrar', valor: 'ok' }]);
+        if (r !== 'ok') return;
+        try { await api('POST', '/api/unidade/competencias/' + cid + '/simas', { data: campo.value, motivo: motivo.value }); toast('Data registrada.'); recarregar(); return; } catch (e) { msg.textContent = e.message; }
+      }
+    };
+    const linha = (canal, x, dia, acao) => h('div', { class: 'linha espaco', style: 'padding:4px 0;flex-wrap:wrap' }, h('span', null, h('strong', null, canal), ' · até ' + dataBr(x.prazo) + ' (dia ' + dia + ' do mês seguinte)'), h('span', null, seloPrazo(x, canal), ' ', h('span', { class: 'mudo peq' }, x.mensagem), acao ? [' ', acao] : null));
+    return h('div', { class: 'cartao' }, h('h3', null, 'Prazos de entrega'),
+      linha('SEI', pz.sei, 20, null), linha('SIMAS', pz.simas, 25, ehGestor() ? h('button', { class: 'sec', onclick: registrar }, pz.simas.entregue_em ? 'Corrigir a data' : 'Informar o envio ao SIMAS') : null),
+      h('p', { class: 'mudo peq', style: 'margin:6px 0 0' }, 'No SEI, vale o dia em que o número do documento foi registrado aqui. No SIMAS, vale a data informada pelo gestor.'));
+  }
+  const avisosPrazos = (pz) => (pz ? [['SEI', pz.sei], ['SIMAS', pz.simas]].filter(([, x]) => ['alta', 'atencao'].includes(x.nivel)).map(([c, x]) => aviso(x.nivel === 'alta' ? 'erro' : 'atencao', h('strong', null, 'Prazo no ' + c + ': '), x.mensagem + ' (prazo ' + dataBr(x.prazo) + ').')) : null);
+
   // ---------- Início ----------
   async function inicio() {
     await carregarInfo();
@@ -25,6 +50,7 @@
       h('div', { class: 'grade' }, INFO.competencias.map((k) => h('div', { class: 'cartao' },
         h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, fmt.comp(k.competencia_id)), k.mes_implantacao ? selo('implantação', 'atencao') : null),
         h('p', { class: 'mudo peq' }, k.versaoEnvio ? 'Enviado (versão ' + k.versaoEnvio + ') · situação: ' + k.status : 'Ainda não enviado'),
+        k.prazos ? h('p', { class: 'peq' }, seloPrazo(k.prazos.sei, 'SEI'), ' ', seloPrazo(k.prazos.simas, 'SIMAS')) : null,
         k.seiAlertas ? h('p', { class: 'peq' }, selo('SEI pendente', 'atencao'), ' o vínculo com o documento no SEI pede atenção. Abra o mês.') : null,
         h('div', { class: 'barra', role: 'img', 'aria-label': k.fichasProntas + ' de ' + k.fichasTotal + ' fichas prontas' }, h('i', { style: 'width:' + Math.round((k.fichasProntas / k.fichasTotal) * 100) + '%' })),
         h('p', { class: 'peq mudo' }, k.fichasProntas + ' de ' + k.fichasTotal + ' fichas prontas'),
@@ -73,7 +99,7 @@
           h('button', { class: 'sec', onclick: async () => { if (await confirmar('Descartar o lote?', 'As linhas deste lote serão apagadas do rascunho.', 'Descartar', true)) { await api('POST', '/api/unidade/lotes/' + l.lote_id + '/descartar', {}); competencia(p); } } }, 'Descartar')] : null))) : null;
     montar(topo,
       h('div', { class: 'kpis' }, kpi('Fichas prontas', prontas + ' de ' + d.setores.length), kpi('Linhas confirmadas', fmt.num(totalLinhas, 0)), kpi('Pontos pelas regras', d.pontos.total + ' de 100', 'informativo; a pontuação final é da CTAI'), kpi('Versão enviada', d.envios.length ? 'v' + d.envios[0].versao : 'nenhuma')),
-      lotes, avisosSei(d, p.cid, true),
+      lotes, avisosPrazos(d.prazos), avisosSei(d, p.cid, true), cartaoPrazos(d.prazos, p.cid, () => competencia(p)),
       h('div', { class: 'grade' }, d.setores.map((s) => h('div', { class: 'cartao' },
         h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, s.nome), statusSelo(s.status)),
         h('p', { class: 'mudo peq' }, s.resumo),

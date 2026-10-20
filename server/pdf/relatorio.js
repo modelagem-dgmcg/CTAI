@@ -6,6 +6,10 @@ const R = require('../../core/regras');
 const U = require('../../core/util');
 const F = require('../../core/formularios');
 const render = require('./render');
+const PRAZOS = require('../../core/prazos');
+const OBRIG = require('../../core/obrigatorios');
+
+const dataBr = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
 
 const TEMPLATE = path.join(__dirname, '..', '..', 'templates', 'relatorio-v1.json');
 
@@ -43,6 +47,10 @@ function construirRelatorio(snapshot, regras, template) {
         ['Processo SEI', snapshot.competencia.processo_sei], ['Regra de pontuação', snapshot.regra.versao],
         ['Versão do envio', 'v' + snapshot.versao + (snapshot.motivo ? ' · motivo da correção: ' + snapshot.motivo : '')],
         ['Enviado por', snapshot.enviadoPor ? snapshot.enviadoPor.nome : '—'],
+        ...(PRAZOS.prazosDaCompetencia(snapshot.competencia.competencia_id) ? [
+          ['Prazo de entrega no SEI', dataBr(PRAZOS.prazosDaCompetencia(snapshot.competencia.competencia_id).sei) + ' (dia ' + PRAZOS.DIA_SEI + ' do mês seguinte)'],
+          ['Prazo de entrega no SIMAS', dataBr(PRAZOS.prazosDaCompetencia(snapshot.competencia.competencia_id).simas) + ' (dia ' + PRAZOS.DIA_SIMAS + ' do mês seguinte)'],
+        ] : []),
       ] });
     } else if (s.id === 'igq' && titulo('igq')) {
       const linhas = regras.indicadores.map((ind) => {
@@ -54,6 +62,17 @@ function construirRelatorio(snapshot, regras, template) {
         { rotulo: 'Origem do valor', largura: 1.7 }, { rotulo: 'Pts', largura: 0.7, alinhar: 'right' }, { rotulo: 'Máx.', largura: 0.7, alinhar: 'right' }, { rotulo: 'Anexo', largura: 1.4 },
       ], linhas });
       blocos.push({ tipo: 'chaveValor', itens: [['Pontos pelas regras do contrato', snapshot.igqDeclarado + ' de 100'], ['Observação', 'Os pontos são calculados pelo sistema a partir do valor informado. A conferência e a pontuação final são da CTAI.']] });
+    } else if (s.id === 'documentos' && titulo('documentos')) {
+      const ROT = { recebido: 'completo', incompleto: 'incompleto', pendente: 'não informado' };
+      const linhasDoc = OBRIG.ITENS.map((it) => {
+        const st = OBRIG.situacaoSugerida(it, flat, snapshot.indicadores, snapshot.resumoLinhas);
+        const f = OBRIG.faltas(it, flat, snapshot.indicadores, snapshot.resumoLinhas);
+        return [it.titulo, ROT[st], st === 'recebido' ? '—' : (f.join('; ') || '—')];
+      });
+      blocos.push({ tipo: 'paragrafo', texto: 'Conferência da própria unidade contra a lista de documentos e relatórios obrigatórios. A situação final de cada item (recebido, pendente, incompleto ou não aplicável) é registrada pela CTAI no recebimento.' });
+      blocos.push({ tipo: 'tabela', colunas: [{ rotulo: 'Documento ou relatório', largura: 4.6 }, { rotulo: 'Situação', largura: 1.3 }, { rotulo: 'O que falta', largura: 2.6 }], linhas: linhasDoc });
+      if (flat.obitos_relatorio_comissao) blocos.push({ tipo: 'paragrafo', texto: 'Relatório da Comissão de Óbitos: ' + flat.obitos_relatorio_comissao });
+      if (flat.transparencia_publicacao) blocos.push({ tipo: 'paragrafo', texto: 'Informações da publicação de transparência: ' + flat.transparencia_publicacao });
     } else if (s.id === 'bid' && titulo('bid')) {
       const ids = F.camposDoSetor('bid').filter((c) => c.tipo === 'inteiro' || c.tipo === 'numero');
       blocos.push({ tipo: 'tabela', colunas: [{ rotulo: 'Item', largura: 4 }, { rotulo: 'Valor', largura: 1.2, alinhar: 'right' }], linhas: ids.map((c) => [c.rotulo, flat[c.id] === undefined || flat[c.id] === '' ? '—' : U.formatarNumero(U.numero(flat[c.id]), c.tipo === 'inteiro' ? 0 : 2)]) });

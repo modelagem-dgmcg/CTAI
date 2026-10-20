@@ -9,6 +9,7 @@ const U = require('../../core/util');
 const E = require('../envios');
 const SEI = require('../sei');
 const achadosDb = require('../achados');
+const PZ = require('../prazos');
 const trilha = require('../trilha');
 const sync = require('../../adapters/mv/sync');
 
@@ -30,7 +31,7 @@ module.exports = (db) => {
     const lista = db.all('SELECT cid, competencia_id, status, mes_implantacao, processo_sei FROM competencias WHERE contrato_id = ? ORDER BY competencia_id DESC', contrato).map((k) => {
       const f = D.fichasDaCompetencia(db, k.cid);
       const ult = D.ultimoEnvio(db, k.cid);
-      return Object.assign(k, { mes_implantacao: !!k.mes_implantacao, fichasProntas: Object.values(f).filter((x) => x.status === 'pronta').length, fichasTotal: F.SETORES.length, versaoEnvio: ult ? ult.versao : null, seiAlertas: SEI.resumoAlertas(db, k.cid) });
+      return Object.assign(k, { mes_implantacao: !!k.mes_implantacao, fichasProntas: Object.values(f).filter((x) => x.status === 'pronta').length, fichasTotal: F.SETORES.length, versaoEnvio: ult ? ult.versao : null, seiAlertas: SEI.resumoAlertas(db, k.cid), prazos: PZ.daCompetencia(db, k) });
     });
     res.json({ contrato: Object.assign(c, { demo: !!c.demo }), competencias: lista });
   });
@@ -47,7 +48,7 @@ module.exports = (db) => {
     res.json({
       competencia: { cid: c.cid, competencia_id: c.competencia_id, status: c.status, mes_implantacao: c.mes_implantacao, unidade: c.unidade, oss: c.oss, demo: c.demo },
       setores: F.SETORES.map((st) => ({ id: st.id, nome: st.nome, resumo: st.resumo, indicadores: st.indicadores, fontes: st.fontes, status: s.fichas[st.id].status, atualizado_por: s.fichas[st.id].atualizado_por, atualizado_em: s.fichas[st.id].atualizado_em })),
-      contagem, consolidado: s.consolidado, pontos: s.pontos, avisos: s.avisos, bloqueios: s.bloqueios, envios, sei, lotes,
+      prazos: PZ.daCompetencia(db, c), contagem, consolidado: s.consolidado, pontos: s.pontos, avisos: s.avisos, bloqueios: s.bloqueios, envios, sei, lotes,
       voce: { perfil: req.usuario.perfil, setor: req.usuario.setor, podeEnviar: req.usuario.perfil === 'gestor_unidade' || req.usuario.perfil === 'admin' },
     });
   });
@@ -199,6 +200,9 @@ module.exports = (db) => {
   });
 
   // Depois de anexar e assinar no SEI, o gestor registra o número do documento. Para corrigir, o motivo é obrigatório e o registro anterior fica no histórico.
+  // Data em que a unidade enviou o relatório ao SIMAS (prazo: dia 25 do mês seguinte). Só o gestor informa.
+  r.post('/competencias/:cid/simas', (req, res) => { const c = comp(req); PZ.registrarSimas(db, req.usuario, c.cid, req.body && req.body.data, req.body && req.body.motivo); res.json({ prazos: PZ.daCompetencia(db, c) }); });
+
   r.post('/envios/:id/sei', (req, res) => {
     const out = SEI.registrar(db, req.usuario, req.params.id, req.body && req.body.numero, req.body && req.body.motivo);
     res.json(Object.assign({ ok: true }, out));

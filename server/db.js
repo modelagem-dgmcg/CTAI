@@ -113,6 +113,12 @@ CREATE TABLE IF NOT EXISTS normas (
   norma_id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT, titulo TEXT NOT NULL, referencia TEXT, tema TEXT, texto TEXT NOT NULL,
   vigente INTEGER NOT NULL DEFAULT 1, demo INTEGER NOT NULL DEFAULT 0, criado_por TEXT, criado_em TEXT, atualizado_em TEXT
 );
+-- Checklist de recebimento da Secretaria, por competência e por item obrigatório da UPA (core/obrigatorios.js).
+-- status_manual = 1 quando uma pessoa decidiu o status; sem isso, o sistema o recalcula a cada novo envio.
+CREATE TABLE IF NOT EXISTS checklist_itens (
+  cid INTEGER NOT NULL, item_id TEXT NOT NULL, status TEXT NOT NULL, status_manual INTEGER NOT NULL DEFAULT 0, data_recebimento TEXT, responsavel TEXT,
+  validacao TEXT, observacao TEXT, atualizado_por TEXT, atualizado_em TEXT, PRIMARY KEY (cid, item_id)
+);
 CREATE TABLE IF NOT EXISTS integracoes (
   integracao_id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, tipo TEXT NOT NULL, nome TEXT NOT NULL, config TEXT NOT NULL DEFAULT '{}', ativo INTEGER NOT NULL DEFAULT 0,
   estado TEXT NOT NULL DEFAULT 'não configurada', ultima_sync TEXT, ultimo_erro TEXT
@@ -158,6 +164,7 @@ CREATE TRIGGER IF NOT EXISTS trg_conf_no_delete BEFORE DELETE ON conferencias
 
 // Colunas acrescentadas depois da primeira versão (migração segura: só acrescenta, nunca altera o que existe).
 const COLUNAS_NOVAS = {
+  competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
   achados: ['encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
 };
 function migrar(db) {

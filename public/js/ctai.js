@@ -18,14 +18,65 @@
       r.contratos.map((c) => h('div', { class: 'cartao' },
         h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null), c.decisoesAbertas ? h('a', { href: '#/regras/' + c.contrato_id }, selo(c.decisoesAbertas + ' dúvida(s) de regra em aberto', 'atencao')) : selo('regras decididas', 'ok')),
         h('p', { class: 'mudo peq' }, c.oss + ' · ' + (c.numero_cg || '')),
-        tabela([{ t: 'Mês' }, { t: 'Situação' }, { t: 'Envio' }, { t: 'Recebido em' }, { t: 'Divergências abertas', n: true }, { t: '' }],
-          c.competencias.map((k) => [fmt.comp(k.competencia_id) + (k.mes_implantacao ? ' (implantação)' : ''), selo(k.status, SITU[k.status] || ''), k.versaoEnvio ? h('span', null, 'v' + k.versaoEnvio, k.seiAlertas ? [' ', h('a', { href: '#/c/' + k.cid + '/envios', title: 'Alerta entre o sistema e o SEI' }, selo('SEI: ' + k.seiAlertas + ' alerta(s)', 'atencao'))] : null) : '—', fmt.data(k.recebido_em), String(k.divergenciasAbertas), h('a', { href: '#/c/' + k.cid }, 'Abrir')])))),
+        tabela([{ t: 'Mês' }, { t: 'Situação' }, { t: 'Envio' }, { t: 'Recebido em' }, { t: 'Prazos' }, { t: 'Divergências abertas', n: true }, { t: '' }],
+          c.competencias.map((k) => [fmt.comp(k.competencia_id) + (k.mes_implantacao ? ' (implantação)' : ''), selo(k.status, SITU[k.status] || ''), k.versaoEnvio ? h('span', null, 'v' + k.versaoEnvio, k.seiAlertas ? [' ', h('a', { href: '#/c/' + k.cid + '/envios', title: 'Alerta entre o sistema e o SEI' }, selo('SEI: ' + k.seiAlertas + ' alerta(s)', 'atencao'))] : null) : '—', fmt.data(k.recebido_em), k.prazos ? selo(k.prazos.texto, k.prazos.nivel === 'alta' ? 'alta' : (k.prazos.nivel === 'atencao' ? 'atencao' : (k.prazos.nivel === 'ok' ? 'ok' : ''))) : '—', String(k.divergenciasAbertas), h('a', { href: '#/c/' + k.cid }, 'Abrir')])))),
       h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, 'Pareceres'), h('a', { class: 'btn sec', href: '#/pareceres' }, 'Ver todos')),
         tabela([{ t: 'Parecer' }, { t: 'Trimestre' }, { t: 'Criado por' }, { t: 'Situação' }], pareceres.pareceres.slice(0, 5).map((p) => [h('a', { href: '#/p/' + p.parecer_id }, p.titulo), p.trimestre, p.criador_nome, selo(p.status + (p.ultimaVersao ? ' (v' + p.ultimaVersao.numero + ')' : ''), p.status === 'anexado ao SEI' || p.status === 'autorizado' ? 'ok' : 'atencao')]), { vazio: 'Nenhum parecer aberto.' })));
   }
 
+  // ---------- Prazos e checklist de recebimento ----------
+  const dataBr = (iso) => (iso ? iso.split('-').reverse().join('/') : '—');
+  const seloPrazo = (pz, canal) => selo(canal + ': ' + pz.situacao + (['vencido', 'entregue com atraso', 'a vencer'].includes(pz.situacao) ? ' (' + pz.dias + ' d)' : ''), pz.nivel === 'alta' ? 'alta' : (pz.nivel === 'atencao' ? 'atencao' : (pz.nivel === 'ok' ? 'ok' : '')));
+  function cartaoPrazos(pz) {
+    if (!pz) return null;
+    const linha = (canal, x, dia) => h('div', { class: 'linha espaco', style: 'padding:4px 0' }, h('span', null, h('strong', null, 'Prazo no ' + canal), ' · até ' + dataBr(x.prazo) + ' (dia ' + dia + ' do mês seguinte)'), h('span', null, seloPrazo(x, canal), ' ', h('span', { class: 'mudo peq' }, x.mensagem)));
+    return h('div', { class: 'cartao' }, h('h3', null, 'Prazos de entrega'), linha('SEI', pz.sei, 20), linha('SIMAS', pz.simas, 25),
+      h('p', { class: 'mudo peq', style: 'margin:6px 0 0' }, 'SEI: vale a data em que a unidade registrou o número do documento no sistema. SIMAS: vale a data que o gestor da unidade informou.' + (pz.tem_envio ? '' : ' Sem envio pelo portal: o prazo corre normalmente.')));
+  }
+  const avisoPrazos = (pz) => (pz ? [['SEI', pz.sei], ['SIMAS', pz.simas]].filter(([, x]) => ['alta', 'atencao'].includes(x.nivel)).map(([c, x]) => aviso(x.nivel === 'alta' ? 'erro' : 'atencao', h('strong', null, 'Prazo no ' + c + ': '), x.mensagem + ' (prazo ' + dataBr(x.prazo) + ').')) : null);
+  const STATUS_CK = { recebido: 'ok', pendente: 'alta', incompleto: 'atencao', 'não aplicável': '' };
+
+  async function editarItem(it, recarregar, cid) {
+    const st = h('select', { id: 'ck-s' }, ['recebido', 'pendente', 'incompleto', 'não aplicável'].map((x) => h('option', { value: x, selected: x === it.status }, x)));
+    const dt = h('input', { type: 'date', id: 'ck-d', value: it.data_recebimento || '' });
+    const rs = h('input', { type: 'text', id: 'ck-r', maxlength: 120, value: it.responsavel || '' });
+    const vl = h('select', { id: 'ck-v' }, [['', 'não registrada'], ['validado', 'validado'], ['com divergências', 'com divergências'], ['com inconsistências', 'com inconsistências']].map(([v, r]) => h('option', { value: v, selected: v === (it.validacao || '') }, r)));
+    const ob = h('textarea', { id: 'ck-o', rows: 3, maxlength: 1000 }); ob.value = it.observacao || '';
+    const msg = h('div', { class: 'msg-erro' });
+    const corpo = h('div', null, h('p', { class: 'peq mudo' }, it.titulo), it.faltas.length ? h('p', { class: 'peq' }, h('strong', null, 'O sistema notou: '), it.faltas.join('; ') + '. Sugestão: ' + it.sugestao + '.') : (it.sugestao ? h('p', { class: 'peq' }, 'Sugestão do sistema: ' + it.sugestao + '.') : null),
+      it.divergencias_abertas ? h('p', { class: 'peq' }, h('strong', null, it.divergencias_abertas + ' divergência(s) aberta(s) '), 'ligada(s) a este item.') : null,
+      h('div', { class: 'campo' }, h('label', { for: 'ck-s' }, 'Status'), st), h('div', { class: 'campo' }, h('label', { for: 'ck-d' }, 'Data de recebimento'), dt), h('div', { class: 'campo' }, h('label', { for: 'ck-r' }, 'Responsável pelo envio'), rs),
+      h('div', { class: 'campo' }, h('label', { for: 'ck-v' }, 'Validação (divergências e inconsistências)'), vl), h('div', { class: 'campo' }, h('label', { for: 'ck-o' }, 'Observações (obrigatórias para "não aplicável")'), ob), msg);
+    for (;;) {
+      const r = await janela('Checklist · ' + it.titulo.split(':')[0], corpo, [{ rotulo: 'Cancelar', valor: null, sec: true }, it.status_manual ? { rotulo: 'Voltar ao cálculo do sistema', valor: 'auto', sec: true } : null, { rotulo: 'Salvar', valor: 'ok' }].filter(Boolean));
+      if (r === 'auto') { try { await api('POST', '/api/ctai/competencias/' + cid + '/checklist/' + it.item_id + '/restaurar', {}); toast('Voltou ao cálculo do sistema.'); recarregar(); return; } catch (e) { msg.textContent = e.message; continue; } }
+      if (r !== 'ok') return;
+      try { await api('PUT', '/api/ctai/competencias/' + cid + '/checklist/' + it.item_id, { status: st.value, data_recebimento: dt.value || '', responsavel: rs.value, validacao: vl.value, observacao: ob.value }); toast('Checklist atualizado.'); recarregar(); return; } catch (e) { msg.textContent = e.message; }
+    }
+  }
+
+  function abaChecklist(d, p) {
+    const ck = d.checklist;
+    if (!ck.iniciado) return [avisoPrazos(d.prazos), aviso('info', h('strong', null, 'Sem envio pelo portal. '), 'O checklist de recebimento é montado quando a unidade envia o relatório.'), cartaoPrazos(d.prazos)];
+    const r = ck.resumo;
+    const recarregar = () => competencia(p);
+    const linhas = (compl) => ck.itens.filter((i) => i.complementar === compl).map((i) => [
+      h('div', null, h('strong', null, i.titulo), i.faltas.length && i.status !== 'recebido' ? h('div', { class: 'peq mudo' }, i.faltas.join('; ')) : null),
+      selo(i.status, STATUS_CK[i.status] || '') , i.status_manual ? h('span', { class: 'peq mudo', title: 'Status decidido por ' + i.atualizado_por }, 'decidido por ' + i.atualizado_por) : h('span', { class: 'peq mudo' }, 'sugerido pelo sistema'),
+      dataBr(i.data_recebimento), i.responsavel || '—',
+      i.validacao ? selo(i.validacao, i.validacao === 'validado' ? 'ok' : 'atencao') : h('span', { class: 'mudo peq' }, i.divergencias_abertas ? i.divergencias_abertas + ' divergência(s) aberta(s)' : 'não registrada'),
+      i.observacao || '', h('button', { class: 'sec', onclick: () => editarItem(i, recarregar, p.cid) }, 'Editar')]);
+    const cols = [{ t: 'Item' }, { t: 'Status' }, { t: 'Origem' }, { t: 'Recebido em' }, { t: 'Responsável' }, { t: 'Validação' }, { t: 'Observações' }, { t: '' }];
+    return [avisoPrazos(d.prazos),
+      h('div', { class: 'kpis' }, kpi('Competência', fmt.comp(d.competencia.competencia_id)), kpi('Data de recebimento', dataBr(ck.data_recebimento), 'versão v' + ck.versao), kpi('Responsável pelo envio', ck.responsavel_envio || '—'),
+        kpi('Recebidos', String(r.recebido), 'de ' + (r.recebido + r.pendente + r.incompleto + r['não aplicável'])), kpi('Incompletos', String(r.incompleto)), kpi('Pendentes', String(r.pendente))),
+      h('div', { class: 'cartao' }, h('h3', null, 'Documentos e relatórios obrigatórios da UPA'), h('p', { class: 'mudo peq' }, 'O sistema sugere o status pelo que a unidade informou. A decisão é de quem confere: ao editar, o item deixa de ser recalculado a cada novo envio.'), tabela(cols, linhas(false))),
+      h('div', { class: 'cartao' }, h('h3', null, 'Complementares (mantidos por decisão)'), tabela(cols, linhas(true))),
+      cartaoPrazos(d.prazos)];
+  }
+
   // ---------- Competência ----------
-  const ABAS = [['recalculo', 'Recálculo'], ['divergencias', 'Divergências'], ['evidencias', 'Evidências'], ['achados', 'Achados do Analista'], ['envios', 'Envios']];
+  const ABAS = [['recalculo', 'Recálculo'], ['divergencias', 'Divergências'], ['evidencias', 'Evidências'], ['achados', 'Achados do Analista'], ['checklist', 'Checklist de recebimento'], ['envios', 'Envios']];
   async function competencia(p) {
     const aba = p.aba || 'recalculo';
     const d = await api('GET', '/api/ctai/competencias/' + p.cid);
@@ -35,16 +86,17 @@
         d.envios.length ? h('button', { class: 'sec', onclick: async () => { try { await api('POST', '/api/ctai/envios/' + d.envios[0].envio_id + '/reprocessar', {}); toast('Recalculado e relido.'); competencia(p); } catch (e) { toast(e.message, true); } } }, 'Recalcular e reler') : null),
       h('div', { class: 'abas' }, ABAS.map(([k, r]) => h('a', { href: '#/c/' + p.cid + '/' + k, class: aba === k ? 'ativo' : '' }, r))),
       aba !== 'envios' && d.canais.alertas.length ? d.canais.alertas.map((a) => aviso(a.gravidade === 'alta' ? 'erro' : 'atencao', h('strong', null, 'Sistema × SEI: '), a.mensagem, ' ', h('a', { href: '#/c/' + p.cid + '/envios' }, 'Ver os dois canais'))) : null];
-    const corpo = { recalculo: abaRecalculo, divergencias: abaDivergencias, evidencias: abaEvidencias, achados: abaAchados, envios: abaEnvios }[aba](d, p);
+    const corpo = { recalculo: abaRecalculo, divergencias: abaDivergencias, evidencias: abaEvidencias, achados: abaAchados, checklist: abaChecklist, envios: abaEnvios }[aba](d, p);
     montar(topo, corpo);
   }
 
   function abaRecalculo(d, p) {
     const rec = d.recalculo;
+    const prazosTopo = [avisoPrazos(d.prazos)];
     const decAbertas = d.decisoes.filter((x) => !x.valor);
     if (!rec) {
       const oss = Object.fromEntries(d.indicadores_oss.map((o) => [o.indicador_id, o]));
-      return [aviso('info', h('strong', null, 'Sem envio pelo portal. '), 'Este mês veio da carga dos documentos já lidos. Os valores abaixo são o que a unidade declarou; não há linhas para recalcular.'),
+      return [prazosTopo, aviso('info', h('strong', null, 'Sem envio pelo portal. '), 'Este mês veio da carga dos documentos já lidos. Os valores abaixo são o que a unidade declarou; não há linhas para recalcular.'),
         d.totais ? h('div', { class: 'kpis' }, kpi('IGQ declarado pela OSS', d.totais.igq_oss), kpi('IGQ no parecer', d.totais.igq_parecer), kpi('IGQ pelas faixas (Página 3)', d.totais.igq_pagina3_faixas)) : null,
         d.totais && d.totais.observacao ? h('p', { class: 'mudo' }, d.totais.observacao) : null,
         h('div', { class: 'cartao' }, tabela([{ t: 'Item' }, { t: 'Indicador' }, { t: 'Valor da OSS', n: true }, { t: 'Pontos', n: true }, { t: 'Texto' }], d.regras.indicadores.map((i) => { const o = oss[i.id]; return [i.id, i.nome, o ? fmt.valor(o.valor_declarado) : '—', o ? String(o.pontos_declarados) : '—', o ? o.texto_analise || '' : '']; }), { vazio: 'Sem indicadores.' }))];
@@ -52,6 +104,7 @@
     const dif = rec.igqRecalculado - rec.igqDeclarado;
     const tr = rec.transferencias || {};
     return [
+      prazosTopo,
       decAbertas.length ? aviso('atencao', h('strong', null, decAbertas.length + ' dúvida(s) de regra ainda sem decisão. '), 'O recálculo usa a ficha do contrato enquanto isso. ', h('a', { href: '#/regras/' + d.competencia.contrato_id }, 'Decidir agora')) : null,
       h('div', { class: 'kpis' }, kpi('Versão recebida', 'v' + rec.envio.versao, fmt.data(rec.envio.enviado_em)), kpi('IGQ declarado', rec.igqDeclarado, 'pelos valores da unidade'), kpi('IGQ recalculado', rec.igqRecalculado, 'pelas linhas e contagens'), kpi('Diferença', (dif > 0 ? '+' : '') + dif, dif === 0 ? 'sem diferença' : 'pontos'), kpi('Alertas', String(rec.alertas.length), rec.divergencias.length + ' divergência(s)')),
       h('div', { class: 'cartao' }, h('h3', null, 'Indicador a indicador'),
@@ -211,7 +264,10 @@
   // ---------- Conteúdo da minuta (usado no parecer e na mesa) ----------
   const ROT_ALERTA = { sem_registro_sei: 'recebido no sistema sem registro de SEI', sei_versao_antiga: 'registro de SEI aponta versão antiga e existe versão mais nova no sistema', nova_versao_depois_sei: 'nova versão no sistema depois do SEI' };
   function renderSecao(id, c) {
-    if (id === 'identificacao') { const i = c.identificacao; return h('div', { class: 'duas peq' }, [['Unidade', i.unidade], ['Organização social', i.oss], ['Contrato de Gestão', i.numero_cg], ['Trimestre', i.trimestre], ['Competências', i.competencias.join(', ')], ['Parecer nº', i.numero_parecer || 'a definir'], ['Regra', i.regra], ['Criado por', i.criador]].map(([k, v]) => h('div', null, h('span', { class: 'mudo' }, k + ': '), v || '—'))); }
+    if (id === 'identificacao') { const i = c.identificacao; return h('div', { class: 'duas peq' }, [['Unidade', i.unidade], ['Organização social', i.oss], ['Contrato de Gestão', i.numero_cg], ['Trimestre', i.trimestre], ['Competências', i.competencias.join(', ')], ['Parecer nº', i.numero_parecer || 'a definir'], ['Regra', i.regra], ['Criado por', i.criador]].map(([k, v]) => h('div', null, h('span', { class: 'mudo' }, k + ': '), v || '—')), c.indicadores.competencias.filter((k) => k.checklist || k.prazos).map((k) => h('div', { style: 'grid-column:1/-1;margin-top:10px' }, h('strong', null, 'Checklist de recebimento · ' + fmt.comp(k.competencia)),
+        k.prazos ? h('div', { class: 'peq' }, 'Prazos: ', seloPrazo(k.prazos.sei, 'SEI'), ' ', seloPrazo(k.prazos.simas, 'SIMAS')) : null,
+        k.checklist ? [h('div', { class: 'peq mudo' }, 'Recebido em ' + dataBr(k.checklist.data_recebimento) + ' · responsável pelo envio: ' + (k.checklist.responsavel_envio || '—') + ' · ' + k.checklist.resumo.recebido + ' recebido(s), ' + k.checklist.resumo.incompleto + ' incompleto(s), ' + k.checklist.resumo.pendente + ' pendente(s)'),
+          tabela([{ t: 'Item' }, { t: 'Status' }, { t: 'Validação' }, { t: 'Observações' }], k.checklist.itens.map((it) => [it.titulo, selo(it.status, STATUS_CK[it.status] || ''), it.validacao || 'não registrada', it.observacao || '']))] : null))); }
     if (id === 'sei') {
       const ms = c.indicadores.competencias;
       if (!ms.some((k) => k.canais)) return aviso('atencao', 'Esta versão foi congelada antes do vínculo com o SEI e não guardou os dados de apoio. Veja a aba Envios da competência.');

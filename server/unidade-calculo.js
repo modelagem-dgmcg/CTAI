@@ -104,6 +104,10 @@ function conferirAntesDoEnvio(flat, linhas, consolidado) {
     }
     if (c.anexo === null && s.tipo !== 'texto') avisos.push({ nivel: 'info', indicador: id, mensagem: 'Indicador ' + id + ' sem anexo de comprovação.' });
   }
+  // Itens exigidos pela lista da Secretaria. Só avisam: a CTAI marca o item como incompleto na recepção.
+  const comValor = (id) => consolidado[id] && consolidado[id].valor !== null && consolidado[id].valor !== undefined;
+  if (comValor('2.10') && !String(flat.obitos_relatorio_comissao || '').trim()) avisos.push({ nivel: 'atencao', indicador: '2.10', mensagem: 'Falta informar o Relatório da Comissão de Óbitos (item 2.10). A lista da Secretaria exige o relatório e o percentual de óbitos revisados.' });
+  if (comValor('2.13') && !String(flat.transparencia_publicacao || '').trim()) avisos.push({ nivel: 'atencao', indicador: '2.13', mensagem: 'Faltam as informações da publicação de transparência (item 2.13), que permitem aferir a qualidade da publicação.' });
   const bid = U.numero(flat.bid_remocoes), tr = (linhas.transferencias || []).length;
   if (bid && tr && tr < bid) avisos.push({ nivel: 'atencao', indicador: null, mensagem: 'A lista de transferências tem ' + tr + ' linha(s) e o BID registra ' + bid + ' remoções.' });
   if (U.numero(flat.gasto_pessoal_pct) > 80) avisos.push({ nivel: 'atencao', indicador: null, mensagem: 'Gasto com pessoal acima do limite de 80%.' });

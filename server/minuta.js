@@ -122,6 +122,19 @@ function canaisParaMinuta(db, cid) {
   };
 }
 
+// Checklist de recebimento e prazos que entram no conteúdo congelado da minuta (e no PDF).
+function checklistCompacto(db, cid) {
+  const c = require('./checklist').listar(db, cid);
+  if (!c.iniciado) return null;
+  return { data_recebimento: c.data_recebimento, responsavel_envio: c.responsavel_envio, versao: c.versao, resumo: c.resumo,
+    itens: c.itens.filter((i) => i.status).map((i) => ({ item_id: i.item_id, titulo: i.titulo, complementar: i.complementar, status: i.status, data_recebimento: i.data_recebimento, responsavel: i.responsavel, validacao: i.validacao, observacao: i.observacao, divergencias_abertas: i.divergencias_abertas })) };
+}
+function prazosCompactos(db, k) {
+  const comp = D.competenciaPorCid(db, k.cid);
+  const pz = require('./prazos').daCompetencia(db, comp);
+  return pz ? { sei: { prazo: pz.sei.prazo, entregue_em: pz.sei.entregue_em, situacao: pz.sei.situacao, dias: pz.sei.dias }, simas: { prazo: pz.simas.prazo, entregue_em: pz.simas.entregue_em, situacao: pz.simas.situacao, dias: pz.simas.dias } } : null;
+}
+
 function conteudoAtual(db, parecerId) {
   const p = obter(db, parecerId);
   const contrato = db.get('SELECT * FROM contratos WHERE contrato_id = ?', p.contrato_id);
@@ -164,7 +177,7 @@ function conteudoAtual(db, parecerId) {
       recalculado: rec ? rec.igqRecalculado : (tot.igq_pagina3_faixas ?? null),
       adotado: soma('pontos_adotados') ?? (tot.igq_parecer ?? null),
     };
-    comps.push({ cid: k.cid, competencia: competencia_id, implantacao: !!k.mes_implantacao, processo_sei: k.processo_sei, envio: envio ? { versao: envio.versao, enviado_em: envio.enviado_em, hash: SEI.hashCurto(envio.hash_snapshot) } : null, canais: canaisParaMinuta(db, k.cid), indicadores, igq, observacao_totais: tot.observacao || null });
+    comps.push({ checklist: envio ? checklistCompacto(db, k.cid) : null, prazos: prazosCompactos(db, k), cid: k.cid, competencia: competencia_id, implantacao: !!k.mes_implantacao, processo_sei: k.processo_sei, envio: envio ? { versao: envio.versao, enviado_em: envio.enviado_em, hash: SEI.hashCurto(envio.hash_snapshot) } : null, canais: canaisParaMinuta(db, k.cid), indicadores, igq, observacao_totais: tot.observacao || null });
     for (const d of db.all('SELECT * FROM divergencias WHERE cid = ? ORDER BY divergencia_id', k.cid)) {
       divs.push({ competencia: competencia_id, indicador_id: d.indicador_id, tema: d.tema, declarado: d.declarado, recalculado: d.recalculado, gravidade: d.gravidade, status: d.status, origem: d.origem, observacao: d.observacao });
     }
