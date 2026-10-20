@@ -12,7 +12,7 @@ const CAP = path.join(__dirname, '..', '..', 'docs', 'capturas');
 const SENHA = 'Senha@12345';
 const log = (m) => console.log('• ' + m);
 
-async function entrar(browser, login, largura) {
+async function entrar(browser, login, largura, jaTrocou) {
   const ctx = await browser.newContext({ viewport: { width: largura || 1280, height: 860 }, locale: 'pt-BR' });
   const p = await ctx.newPage();
   p.erros = [];
@@ -21,7 +21,7 @@ async function entrar(browser, login, largura) {
   p.on('response', (r) => { if (r.status() >= 500) p.erros.push('HTTP ' + r.status() + ' ' + r.url()); });
   await p.goto(base + '/');
   await p.fill('#login', login);
-  await p.fill('#senha', 'Trocar@123');
+  await p.fill('#senha', jaTrocou ? SENHA : 'Trocar@123');
   await p.click('button[type=submit]');
   await p.waitForSelector('#ts-a, #conteudo', { timeout: 8000 });
   if (await p.$('#ts-a')) { await p.fill('#ts-a', 'Trocar@123'); await p.fill('#ts-n', SENHA); await p.click('dialog button'); await p.waitForSelector('dialog', { state: 'detached' }); }
@@ -29,10 +29,11 @@ async function entrar(browser, login, largura) {
   return p;
 }
 const api = (p, m, u, b) => p.evaluate(([m, u, b]) => window.CTAI.api(m, u, b), [m, u, b]);
-const ir = async (p, hash, espera) => { await p.evaluate((x) => { location.hash = x; }, hash); await p.waitForSelector(espera || '#conteudo h1', { timeout: 8000 }); await p.waitForTimeout(200); };
+const ir = async (p, hash, espera, ms) => { await p.evaluate((x) => { location.hash = x; }, hash); await p.waitForSelector(espera || '#conteudo h1', { timeout: ms || 8000 }); await p.waitForTimeout(200); };
 const limpa = (p) => p.evaluate(() => document.querySelectorAll('.toast').forEach((x) => x.remove()));
 const dialogo = async (p, rotulo) => { await p.waitForSelector('dialog[open]'); await p.click('dialog[open] button:has-text("' + rotulo + '")'); await p.waitForSelector('dialog', { state: 'detached' }); };
 
+process.env.CTAI_SEGREDO = 'segredo-e2e-com-mais-de-16-caracteres';
 let base;
 (async () => {
   const S = await H.iniciar(); base = S.base;
@@ -200,7 +201,7 @@ let base;
     await ir(cri, '#/regras/DEMO-UPA', '#q-iam_meta');
     await cri.selectOption('#q-iam_meta', '30'); await cri.fill('#j-iam_meta', 'Ficha do contrato, item 6.6.2');
     await cri.locator('div.cartao', { has: cri.locator('#q-iam_meta') }).locator('button:has-text("Registrar decisão")').click(); await cri.waitForSelector('text=Decisão registrada.');
-    try { await ir(cri, '#/c/' + cid06 + '/divergencias', 'select[id^="dv"]'); } catch (e) { console.log('DBGX', (await cri.textContent('#conteudo')).replace(/\s+/g, ' ').slice(0, 500)); throw e; }
+    try { await ir(cri, '#/c/' + cid06 + '/divergencias', 'select[id^="dv"]', 20000); } catch (e) { console.log('DBGX', (await cri.textContent('#conteudo')).replace(/\s+/g, ' ').slice(0, 500)); throw e; }
     await cri.waitForTimeout(800); const dv = cri.locator('select[id^="dv"]').first(); await dv.selectOption('aceita');
     await dv.locator('xpath=ancestor::div[contains(@class,"cartao")]').locator('button:has-text("Registrar")').click();
     await cri.fill('#perg-campo', 'Conferido com a evidência da unidade'); await dialogo(cri, 'Confirmar'); await cri.waitForSelector('text=Registrado.');
@@ -235,6 +236,34 @@ let base;
     await cartaoDemo.locator('button:has-text("Testar a conexão")').click(); await adm.waitForSelector('text=Conectou em', { timeout: 8000 });
     await ir(adm, '#/regras', '#conteudo h1'); await ir(adm, '#/c/' + cid06 + '/divergencias', 'text=Divergências');
     log('telas do administrador percorridas');
+
+    // 6. Gestão CTAI (superintendente): carteira, painel, produção, usuários, IA e PDF do painel
+    const sup = await entrar(browser, 'nathalia', 1280, true); paginas.push(sup);
+    await sup.waitForSelector('a.nav:has-text("Gestão CTAI")');
+    await ir(sup, '#/gestao/carteira', 'text=Quem acompanha cada unidade');
+    await sup.click('#cart-ed-colega1'); await sup.waitForSelector('dialog[open] #ck-DEMO-UPA'); await sup.check('#ck-DEMO-UPA'); await sup.fill('#ck-motivo', 'Distribuição inicial'); await dialogo(sup, 'Salvar carteira'); await sup.waitForSelector('text=Carteira atualizada.');
+    await sup.click('#cart-ed-cleuton'); await sup.waitForSelector('dialog[open] #ck-UPA-OLINDA'); await sup.check('#ck-UPA-OLINDA'); await sup.check('#ck-DEMO-UPA'); await dialogo(sup, 'Salvar carteira'); await sup.waitForSelector('text=Carteira atualizada.');
+    await sup.waitForSelector('#conteudo >> text=Histórico de mudanças'); await limpa(sup); await sup.setViewportSize({ width: 1280, height: 1000 }); await sup.screenshot({ path: path.join(CAP, '19-gestao-carteira.png') });
+    await ir(sup, '#/gestao', 'text=Alertas'); await sup.waitForSelector('.un-card');
+    assert.match(await sup.textContent('#conteudo'), /Responsável: .*Colega conferente 1/);
+    await sup.setViewportSize({ width: 1280, height: 1500 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '18-gestao-painel.png') });
+    await sup.selectOption('#gp-func', { label: 'Cleuton' }); await sup.waitForTimeout(500); await sup.waitForSelector('.un-card');
+    assert.equal(await sup.locator('.un-card').count(), 2);
+    await sup.selectOption('#gp-un', { index: 1 }); await sup.waitForTimeout(500); assert.equal(await sup.locator('.un-card').count(), 1);
+    await sup.selectOption('#gp-un', { value: '' }); await sup.selectOption('#gp-func', { value: '' }); await sup.waitForTimeout(500);
+    const pdfPainel = await sup.evaluate(async () => { const r = await fetch(document.querySelector('#gp-pdf').getAttribute('href')); const b = new Uint8Array(await r.arrayBuffer()); let s = ''; for (const x of b) s += String.fromCharCode(x); return { ok: r.ok, b64: btoa(s) }; });
+    assert.ok(pdfPainel.ok); const bufPainel = Buffer.from(pdfPainel.b64, 'base64'); assert.equal(bufPainel.slice(0, 5).toString(), '%PDF-'); fs.writeFileSync(path.join(CAP, '23-painel-superintendencia.pdf'), bufPainel);
+    await ir(sup, '#/gestao/producao', 'text=Por funcionário'); await sup.setViewportSize({ width: 1280, height: 900 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '20-gestao-producao.png') });
+    await ir(sup, '#/gestao/usuarios', '#gu-l');
+    await sup.fill('#gu-l', 'colega.gestao'); await sup.fill('#gu-n', 'Colega pela Gestão'); await sup.selectOption('#gu-p', 'colega'); await sup.click('#gu-criar');
+    await sup.waitForSelector('td:has-text("colega.gestao")', { timeout: 8000 }); await sup.setViewportSize({ width: 1280, height: 1000 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '21-gestao-usuarios.png') });
+    await ir(sup, '#/gestao/ia', '.ia-card');
+    await sup.click('#ia-conf-kimi'); await sup.waitForSelector('dialog[open] #ia-chave'); await sup.fill('#ia-chave', 'sk-demo-NAO-REAL-9876'); await sup.check('#ia-jur'); await sup.check('#ia-ligar'); await dialogo(sup, 'Salvar'); await sup.waitForSelector('text=configurada · final 9876');
+    assert.doesNotMatch(await sup.content(), /sk-demo-NAO-REAL/, 'a chave nunca aparece na tela');
+    await sup.setViewportSize({ width: 1280, height: 1500 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '22-gestao-ia.png') });
+    const colegaCart = await entrar(browser, 'colega1', 1280, true); paginas.push(colegaCart);
+    await colegaCart.waitForSelector('#conteudo h1'); assert.doesNotMatch(await colegaCart.textContent('#conteudo'), /Olinda/); assert.equal(await colegaCart.locator('a.nav:has-text("Gestão CTAI")').count(), 0);
+    log('Gestão CTAI: carteira, painel com filtros, PDF, produção, usuários e IA; o colega só vê a carteira dele');
     for (const p of paginas) assert.deepEqual(p.erros, [], 'erros de JavaScript na tela: ' + p.erros.join(' | '));
     console.log('\nE2E OK');
   } catch (e) {

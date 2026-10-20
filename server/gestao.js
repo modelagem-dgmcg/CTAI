@@ -35,10 +35,14 @@ function limitesDoTrimestre(tri) {
   const ultimo = new Date(Date.UTC(a, m, 0)).getUTCDate();
   return { de: meses[0] + '-01', ate: meses[2] + '-' + pad(ultimo) };
 }
-// Trimestre padrão do painel: o atual, se já tiver competências; senão o mais recente que tenha.
+// Trimestre padrão do painel: o atual, se já tiver envios; senão o mais recente com envios; senão o mais recente com competências.
 function trimestrePadrao(db) {
-  const comDados = [...new Set(db.all('SELECT competencia_id FROM competencias').map((c) => trimestreDe(c.competencia_id)).filter(Boolean))].sort().reverse();
+  const de = (sql) => [...new Set(db.all(sql).map((c) => trimestreDe(c.competencia_id)).filter(Boolean))].sort().reverse();
+  const comEnvio = de('SELECT DISTINCT k.competencia_id FROM envios e JOIN competencias k ON k.cid = e.cid');
+  const comDados = de('SELECT competencia_id FROM competencias');
   const atual = trimestreAtual();
+  if (comEnvio.includes(atual)) return atual;
+  if (comEnvio.length) return comEnvio.find((t) => t <= atual) || comEnvio[0];
   if (comDados.includes(atual) || !comDados.length) return atual;
   return comDados.find((t) => t <= atual) || comDados[0];
 }
@@ -211,7 +215,8 @@ function painel(db, filtro) {
   const unidades = contratos.map((c) => {
     const atual = dadosDoTrimestre(db, c.contrato_id, tri, hoje);
     const ant = dadosDoTrimestre(db, c.contrato_id, triAnt, hoje);
-    const ach = db.all("SELECT x.* FROM achados x JOIN competencias k ON k.cid = x.cid WHERE k.contrato_id = ? AND x.status IN ('novo','encaminhado','respondido')", c.contrato_id);
+    const cidsTri = atual.comps.map((k) => k.cid);
+    const ach = cidsTri.length ? db.all("SELECT x.* FROM achados x WHERE x.cid IN (" + cidsTri.map(() => '?').join(',') + ") AND x.status IN ('novo','encaminhado','respondido')", ...cidsTri) : [];
     const abertos = ach.length, vencidos = ach.filter((a) => a.status === 'encaminhado' && a.prazo && a.prazo < hoje).length;
     const f = faseDa(db, c.contrato_id, tri, atual.comps);
     let pior = null;

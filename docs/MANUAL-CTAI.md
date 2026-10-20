@@ -3,7 +3,7 @@
 Endereço: `/ctai`. Perfis: **criador** (monta o parecer), **colega** (confere), **superintendente** (confere de novo e autoriza), **administrador** (usuários, demonstração, integrações; **não** confere nem autoriza na mesa).
 
 ## Menu
-**Painel · Pareceres · Analista · Regras e decisões · Integrações · Trilha · Administração** (só admin).
+**Painel · Pareceres · Analista CTAI · Regras e decisões · Integrações · Trilha · Gestão CTAI** (superintendente e admin) **· Administração** (só admin).
 
 ## 1. Painel
 Mostra cada unidade, mês a mês: situação, envio recebido, divergências abertas, e os pareceres em andamento. Contratos de demonstração aparecem com a marca "dados fictícios".
@@ -66,3 +66,30 @@ Cada competência com envio tem a aba **Checklist de recebimento** (console da C
 - O sistema sugere o status pelo que a unidade informou. Quando você edita, o item deixa de ser recalculado a cada nova versão; **Voltar ao cálculo do sistema** desfaz isso. Toda alteração fica na trilha.
 - **Prazos:** SEI até o dia 20 e SIMAS até o dia 25 do mês seguinte. O painel tem a coluna **Prazos** e a competência mostra o aviso de prazo vencido, a vencer ou entregue com atraso.
 - O checklist e os prazos vão para a minuta e para o PDF do parecer (seção **Checklist de recebimento e prazos**) e aparecem na mesa, dentro do item de identificação.
+
+
+## Gestão CTAI (superintendente e administrador)
+
+Menu **Gestão CTAI**, com cinco abas. Só a superintendente e o administrador veem esta área; as outras pessoas da CTAI não têm o menu e recebem "sem acesso" se tentarem pelo endereço.
+
+**Painel.** A visão da superintendente num só lugar. Filtros por **trimestre, unidade e funcionário**; botão **Exportar PDF** gera o mesmo painel em PDF.
+- Cartões: unidades, envios recebidos, incompletos e pendentes, prazos vencidos / a vencer / com atraso, achados abertos e vencidos, pareceres em rascunho e congelados, unidades sem carteira.
+- **Alertas**: prazo vencido ou a vencer (SEI dia 20, SIMAS dia 25), envio incompleto, achado sem resposta no prazo, queda de 5 pontos ou mais no IGQ, trilha com falha.
+- **Por unidade**: fase da conferência (aguardando envio, recebido, tratando divergências, minuta em elaboração, mesa de conferência, autorizado, anexado no SEI), prazos de cada mês, IGQ médio em pontos, percentual pago em média, comparação com o trimestre anterior, achados abertos e parecer.
+- **Divergências recorrentes por indicador**: itens que voltam em mais de uma competência.
+- **Unidades sem carteira**: o envio delas não tem responsável; escolha o funcionário e clique em Atribuir.
+
+**Produção.** Por funcionário e por período (trimestre ou todo o período), com filtro de unidade: itens conferidos na mesa, divergências tratadas, achados encaminhados / respondidos / descartados, minutas criadas e congeladas, tempo médio entre o recebimento do envio e a autorização do parecer, e a **carga atual** (unidades, divergências e achados abertos, minutas em andamento, conferências a fazer). Tudo sai de ações já registradas na trilha e no fluxo. **Não há monitoramento de digitação, de tela aberta nem de tempo online.**
+
+**Carteira.** Define quais unidades cada criador ou colega acompanha. Regras:
+- quem tem unidades na carteira vê **só** essas unidades (fila, mesa, achados, relatório trimestral, checklist, decisões) e não abre as outras nem pelo endereço;
+- quem ainda não tem nenhuma unidade vê todas (modo compatível); o **modo estrito** faz essa pessoa não ver nada até receber unidades;
+- superintendente e administrador veem todas;
+- cada mudança entra no **histórico** (quem, quando, motivo) e na trilha.
+
+**Usuários.** Criar, editar nome e perfil, trocar senha (volta para a senha temporária e a pessoa troca no próximo acesso), ativar e desativar. Perfis: administrador, criador, colega, superintendente, gestor da unidade e responsável de setor. A superintendente não cria nem altera administradores. Tudo vai para a trilha; a senha nunca é gravada.
+
+**IA.** Liga e desliga cada provedor, cadastra chave e modelo, testa a conexão e mostra o uso do mês (chamadas e falhas). Tudo começa desligado.
+- A chave é guardada **só no servidor, cifrada**, com o segredo `CTAI_SEGREDO` do `.env`. Ela nunca volta para a tela nem entra na trilha: aparece só "configurada" e os 4 últimos caracteres. Sem `CTAI_SEGREDO` o sistema não guarda chaves.
+- Para ligar um provedor em **nuvem** é preciso confirmar que o uso foi **aprovado pelo jurídico** (fica registrado quem e quando). Dados reais de unidade só podem ir para provedor aprovado; em nuvem sai somente texto mascarado.
+- "Testar" faz uma chamada mínima, sem dado de unidade.

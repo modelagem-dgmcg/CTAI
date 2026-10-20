@@ -22,7 +22,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .lateral a.nav.ativo{background:var(--acento);color:#fff}
 .lateral .rodape{margin-top:auto;font-size:12.5px;color:#9bb8c2;padding:10px 8px;border-top:1px solid rgba(255,255,255,.1)}
 .lateral .rodape button{margin-top:8px}
-.conteudo{padding:26px 32px 60px;max-width:1180px;width:100%}
+.conteudo{padding:26px 32px 60px;max-width:1180px;width:100%;min-width:0}
 .topo{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .topo p{margin:0;color:var(--cinza)}
 .migalha{font-size:13px;color:var(--cinza);margin-bottom:6px}
@@ -116,3 +116,4 @@ label.ck{display:block;padding:5px 0;cursor:pointer}label.ck input{margin-right:
 .ia-card .ia-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin:12px 0}
 .ia-card .r{font-size:12.5px;color:var(--cinza)}
 @media (max-width:640px){.unidades-grid{grid-template-columns:1fr}}
+.carga{min-width:210px;line-height:1.45}

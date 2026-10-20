@@ -75,7 +75,7 @@
         h('div', null, h('div', { class: 'r' }, 'Antes · ' + p.trimestre_anterior), h('div', { class: 'num-medio' }, u.igq_anterior ? n1(u.igq_anterior.medio) : '—'),
           delta === null ? h('div', { class: 'r' }, 'sem comparação') : h('div', { class: 'delta ' + (delta < 0 ? 'baixou' : (delta > 0 ? 'subiu' : '')) }, (delta > 0 ? '▲ +' : (delta < 0 ? '▼ ' : '= ')) + n1(delta) + ' ponto(s)')),
         h('div', null, h('div', { class: 'r' }, 'Achados'), h('div', { class: 'num-medio' }, u.achados.abertos), h('div', { class: 'r' }, u.achados.vencidos ? u.achados.vencidos + ' vencido(s)' : 'nenhum vencido')),
-        h('div', null, h('div', { class: 'r' }, 'Parecer'), h('div', { class: 'num-medio' }, u.parecer ? (u.parecer.congelado ? 'v' + u.parecer.versao : 'rascunho') : '—'), h('div', { class: 'r' }, u.parecer ? (u.parecer.versao_status || u.parecer.status) : 'não iniciado'))));
+        h('div', null, h('div', { class: 'r' }, 'Parecer'), h('div', { class: 'num-medio' }, u.parecer ? (u.parecer.congelado ? 'v' + u.parecer.versao : 'rascunho') : '—'), h('div', { class: 'r' }, u.parecer ? (u.parecer.congelado ? u.parecer.versao_status : 'em elaboração') : 'não iniciado'))));
   }
 
   // ---------- Produção ----------
@@ -94,11 +94,11 @@
       h('div', { class: 'kpis' }, kpi('Itens conferidos', t.itens_conferidos), kpi('Divergências tratadas', t.divergencias_tratadas), kpi('Achados encaminhados', t.achados_encaminhados, t.achados_respondidos + ' já respondidos'),
         kpi('Minutas criadas', t.minutas_criadas, t.minutas_congeladas + ' congeladas')),
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Por funcionário'),
-        tabela([{ t: 'Funcionário' }, { t: 'Itens conferidos', n: true }, { t: 'Divergências tratadas', n: true }, { t: 'Achados: enc. / resp. / desc.' }, { t: 'Minutas: criadas / congeladas' }, { t: 'Recebimento → conferência concluída' }, { t: 'Carga atual' }],
+        tabela([{ t: 'Funcionário' }, { t: 'Itens', n: true }, { t: 'Diverg.', n: true }, { t: 'Achados enc./resp./desc.' }, { t: 'Minutas cri./cong.' }, { t: 'Receb. → conferido' }, { t: 'Carga atual' }],
           p.funcionarios.map((f) => [h('div', null, h('strong', null, f.nome), h('div', { class: 'r mudo peq' }, f.perfil)), f.itens_conferidos, f.divergencias_tratadas,
             f.achados.encaminhados + ' / ' + f.achados.respondidos + ' / ' + f.achados.descartados, f.minutas.criadas + ' / ' + f.minutas.congeladas,
-            f.tempo_medio ? n1(f.tempo_medio.dias) + ' dia(s) (' + f.tempo_medio.amostra + ' parecer(es))' : '—',
-            h('div', { class: 'peq' }, f.carga.unidades + ' unidade(s)', h('br'), f.carga.divergencias_abertas + ' diverg. · ' + f.carga.achados_abertos + ' achados', h('br'), f.carga.minutas_abertas + ' minuta(s) · ' + f.carga.conferencias_pendentes + ' conf. a fazer')]))));
+            f.tempo_medio ? n1(f.tempo_medio.dias) + ' d (' + f.tempo_medio.amostra + ')' : '—',
+            h('div', { class: 'peq carga' }, f.carga.unidades + ' unid. · ' + f.carga.divergencias_abertas + ' diverg. · ' + f.carga.achados_abertos + ' achados · ' + f.carga.minutas_abertas + ' minuta(s) · ' + f.carga.conferencias_pendentes + ' a conferir')]))));
   }
 
   // ---------- Carteira ----------

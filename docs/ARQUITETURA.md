@@ -6,7 +6,7 @@
  Unidade (navegador/PWA)          CTAI (navegador/PWA)
         │                                 │
         ▼                                 ▼
-  /api/unidade/*                    /api/ctai/*   /api/analista/*   /api/integracoes/*   /api/admin/*
+  /api/unidade/*                    /api/ctai/*  /api/analista/*  /api/integracoes/*  /api/admin/*  /api/gestao/*
         └───────────────┬───────────────────┘
                    Express 5 (server/app.js)
    auth (sessão, CSRF) · cabeçalhos de segurança · trilha com cadeia
@@ -64,3 +64,21 @@
 - **MV**: `adapters/mv/` (veja `docs/INTEGRACAO-MV.md`). Outros sistemas: copie `adapters/csv.js` ou o adaptador do MV e troque o mapeamento.
 - **Modelo do relatório**: `templates/relatorio-v1.json` define as seções do PDF.
 - **Novo contrato**: inclua em `carga/contratos.csv` (ou crie pela rotina de seed) e cadastre a regra.
+
+
+## Gestão CTAI (módulo da superintendência)
+
+Rotas em `server/routes/gestao.js` (`/api/gestao/*`, só superintendente e admin). Peças:
+
+| Arquivo | Papel |
+|---|---|
+| `server/carteira.js` | carteira de unidades por funcionário, com histórico (`carteira`: `desde`/`ate`); regra de visibilidade (`permitidos`); barreira `guarda(db)` aplicada nos routers `/api/ctai` e `/api/analista`: confere a unidade de qualquer recurso citado na URL, no corpo ou na consulta (competência, envio, parecer, versão, achado, divergência, contrato) e filtra as listas |
+| `server/ia-config.js` | provedores de IA: chave cifrada com AES-256-GCM (chave derivada de `CTAI_SEGREDO` por scrypt), nunca devolvida; `ia_config`, `ia_uso` (contagem por provedor e mês); `instalar(db)` liga o módulo do Analista a esta configuração |
+| `modules/analista/providers/index.js` | o módulo não conhece o banco: recebe um *resolvedor* (configuração cadastrada) e um *contador* de uso por `usar()`. `.env` continua valendo como base; o que foi cadastrado manda por cima, inclusive para desligar |
+| `server/gestao.js` | produção (consultas à trilha e às tabelas do fluxo, sem telemetria de uso) e painel (prazos, envios, fase, IGQ, comparação com o trimestre anterior, recorrência, alertas) |
+| `server/pdf/painel.js` | PDF do painel, pelo mesmo renderizador dos outros PDFs |
+| `public/js/gestao.js` | telas (carregado antes de `ctai.js`; o menu e as rotas só existem para superintendente e admin) |
+
+Tabelas novas (criadas por `CREATE IF NOT EXISTS`, sem alterar as existentes): `carteira`, `gestao_config`, `ia_config`, `ia_uso`.
+
+Decisões: (1) criador/colega **sem carteira** continuam vendo tudo, para não quebrar quem já usa; o modo estrito (`gestao_config.carteira_estrita`) inverte isso. (2) A produção só conta ações já gravadas. (3) Segredo e chaves nunca vão para o repositório, a tela, a trilha ou o log.

@@ -17,7 +17,7 @@ npm start            # 3. sobe em http://localhost:3000
 ```
 
 - Portal da unidade: `http://localhost:3000/unidade`
-- Console da CTAI: `http://localhost:3000/ctai` (menu **Analista CTAI**: veja `docs/ANALISTA-CTAI.md`)
+- Console da CTAI: `http://localhost:3000/ctai` (menu **Analista CTAI**: veja `docs/ANALISTA-CTAI.md`; menu **Gestão CTAI** para a superintendente: veja `docs/MANUAL-CTAI.md`)
 - Entrada comum: `http://localhost:3000/` (cada perfil vai para o seu lado)
 
 Com Docker: `docker compose up --build` (usa a pasta `data/` para o banco e os PDFs).
