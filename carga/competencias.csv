@@ -1,0 +1,4 @@
+competencia_id,contrato_id,regra_id,mes_implantacao,processo_sei,parecer_numero,status
+2026-04,UPA-OLINDA,igq_v1,sim,SEI 2300000660.000094/2026-69,204/2026,parecer emitido
+2026-05,UPA-OLINDA,igq_v1,não,SEI 2300000660.000114/2026-00,204/2026,parecer emitido
+2026-06,UPA-OLINDA,igq_v1,não,SEI 2300000660.000142/2026-19,204/2026,parecer emitido

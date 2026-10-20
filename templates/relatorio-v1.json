@@ -1,0 +1,65 @@
+{
+  "modelo": "relatorio-v1",
+  "descricao": "Modelo padrão do relatório mensal da unidade. Pode ser ajustado aqui sem mexer no código: troque títulos, ligue ou desligue seções e mude a ordem. Depois de validado pela CTAI, passa a ser o padrão para as demais unidades.",
+  "titulo": "Relatório mensal de acompanhamento do Contrato de Gestão",
+  "subtitulo": "Elaborado pela unidade a partir dos dados lançados no Portal da CTAI",
+  "declaracao": "Declaro que os dados deste relatório foram lançados pelos setores da unidade, conferidos pelo gestor e correspondem aos documentos comprobatórios anexados no processo SEI. Os dados não contêm informação que identifique pacientes. A assinatura oficial é feita no SEI, pela pessoa responsável.",
+  "secoes": [
+    {
+      "id": "identificacao",
+      "titulo": "1. Identificação",
+      "ativa": true
+    },
+    {
+      "id": "igq",
+      "titulo": "2. Indicadores de qualidade (IGQ)",
+      "ativa": true
+    },
+    {
+      "id": "bid",
+      "titulo": "3. Boletim de Informação Diária (BID)",
+      "ativa": true
+    },
+    {
+      "id": "tempos",
+      "titulo": "4. Tempos medidos a partir das linhas",
+      "ativa": true
+    },
+    {
+      "id": "educacao",
+      "titulo": "5. Educação permanente",
+      "ativa": true
+    },
+    {
+      "id": "queixas",
+      "titulo": "6. Queixas e respostas",
+      "ativa": true
+    },
+    {
+      "id": "transferencias",
+      "titulo": "7. Transferências",
+      "ativa": true
+    },
+    {
+      "id": "pessoal",
+      "titulo": "8. Pessoal e escalas",
+      "ativa": true
+    },
+    {
+      "id": "conferencias",
+      "titulo": "9. Conferências automáticas do sistema",
+      "ativa": true
+    },
+    {
+      "id": "observacoes",
+      "titulo": "Observações dos setores",
+      "ativa": true
+    },
+    {
+      "id": "declaracao",
+      "titulo": "10. Declaração e assinatura",
+      "ativa": true
+    }
+  ],
+  "rodape": "Relatório gerado pelo Portal da CTAI. A assinatura oficial é feita no SEI."
+}

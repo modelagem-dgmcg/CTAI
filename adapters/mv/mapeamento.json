@@ -1,0 +1,425 @@
+{
+  "versao": 1,
+  "aviso": "Nomes de campo fictícios. Troque a coluna \"de\" pelos campos reais do sistema da unidade.",
+  "fusoHorario": "America/Recife",
+  "fontes": {
+    "classificacao": {
+      "endpoint": "/api/v1/classificacao",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "protocolo": {
+          "de": "nr_atendimento"
+        },
+        "cor": {
+          "de": "ds_cor",
+          "como": "mapa",
+          "mapa": {
+            "VERMELHO": "vermelho",
+            "LARANJA": "laranja",
+            "AMARELO": "amarelo",
+            "VERDE": "verde",
+            "AZUL": "azul",
+            "FAST-TRACK": "fast-track"
+          }
+        },
+        "data_classificacao": {
+          "de": "dh_classificacao",
+          "como": "data"
+        },
+        "hora_classificacao": {
+          "de": "dh_classificacao",
+          "como": "hora"
+        },
+        "data_atendimento": {
+          "de": "dh_atendimento",
+          "como": "data"
+        },
+        "hora_atendimento": {
+          "de": "dh_atendimento",
+          "como": "hora"
+        },
+        "minutos": {
+          "de": "nr_segundos",
+          "como": "segundos_para_minutos"
+        }
+      }
+    },
+    "retorno": {
+      "endpoint": "/api/v1/retorno",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "protocolo": {
+          "de": "nr_atendimento"
+        },
+        "retornou_24h": {
+          "de": "fl_retornou_24h",
+          "como": "sim_nao"
+        }
+      }
+    },
+    "dor_toracica": {
+      "endpoint": "/api/v1/dor-toracica",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "protocolo": {
+          "de": "nr_atendimento"
+        },
+        "data_chegada": {
+          "de": "dh_chegada",
+          "como": "data"
+        },
+        "hora_chegada": {
+          "de": "dh_chegada",
+          "como": "hora"
+        },
+        "data_ecg": {
+          "de": "dh_ecg",
+          "como": "data"
+        },
+        "hora_ecg": {
+          "de": "dh_ecg",
+          "como": "hora"
+        },
+        "minutos": {
+          "de": "nr_segundos",
+          "como": "segundos_para_minutos"
+        }
+      }
+    },
+    "iamcsst": {
+      "endpoint": "/api/v1/iamcsst",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "protocolo": {
+          "de": "nr_atendimento"
+        },
+        "data_classificacao": {
+          "de": "dh_classificacao",
+          "como": "data"
+        },
+        "hora_classificacao": {
+          "de": "dh_classificacao",
+          "como": "hora"
+        },
+        "data_saida": {
+          "de": "dh_saida",
+          "como": "data"
+        },
+        "hora_saida": {
+          "de": "dh_saida",
+          "como": "hora"
+        },
+        "minutos": {
+          "de": "nr_segundos",
+          "como": "segundos_para_minutos"
+        },
+        "contagem_desde": {
+          "de": "ds_contagem_desde",
+          "como": "mapa",
+          "mapa": {
+            "CLASSIFICAÇÃO": "classificação",
+            "ECG": "ECG"
+          }
+        }
+      }
+    },
+    "ave": {
+      "endpoint": "/api/v1/ave",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "protocolo": {
+          "de": "nr_atendimento"
+        },
+        "data_admissao": {
+          "de": "dh_admissao",
+          "como": "data"
+        },
+        "hora_admissao": {
+          "de": "dh_admissao",
+          "como": "hora"
+        },
+        "data_avaliacao": {
+          "de": "dh_avaliacao",
+          "como": "data"
+        },
+        "hora_avaliacao": {
+          "de": "dh_avaliacao",
+          "como": "hora"
+        },
+        "minutos": {
+          "de": "nr_segundos",
+          "como": "segundos_para_minutos"
+        }
+      }
+    },
+    "sepse": {
+      "endpoint": "/api/v1/sepse",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "protocolo": {
+          "de": "nr_atendimento"
+        },
+        "data_chegada": {
+          "de": "dh_chegada",
+          "como": "data"
+        },
+        "hora_chegada": {
+          "de": "dh_chegada",
+          "como": "hora"
+        },
+        "data_antibiotico": {
+          "de": "dh_antibiotico",
+          "como": "data"
+        },
+        "hora_antibiotico": {
+          "de": "dh_antibiotico",
+          "como": "hora"
+        },
+        "minutos": {
+          "de": "nr_segundos",
+          "como": "segundos_para_minutos"
+        }
+      }
+    },
+    "obitos": {
+      "endpoint": "/api/v1/obitos",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "protocolo": {
+          "de": "nr_atendimento"
+        },
+        "data_admissao": {
+          "de": "dh_admissao",
+          "como": "data"
+        },
+        "hora_admissao": {
+          "de": "dh_admissao",
+          "como": "hora"
+        },
+        "data_obito": {
+          "de": "dh_obito",
+          "como": "data"
+        },
+        "hora_obito": {
+          "de": "dh_obito",
+          "como": "hora"
+        },
+        "revisado": {
+          "de": "fl_revisado",
+          "como": "sim_nao"
+        }
+      }
+    },
+    "queixas": {
+      "endpoint": "/api/v1/queixas",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "protocolo": {
+          "de": "nr_atendimento"
+        },
+        "identificada": {
+          "de": "fl_identificada",
+          "como": "sim_nao"
+        },
+        "data_recebimento": {
+          "de": "dt_recebimento",
+          "como": "data"
+        },
+        "data_resposta": {
+          "de": "dt_resposta",
+          "como": "data"
+        },
+        "resposta_propria": {
+          "de": "fl_resposta_propria",
+          "como": "sim_nao"
+        }
+      }
+    },
+    "educacao_participacao": {
+      "endpoint": "/api/v1/educacao-participacao",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "codigo_pessoa": {
+          "de": "cd_colaborador"
+        },
+        "area": {
+          "de": "ds_area",
+          "como": "mapa",
+          "mapa": {
+            "ASSISTENCIAL": "assistencial",
+            "ADMINISTRATIVA": "administrativa"
+          }
+        },
+        "categoria_profissional": {
+          "de": "ds_categoria_profissional"
+        },
+        "tema": {
+          "de": "ds_tema"
+        },
+        "data": {
+          "de": "dt_evento",
+          "como": "data"
+        },
+        "participou": {
+          "de": "fl_participou",
+          "como": "sim_nao"
+        }
+      }
+    },
+    "transferencias": {
+      "endpoint": "/api/v1/transferencias",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "protocolo": {
+          "de": "nr_atendimento"
+        },
+        "data_solicitacao": {
+          "de": "dh_solicitacao",
+          "como": "data"
+        },
+        "hora_solicitacao": {
+          "de": "dh_solicitacao",
+          "como": "hora"
+        },
+        "data_saida": {
+          "de": "dh_saida",
+          "como": "data"
+        },
+        "hora_saida": {
+          "de": "dh_saida",
+          "como": "hora"
+        },
+        "minutos": {
+          "de": "nr_segundos",
+          "como": "segundos_para_minutos"
+        },
+        "destino": {
+          "de": "ds_destino"
+        }
+      }
+    },
+    "quadro_pessoal": {
+      "endpoint": "/api/v1/quadro-pessoal",
+      "parametros": {
+        "inicio": "{inicio}",
+        "fim": "{fim}"
+      },
+      "listaEm": "dados",
+      "paginacao": {
+        "param": "pagina",
+        "paramTamanho": "limite",
+        "tamanho": 500
+      },
+      "campos": {
+        "codigo_pessoa": {
+          "de": "cd_colaborador"
+        },
+        "area": {
+          "de": "ds_area",
+          "como": "mapa",
+          "mapa": {
+            "ASSISTENCIAL": "assistencial",
+            "ADMINISTRATIVA": "administrativa"
+          }
+        },
+        "categoria_profissional": {
+          "de": "ds_categoria_profissional"
+        },
+        "ativo": {
+          "de": "fl_ativo",
+          "como": "sim_nao"
+        }
+      }
+    }
+  }
+}

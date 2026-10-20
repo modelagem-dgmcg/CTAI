@@ -1,0 +1,26 @@
+competencia_id,indicador_id,declarado,recalculado,diferenca,gravidade,status,documento_id,observacao
+2026-05;2026-06,2.3,"vermelho: parecer 0 pt e ""não atingiu""","maio 9,92 min (2 pts); junho 4,03 min (7 pts)",,alta,aberta,,Regra por faixa ou binário (dúvida 2)
+2026-05;2026-06,2.15;2.16,adesão: 100/80 (maio) e 96/80 (junho),"assist. 69,7% e 76,5%; adm. 58,5% e ~52%",,alta,aberta,,Recalculado pelas tabelas de setor; regra de pessoas únicas pendente
+2026-04,2.15;2.16,58% e 69%,~47% e ~66%,,média,aberta,,"Implantação, sem desconto"
+2026-05;2026-06,2.6,porta-ECG declarado,"maio 9,75 min (55 linhas); junho 9,94 (231 linhas, 85 acima de 10)",,média,aberta,,Média a menos de 5% do limite: alerta
+2026-05;2026-06,2.9,sepse declarado,"maio 29,67 min (6 casos); junho 37,5 (4 casos)",,baixa,aberta,,Amostra menor que 10: alerta
+2026-05;2026-06,2.8,AVE declarado,"maio 4,64 min (11); junho 9,75 (16, extremos 82/36/20)",,média,aberta,,Mediana 1-2 min; média a menos de 5% do limite
+2026-05;2026-06,2.7,IAMCSST,"maio 5 casos média 83,8 min; junho 1 caso 264 min da triagem / 110 desde o ECG",,alta,aberta,,Meta ≤30 ou <120 min: dúvida 3
+2026-05;2026-06,2.3,vermelhos: BID × turno × tempo,junho 282 × 253 × 183; maio 334 × 344 × 226,,média,aberta,,Cobertura dos relatórios de tempo 65-68%
+2026-04;2026-05;2026-06,transferências,média das planilhas ~413 min (maio e junho),média das linhas ~1.360 min (abril 1.368; maio 1.362; junho 1.358),,alta,aberta,,Maio: lista com 381 de 514 linhas; cabeçalho de junho 3.740:19 h = 224.419 min ≠ 212.419; soma das linhas 698.156
+2026-04;2026-05;2026-06,2.11,denominador fixo 13.922 (abril); 15.547 (maio),"abril 11.454 (11,78%); maio 16.112 (10,36%)",,média,aberta,,Dúvida 7
+2026-04,2.11,tabela de satisfação,64 células múltiplas de 5; cada pergunta soma 1.350,,média,aberta,86752455,Pedir questionários por respondente
+2026-04;2026-05;2026-06,prontuário,amostra declarada 2%,"abril 6% (180/2.986); maio 20% (855/4.275); junho 3,6% (140/3.869)",,baixa,aberta,,
+2026-05;2026-06,2.10,óbitos nas atas: 7 e 8,BID: 13 (maio) e 21 (junho),,média,aberta,,Dúvida 4
+2026-06,2.14,relatório de educação de junho,conclusão copiada de março; NR 01: 9 declarados × 5 na tabela × 14 assinaturas; EPIs 38 × 19,,alta,aberta,,
+2026-05;2026-06,2.12,queixas: 4 (maio) com resposta da queixa 4 copiada da 3,maio inclui queixa recebida em 03/06; caso repetido em junho com novo número,,média,aberta,,
+2026-04,2.12,7 queixas declaradas,3 anexadas,,média,aberta,86841240,Resposta de 20/04 saiu em 05/05 (10 dias úteis)
+2026-04,contagens por cor,relatório de tempo 12.113,ACCR por turno 12.806 (inclui 1.154 azuis); altas 12.456; OSS 11.454 + 747,,média,aberta,,Reconciliar contagens
+2026-04,pontuação,6.6.2 escreve 07 pontos,máximo do indicador 6; 54 fecha com 6,,baixa,aberta,,
+2026-01;2026-02;2026-03,gasto com pessoal,"jan 85,17%; fev 79,86%; mar 82,95%",limite 80% (Cláusula Oitava § 2); parecer comenta só fevereiro,,média,aberta,,
+2026-04;2026-05;2026-06,CID,Z00 (exame geral) 2.259; 2.598; 2.420,"20% a 24% do total; junho tem registro de cólera com texto ""teste""",,baixa,aberta,,Contagem parcial
+2026-04;2026-05;2026-06,médicos nas escalas,educação: 21 a 22 médicos,"escalas: ~57 CRMs (abril), 58 (maio), 43 (junho, parcial)",,média,aberta,,Adesão médica de maio cairia de 95% para ~35%
+2026-04;2026-05;2026-06,2.5,NSP: pautas de maio e junho quase idênticas,sem relatório dos 6 protocolos básicos,,baixa,aberta,,Abril: ata de 29/04 e relatório de 28/04
+2026-04,gerência de risco,63 eventos,"59 evasões (94%); jan 170, fev 64, mar 118",,baixa,aberta,,"Sem queda, LPP, IRAS ou falha de medicação"
+2026-05,raio-X,2.287 exames,"mesmo valor de abril (2.287); anexo ""RADIOLOGIA"" de maio é de laboratório",,média,aberta,,Possível cópia
+2026-05;2026-06,remoções,planilha 514 (maio) e 515 (junho),listas: 515 (maio) e 514 (junho),,baixa,aberta,,Valores trocados

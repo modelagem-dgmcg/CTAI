@@ -1,0 +1,6 @@
+ta_id,contrato_id,numero,data_assinatura,vigencia_inicio,vigencia_fim,efeito,processo_sei
+UPA-OLINDA-TA09,UPA-OLINDA,9º TA,,,,"Ambulância (R$ 36.827,75 na base)",
+UPA-OLINDA-TA10,UPA-OLINDA,10º TA,,,,"Recursos humanos (R$ 93.066,32 na base)",
+UPA-OLINDA-TA12,UPA-OLINDA,12º TA,,2026-05-01,,"Vigilância (R$ 20.000,00 na base, desde maio)",
+UPA-OLINDA-TA15,UPA-OLINDA,15º TA,2026-01-30,2026-02-01,2028-01-31,"Prorroga vigência; novo IGQ de 100 pontos; abril/2026 = implantação (Obs. 1, Anexo I)",
+UPA-OLINDA-TA17,UPA-OLINDA,17º TA,,,,A confirmar se entra na base do desconto,

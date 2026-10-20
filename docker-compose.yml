@@ -1,0 +1,16 @@
+services:
+  ctai:
+    build: .
+    ports: ["3000:3000"]
+    env_file: [{ path: .env, required: false }]
+    environment:
+      CTAI_DATA_DIR: /dados
+    volumes:
+      - ./data:/dados
+    restart: unless-stopped
+  # Simulador da API do MV, só para ensaio (docker compose --profile teste up)
+  mock-mv:
+    build: .
+    profiles: ["teste"]
+    command: ["node", "--no-warnings", "adapters/mv/mock-server.js"]
+    ports: ["4010:4010"]

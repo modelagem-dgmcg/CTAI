@@ -1,0 +1,11 @@
+{
+  "baseUrl": "https://mv.exemplo.local",
+  "auth": { "tipo": "bearer", "tokenEnv": "MV_API_TOKEN" },
+  "timeoutMs": 30000,
+  "mapeamento": "adapters/mv/mapeamento.json",
+  "_comentarios": [
+    "As credenciais NÃO ficam aqui nem no banco: o campo tokenEnv só diz o NOME da variável do .env que guarda o token.",
+    "tipos de auth aceitos: bearer {tokenEnv}, basic {usuarioEnv, senhaEnv}, apikey {cabecalho, chaveEnv}, nenhuma.",
+    "Use dryRun na tela Integrações para ver o que viria, sem gravar nada."
+  ]
+}

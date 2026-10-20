@@ -1,0 +1,49 @@
+{
+  "versao": "igq_v1",
+  "contrato": "UPA Olinda - ISMEP - CG 001/2022",
+  "vigencia_inicio": "2026-04-01",
+  "base_legal": "15º TA (30/01/2026), Anexo I; Cláusula Oitava",
+  "implantacao": {
+    "competencias": ["2026-04"],
+    "regra": "Abril/2026 é mês de implantação (Obs. 1, Anexo I, 15º TA): sem desconto. Conta a partir de maio."
+  },
+  "parte_variavel": {
+    "percentual_total": 30,
+    "producao": { "percentual": 20, "minimo_execucao_pct": 85, "excecao": "urgência/emergência fora da compensação de 115% (Lei 15.210/2013, art. 15-A)" },
+    "qualidade": { "percentual": 10, "indicador": "IGQ 0-100" }
+  },
+  "base_desconto_mensal": {
+    "valor": 1647464.17,
+    "composicao": { "base": 1497570.10, "ta_9_ambulancia": 36827.75, "ta_10_rh": 93066.32, "ta_12_vigilancia": 20000.00 },
+    "pendente": "confirmar se 17º TA e piso da enfermagem entram na base"
+  },
+  "faixas_pagamento": [
+    { "igq_min": 90, "igq_max": 100, "paga_pct": 10 },
+    { "igq_min": 80, "igq_max": 89, "paga_pct": 8 },
+    { "igq_min": 70, "igq_max": 79, "paga_pct": 6 },
+    { "igq_min": 60, "igq_max": 69, "paga_pct": 4 },
+    { "igq_min": 50, "igq_max": 59, "paga_pct": 2 },
+    { "igq_min": 0, "igq_max": 49, "paga_pct": 0 }
+  ],
+  "desconto_pct_regra": "desconto = 10 - paga_pct, sobre base_desconto_mensal",
+  "pendente_desconto": "O parecer 204/2026 aplicou 10% fixo; a planilha usa faixas. Regra de conversão está no Anexo II (não estava nos arquivos). Calculadora trata como parâmetro: modo 'faixa' ou 'fixo'.",
+  "indicadores": [
+    { "id": "2.1", "nome": "Tempo classificação até atendimento (verde)", "max": 5, "tipo": "faixa_menor_melhor", "unidade": "min", "faixas": [ { "ate": 120, "pontos": 5 }, { "ate": 180, "pontos": 3 }, { "ate": 240, "pontos": 1 } ] },
+    { "id": "2.2", "nome": "Tempo classificação até atendimento (amarelo)", "max": 6, "tipo": "faixa_menor_melhor", "unidade": "min", "faixas": [ { "ate": 60, "pontos": 6 }, { "ate": 120, "pontos": 4 }, { "ate": 180, "pontos": 2 } ] },
+    { "id": "2.3", "nome": "Tempo classificação até atendimento (vermelho)", "max": 7, "tipo": "faixa_menor_melhor", "unidade": "min", "faixas": [ { "ate": 5, "pontos": 7 }, { "ate": 6, "pontos": 4 }, { "ate": 10, "pontos": 2 } ], "pendente": "parecer tratou como binário (0 se não atingiu); planilha por faixa" },
+    { "id": "2.4", "nome": "Taxa de retorno em até 24h", "max": 5, "tipo": "faixa_menor_melhor", "unidade": "%", "faixas": [ { "ate": 5, "pontos": 5 } ] },
+    { "id": "2.5", "nome": "Conformidade PNSP (relatório comprobatório, RDC 36/2013)", "max": 4, "tipo": "binario", "evidencia": "relatório de segurança do paciente enviado no prazo" },
+    { "id": "2.6", "nome": "Dor torácica: porta-ECG", "max": 7, "tipo": "faixa_menor_melhor", "unidade": "min", "faixas": [ { "ate": 10, "pontos": 7 } ] },
+    { "id": "2.7", "nome": "Dor torácica: porta-saída IAMCSST", "max": 7, "tipo": "faixa_menor_melhor", "unidade": "min", "faixas": [ { "ate": 30, "pontos": 7 } ], "pendente": "meta ≤30 min (abr/mai) ou <120 min (jun): confirmar" },
+    { "id": "2.8", "nome": "AVE: admissão até avaliação médica", "max": 7, "tipo": "faixa_menor_melhor", "unidade": "min", "faixas": [ { "ate": 10, "pontos": 7 } ] },
+    { "id": "2.9", "nome": "Sepse: porta-antibiótico", "max": 7, "tipo": "faixa_menor_melhor", "unidade": "min", "faixas": [ { "ate": 60, "pontos": 7 } ] },
+    { "id": "2.10", "nome": "Revisão de óbitos ≥24h", "max": 5, "tipo": "faixa_maior_melhor", "unidade": "%", "faixas": [ { "de_exclusivo": 90, "pontos": 5 }, { "de": 80, "ate": 89.9, "pontos": 3 } ], "pendente": "definição de óbito no BID e identificação dos ≥24h" },
+    { "id": "2.11", "nome": "Satisfação do usuário", "max": 6, "tipo": "faixa_maior_melhor", "unidade": "%", "faixas": [ { "de": 90, "pontos": 6 }, { "de": 80, "pontos": 4 }, { "de": 70, "pontos": 2 } ], "condicao": "cobertura mínima de 10% dos atendimentos", "pendente": "denominador oficial do mês" },
+    { "id": "2.12", "nome": "Aceite das queixas", "max": 6, "tipo": "faixa_maior_melhor", "unidade": "%", "faixas": [ { "de": 80, "pontos": 6 } ], "condicao": "queixas anônimas não contam" },
+    { "id": "2.13", "nome": "Transparência", "max": 7, "tipo": "categorico", "categorias": { "Desejado": 7, "Moderado": 5, "Intermediário": 3, "Insuficiente": 1, "Crítico": 0 } },
+    { "id": "2.14", "nome": "Plano de educação permanente executado", "max": 7, "tipo": "faixa_maior_melhor", "unidade": "%", "faixas": [ { "de": 100, "pontos": 7 }, { "de": 90, "pontos": 5 }, { "de": 80, "pontos": 3 }, { "de": 70, "pontos": 1 } ] },
+    { "id": "2.15", "nome": "Adesão da equipe assistencial", "max": 7, "tipo": "faixa_maior_melhor", "unidade": "%", "faixas": [ { "de": 80, "pontos": 7 }, { "de": 70, "pontos": 5 }, { "de": 60, "pontos": 3 } ], "pendente": "contar pessoas únicas? denominador" },
+    { "id": "2.16", "nome": "Adesão da equipe administrativa", "max": 7, "tipo": "faixa_maior_melhor", "unidade": "%", "faixas": [ { "de": 80, "pontos": 7 }, { "de": 70, "pontos": 5 }, { "de": 60, "pontos": 3 } ], "pendente": "contar pessoas únicas? denominador" }
+  ],
+  "soma_maxima": 100
+}

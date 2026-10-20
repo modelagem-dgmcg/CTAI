@@ -1,0 +1,7 @@
+cenario,competencia_id,igq_usado,modo_desconto,desconto_pct,desconto_valor_total_mai_jun,fonte
+parecer 204/2026,2026-05,63,fixo,10,329492.83,10% em maio e em junho
+parecer 204/2026,2026-06,57,fixo,10,329492.83,
+planilha de descontos,2026-05,65,faixa,6,197695.70,faixa 60-69 paga 4%
+planilha de descontos,2026-06,64,faixa,6,197695.70,
+faixas com pontos do parecer,2026-05,63,faixa,6,230644.98,faixa 60-69 paga 4%
+faixas com pontos do parecer,2026-06,57,faixa,8,230644.98,faixa 50-59 paga 2%

@@ -1,0 +1,199 @@
+'use strict';
+// Teste de ponta a ponta com navegador: unidade envia -> CTAI recebe -> minuta -> mesa -> SEI.
+// Usa um banco temporário e o Chromium já instalado (não baixa nada).
+const H = require('../helpers');
+const fs = require('fs');
+const path = require('path');
+const assert = require('node:assert/strict');
+const { chromium } = require('playwright');
+const mock = require('../../adapters/mv/mock-server');
+
+const CAP = path.join(__dirname, '..', '..', 'docs', 'capturas');
+const SENHA = 'Senha@12345';
+const log = (m) => console.log('• ' + m);
+
+async function entrar(browser, login, largura) {
+  const ctx = await browser.newContext({ viewport: { width: largura || 1280, height: 860 }, locale: 'pt-BR' });
+  const p = await ctx.newPage();
+  p.erros = [];
+  p.on('pageerror', (e) => p.erros.push('pageerror: ' + e.message));
+  p.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) p.erros.push('console: ' + m.text()); });
+  p.on('response', (r) => { if (r.status() >= 500) p.erros.push('HTTP ' + r.status() + ' ' + r.url()); });
+  await p.goto(base + '/');
+  await p.fill('#login', login);
+  await p.fill('#senha', 'Trocar@123');
+  await p.click('button[type=submit]');
+  await p.waitForSelector('#ts-a, #conteudo', { timeout: 8000 });
+  if (await p.$('#ts-a')) { await p.fill('#ts-a', 'Trocar@123'); await p.fill('#ts-n', SENHA); await p.click('dialog button'); await p.waitForSelector('dialog', { state: 'detached' }); }
+  await p.waitForSelector('#conteudo');
+  return p;
+}
+const api = (p, m, u, b) => p.evaluate(([m, u, b]) => window.CTAI.api(m, u, b), [m, u, b]);
+const ir = async (p, hash, espera) => { await p.evaluate((x) => { location.hash = x; }, hash); await p.waitForSelector(espera || '#conteudo h1', { timeout: 8000 }); await p.waitForTimeout(200); };
+const limpa = (p) => p.evaluate(() => document.querySelectorAll('.toast').forEach((x) => x.remove()));
+const dialogo = async (p, rotulo) => { await p.waitForSelector('dialog[open]'); await p.click('dialog[open] button:has-text("' + rotulo + '")'); await p.waitForSelector('dialog', { state: 'detached' }); };
+
+let base;
+(async () => {
+  const S = await H.iniciar(); base = S.base;
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' });
+  const paginas = [];
+  const mockSrv = await new Promise((ok) => { const m = mock.criar(); m.listen(4010, '127.0.0.1', () => ok(m)); m.on('error', () => ok(null)); });
+  try {
+    const cid06 = S.db.get("SELECT cid FROM competencias WHERE contrato_id='DEMO-UPA' AND competencia_id='2026-06'").cid;
+
+    // 1. Unidade: gestor revisa e envia
+    const gest = await entrar(browser, 'gestor.demo'); paginas.push(gest);
+    await gest.goto(base + '/unidade#/c/' + cid06); await gest.waitForSelector('#conteudo h1');
+    assert.match(await gest.textContent('body'), /DEMONSTRAÇÃO – dados fictícios/);
+    await limpa(gest); await gest.screenshot({ path: path.join(CAP, '1-unidade-resumo.png') });
+    await gest.evaluate((c) => { location.hash = '#/c/' + c + '/enviar'; }, cid06); await gest.waitForSelector('text=Gerar o PDF e enviar para a CTAI');
+    await gest.setViewportSize({ width: 1280, height: 1700 }); await limpa(gest); await gest.screenshot({ path: path.join(CAP, '2-unidade-enviar.png') }); await gest.setViewportSize({ width: 1280, height: 860 });
+    await gest.click('text=Gerar o PDF e enviar para a CTAI'); await dialogo(gest, 'Gerar e enviar');
+    await gest.waitForSelector('text=Enviado (versão 1)');
+    const envio = S.db.get('SELECT envio_id, pdf_hash FROM envios WHERE cid = ? ORDER BY versao DESC', cid06);
+    assert.ok(envio, 'envio gravado');
+    const pdf = await gest.evaluate(async (id) => { const r = await fetch('/api/unidade/envios/' + id + '/pdf'); const b = new Uint8Array(await r.arrayBuffer()); return { ok: r.ok, ini: String.fromCharCode(...b.slice(0, 5)), n: b.length }; }, envio.envio_id);
+    assert.equal(pdf.ini, '%PDF-'); log('unidade enviou; PDF de ' + pdf.n + ' bytes');
+
+    // 1b. Unidade: aviso de SEI pendente, instrução no campo, número inválido recusado, número válido registrado
+    await gest.evaluate((c) => { location.hash = '#/c/' + c; }, cid06); await gest.waitForSelector('#conteudo h1'); await gest.waitForSelector('text=SEI:');
+    assert.match(await gest.textContent('#conteudo'), /ainda não foi registrado/);
+    await gest.evaluate((c) => { location.hash = '#/c/' + c + '/envios'; }, cid06); await gest.waitForSelector('text=Número do documento no SEI');
+    assert.match(await gest.textContent('#conteudo'), /Depois de anexar e assinar no SEI, registre aqui o número do documento, para a CTAI saber qual versão foi ao processo/);
+    assert.match(await gest.textContent('#conteudo'), /Enviado ao sistema/);
+    await gest.fill('#sei-' + envio.envio_id, '12AB'); await gest.click('button:has-text("Registrar")'); await gest.waitForSelector('.msg-erro:has-text("só dígitos")', { timeout: 6000 });
+    await limpa(gest); await gest.screenshot({ path: path.join(CAP, '6-unidade-registro-sei.png') });
+    await gest.fill('#sei-' + envio.envio_id, '98765432'); await gest.click('button:has-text("Registrar")'); await gest.waitForSelector('text=Registrado no SEI', { timeout: 6000 });
+    assert.match(await gest.textContent('#conteudo'), /Documento no SEI nº 98765432/);
+    assert.equal(S.db.get('SELECT sei_numero FROM envio_sei WHERE envio_id = ?', envio.envio_id).sei_numero, '98765432');
+    log('unidade registrou o número do SEI (número inválido recusado antes)');
+
+    // visão mobile do portal
+    const mob = await entrar(browser, 'assistencia.demo', 390); paginas.push(mob);
+    await mob.goto(base + '/unidade#/c/' + cid06); await mob.waitForSelector('#conteudo h1');
+    await limpa(mob); await mob.screenshot({ path: path.join(CAP, '5-unidade-celular.png') });
+
+    // 2. CTAI: criador vê a competência recebida e monta a minuta
+    const cri = await entrar(browser, 'cleuton'); paginas.push(cri);
+    await ir(cri, '#/c/' + cid06, 'text=Recálculo');
+    await cri.setViewportSize({ width: 1280, height: 1500 }); await limpa(cri); await cri.screenshot({ path: path.join(CAP, '3-ctai-recalculo.png') }); await cri.setViewportSize({ width: 1280, height: 860 });
+    await ir(cri, '#/c/' + cid06 + '/envios', 'text=Os dois canais, versão por versão');
+    assert.match(await cri.textContent('#conteudo'), /SEI nº 98765432/);
+    assert.match(await cri.textContent('#conteudo'), /Registrado no SEI/);
+    assert.match(await cri.textContent('#conteudo'), /Comparar com o PDF que está no SEI \(opcional\)/);
+    assert.match(await cri.textContent('#conteudo'), /não é exigido e não bloqueia nada/);
+    await limpa(cri); await cri.screenshot({ path: path.join(CAP, '7-ctai-dois-canais.png') });
+    const bytes = await cri.evaluate(async (id) => Array.from(new Uint8Array(await (await fetch('/api/ctai/envios/' + id + '/pdf')).arrayBuffer())), envio.envio_id);
+    await cri.setInputFiles('#cmp-arq', { name: 'do-sei.pdf', mimeType: 'application/pdf', buffer: Buffer.from(bytes) }); await cri.click('button:has-text("Comparar")'); await cri.waitForSelector('text=Arquivo idêntico', { timeout: 8000 });
+    await cri.setInputFiles('#cmp-arq', { name: 'do-sei.pdf', mimeType: 'application/pdf', buffer: Buffer.concat([Buffer.from(bytes), Buffer.from('\n% carimbo\n')]) }); await cri.click('button:has-text("Comparar")'); await cri.waitForSelector('text=Arquivo diferente', { timeout: 8000 });
+    assert.match(await cri.textContent('#cmp-res'), /o SEI pode alterar o arquivo/);
+    log('CTAI viu os dois canais lado a lado e comparou o PDF (idêntico e diferente)');
+    await ir(cri, '#/c/' + cid06, 'text=Recálculo');
+    for (const [k, v] of [['desconto_modo', 'faixa'], ['vermelho', 'faixa']]) await api(cri, 'PUT', '/api/ctai/contratos/DEMO-UPA/decisoes/' + k, { valor: v, justificativa: 'Teste ponta a ponta' });
+    await ir(cri, '#/pareceres', '#np-c');
+    await cri.selectOption('#np-c', 'DEMO-UPA'); await cri.fill('#np-t', '2026-T2'); await cri.fill('#np-n', '1/2026');
+    await cri.click('text=Criar a minuta'); await cri.waitForSelector('text=Texto do parecer');
+    await cri.click('text=Sugerir texto a partir dos números'); await cri.waitForTimeout(700);
+    const pid = Number(cri.url().split('#/p/')[1]);
+    await cri.click('button:has-text("Ajustar") >> nth=0'); await cri.waitForSelector('dialog[open]');
+    await cri.fill('#aj-j', 'Conferido na evidência anexada'); await dialogo(cri, 'Salvar'); await cri.waitForTimeout(500);
+    await cri.click('text=Congelar e enviar para conferência'); await cri.waitForSelector('text=Mesa de conferência');
+    const vid = Number(cri.url().split('#/v/')[1]);
+    log('minuta criada e congelada (versão ' + vid + ')');
+
+    // 3. Mesa: dois colegas e a superintendente
+    for (const login of ['colega1', 'colega2', 'nathalia']) {
+      const p = await entrar(browser, login); paginas.push(p);
+      await ir(p, '#/v/' + vid, '.item-mesa');
+      const nOk = await p.locator('.item-mesa button:text-is("OK")').count();
+      if (nOk !== 8) console.log('DEBUG', login, (await p.textContent('#conteudo')).replace(/\s+/g,' ').slice(0,700));
+      assert.equal(nOk, 8, login + ' vê 8 itens para conferir');
+      assert.match(await p.textContent('#conteudo'), /Documento no SEI confere com a versão recebida no sistema/);
+      assert.match(await p.textContent('.item-mesa details[open]'), /98765432/);
+      if (login === 'colega1') { await p.setViewportSize({ width: 1280, height: 1150 }); await p.evaluate(() => window.scrollTo(0, 0)); await limpa(p); await p.screenshot({ path: path.join(CAP, '9-mesa-item-sei.png') }); await p.setViewportSize({ width: 1280, height: 860 }); }
+      for (let i = 0; i < 8; i++) { await p.locator('.item-mesa button:text-is("OK")').first().click(); await p.waitForTimeout(250); }
+      if (login === 'colega1') { await p.setViewportSize({ width: 1280, height: 1500 }); await p.evaluate(() => window.scrollTo(0, 0)); await limpa(p); await p.screenshot({ path: path.join(CAP, '4-mesa.png') }); await p.setViewportSize({ width: 1280, height: 860 }); }
+      if (login === 'nathalia') {
+        await p.waitForSelector('text=Autorizar esta versão');
+        await p.click('button:has-text("Autorizar esta versão")'); await dialogo(p, 'Autorizar'); await p.waitForSelector('text=Autorizada por');
+      }
+      log(login + ' conferiu' + (login === 'nathalia' ? ' e autorizou' : ''));
+    }
+    // criador não confere o próprio trabalho
+    await ir(cri, '#/v/' + vid, '.item-mesa'); assert.equal(await cri.locator('.item-mesa button:text-is("OK")').count(), 0);
+
+    // 4. SEI
+    await ir(cri, '#/p/' + pid, 'text=Anexar no SEI'); await cri.click('text=Registrar o número do SEI'); await cri.fill('#perg-campo', '12345678'); await dialogo(cri, 'Registrar');
+    await cri.waitForSelector('text=Anexado ao SEI');
+    const pdfMin = await cri.evaluate(async (id) => { const r = await fetch('/api/ctai/versoes/' + id + '/pdf'); const b = new Uint8Array(await r.arrayBuffer()); return String.fromCharCode(...b.slice(0, 5)); }, vid);
+    assert.equal(pdfMin, '%PDF-');
+    const trilha = await api(cri, 'GET', '/api/ctai/trilha/verificar'); assert.equal(trilha.ok, true); log('trilha íntegra (' + trilha.total + ' eventos)');
+    // 4b. Portal da unidade, interações: ficha com erro por campo, CSV recusado e aceito, integração (prévia)
+    const cid07 = S.db.get("SELECT cid FROM competencias WHERE contrato_id='DEMO-UPA' AND competencia_id='2026-07'").cid;
+    await gest.evaluate((c) => { location.hash = '#/c/' + c + '/ficha/assistencia'; }, cid07);
+    await gest.waitForSelector('#f-i2_1_valor');
+    await gest.fill('#f-i2_1_valor', 'abc'); await gest.click('button:has-text("Salvar rascunho")');
+    await gest.waitForSelector('.campo.erro', { timeout: 6000 });
+    await gest.fill('#f-i2_1_valor', '22,5'); await gest.click('button:has-text("Salvar rascunho")'); await gest.waitForSelector('text=Ficha salva.');
+    await gest.evaluate((c) => { location.hash = '#/c/' + c + '/lista/retorno'; }, cid07);
+    await gest.waitForSelector('#arq');
+    await gest.setInputFiles('#arq', { name: 'ruim.csv', mimeType: 'text/csv', buffer: Buffer.from('protocolo;nome;retornou_24h\nA1;Maria;sim\n') });
+    await gest.waitForSelector('text=Arquivo recusado', { timeout: 6000 });
+    await gest.setInputFiles('#arq', { name: 'bom.csv', mimeType: 'text/csv', buffer: Buffer.from('protocolo;retornou_24h\nDEMO-1;sim\nDEMO-2;não\nDEMO-3;não\n') });
+    await gest.waitForSelector('text=3 linha(s) no rascunho', { timeout: 6000 });
+    S.db.run("UPDATE integracoes SET ativo = 1 WHERE contrato_id = 'DEMO-UPA'");
+    await gest.evaluate(() => { location.hash = '#/integracao'; }); await gest.waitForSelector('text=Ver prévia (não grava)');
+    await gest.selectOption('#ic', String(cid07)); await gest.click('button:has-text("Ver prévia")'); await gest.waitForSelector('text=Prévia: nada foi gravado.', { timeout: 10000 });
+    await gest.click('button:has-text("Buscar e guardar como lote pendente")'); await gest.waitForSelector('text=lote pendente', { timeout: 10000 });
+    await gest.evaluate((c) => { location.hash = '#/c/' + c; }, cid07); await gest.waitForSelector('button:has-text("Confirmar")', { timeout: 8000 });
+    await gest.click('button:has-text("Confirmar") >> nth=0'); await gest.waitForSelector('text=Lote confirmado.');
+    log('unidade: ficha com erro por campo, CSV recusado/aceito, integração em prévia e lote confirmado');
+
+    // 4c. Console da CTAI, interações: decidir regra, decidir divergência, Achados do Analista
+    await ir(cri, '#/regras/DEMO-UPA', '#q-iam_meta');
+    await cri.selectOption('#q-iam_meta', '30'); await cri.fill('#j-iam_meta', 'Ficha do contrato, item 6.6.2');
+    await cri.locator('div.cartao', { has: cri.locator('#q-iam_meta') }).locator('button:has-text("Registrar decisão")').click(); await cri.waitForSelector('text=Decisão registrada.');
+    await ir(cri, '#/c/' + cid06 + '/divergencias', 'select[id^="dv"]');
+    const dv = cri.locator('select[id^="dv"]').first(); await dv.selectOption('aceita');
+    await dv.locator('xpath=ancestor::div[contains(@class,"cartao")]').locator('button:has-text("Registrar")').click();
+    await cri.fill('#perg-campo', 'Conferido com a evidência da unidade'); await dialogo(cri, 'Confirmar'); await cri.waitForSelector('text=Registrado.');
+    await ir(cri, '#/c/' + cid06 + '/achados', 'text=O Analista lê o texto do relatório enviado');
+    await cri.click('button:has-text("Analisar o relatório enviado")').catch(() => cri.click('#conteudo button.sec >> nth=0')); await cri.waitForTimeout(1500);
+    log('console: decisão de regra, divergência aceita com observação, achados');
+
+    // 4d. Nova versão no sistema depois do SEI: a unidade reenvia e a CTAI vê o alerta (nada é bloqueado)
+    await gest.evaluate((c) => { location.hash = '#/c/' + c + '/enviar'; }, cid06); await gest.waitForSelector('#motivo');
+    await gest.fill('#motivo', 'Correção do tempo médio depois da assinatura no SEI');
+    await gest.click('text=Gerar o PDF e enviar para a CTAI'); await dialogo(gest, 'Gerar e enviar'); await gest.waitForSelector('text=Enviado (versão 2)', { timeout: 20000 });
+    await ir(cri, '#/c/' + cid06 + '/envios', 'text=Os dois canais, versão por versão');
+    await cri.waitForSelector('text=Nova versão no sistema depois do SEI');
+    await limpa(cri); await cri.screenshot({ path: path.join(CAP, '8-ctai-alerta-sei.png') });
+    await ir(cri, '#/c/' + cid06, 'text=Recálculo'); assert.match(await cri.textContent('#conteudo'), /Sistema × SEI/);
+    await ir(cri, '#/', 'text=SEI: 1 alerta(s)');
+    await gest.evaluate((c) => { location.hash = '#/c/' + c; }, cid06); await gest.waitForSelector('text=Você enviou a v2 depois de registrar o SEI da v1');
+    log('nova versão depois do SEI gerou o alerta na CTAI e o aviso na unidade');
+
+    // 5. Telas do administrador: Analista, trilha, usuários, integrações
+    const adm = await entrar(browser, 'admin'); paginas.push(adm);
+    await ir(adm, '#/analista', '#an-t');
+    await adm.fill('#an-t', 'No mês de junho de 2026 foram realizados 22 (vinte) atendimentos de dor torácica.');
+    await adm.click('button:has-text("Analisar")'); await adm.waitForTimeout(1500); if (process.env.DBG) console.log((await adm.textContent('#conteudo')).replace(/\s+/g,' ').slice(-700)); await adm.waitForSelector('text=Valor por extenso diferente do numérico', { timeout: 8000 });
+    log('Analista (regras locais) apontou o extenso diferente do numérico');
+    await ir(adm, '#/trilha', 'text=Cadeia íntegra');
+    await ir(adm, '#/admin', '#au-l');
+    await adm.fill('#au-l', 'colega.novo'); await adm.fill('#au-n', 'Colega Novo'); await adm.selectOption('#au-p', 'colega'); await adm.click('button:has-text("Criar usuário")');
+    await adm.waitForSelector('td:has-text("colega.novo")', { timeout: 8000 });
+    await ir(adm, '#/integracoes', 'text=Testar a conexão');
+    const cartaoDemo = adm.locator('div.cartao', { hasText: 'API de teste' }).last();
+    await cartaoDemo.locator('button:has-text("Testar a conexão")').click(); await adm.waitForSelector('text=Conectou em', { timeout: 8000 });
+    await ir(adm, '#/regras', '#conteudo h1'); await ir(adm, '#/c/' + cid06 + '/divergencias', 'text=Divergências');
+    log('telas do administrador percorridas');
+    for (const p of paginas) assert.deepEqual(p.erros, [], 'erros de JavaScript na tela: ' + p.erros.join(' | '));
+    console.log('\nE2E OK');
+  } catch (e) {
+    console.error('\nE2E FALHOU:', e.message);
+    for (const p of paginas) if (p.erros.length) console.error(p.erros);
+    process.exitCode = 1;
+  } finally { await browser.close(); if (mockSrv) mockSrv.close(); await S.fechar(); }
+})();
