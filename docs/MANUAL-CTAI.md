@@ -2,6 +2,19 @@
 
 Endereço: `/ctai`. Perfis: **criador** (monta o parecer), **colega** (confere), **superintendente** (confere de novo e autoriza), **administrador** (usuários, demonstração, integrações; **não** confere nem autoriza na mesa).
 
+## Caixa de entrada e Minhas unidades (todos da CTAI)
+
+**Caixa de entrada** (menu, com o número de não lidos). Um item para cada fato que pede atenção: relatório recebido, reenvio ou correção, resposta da unidade a um esclarecimento, prazo do SEI (dia 20) ou do SIMAS (dia 25) **a vencer** ou **vencido**, minuta aguardando a sua conferência, unidade sem gestor, unidade sem carteira (só a superintendente recebe esta) e item redirecionado a você.
+- Quem recebe: **quem tem a unidade na carteira**. Co-responsáveis recebem todos os itens. Unidade sem carteira cai na caixa da superintendente. Ninguém vê item de unidade fora da sua carteira (nem pelo endereço); superintendente e administrador veem o que é deles.
+- Cada item mostra unidade, tipo, competência, data, se foi lido (por pessoa) e se foi **tratado** (quem e quando). **Abrir** leva direto à tela certa e marca como lido. **Marcar como tratado** vale para todos os destinatários; o primeiro que tratar marca, quem tentar depois é avisado. **Reabrir** é possível e o **Histórico** guarda tudo (criado, lido, tratado, reaberto, redirecionado).
+- Filtros por unidade, tipo e situação (pendentes, não lidos, tratados). A lista vem ordenada por urgência: prazo vencido, prazo a vencer, resposta da unidade, minuta, reenvio, relatório recebido. Avisos de prazo e de unidade sem gestor/carteira fecham sozinhos quando a situação se resolve.
+- **Redirecionar item**: envia um item a outra pessoa (ela precisa ter a unidade na carteira) e ela recebe um aviso "redirecionado a você".
+- Os textos da caixa trazem só unidade, tipo, competência e versão. Nada de conteúdo de resposta ou dado de paciente.
+- **Ausência ou substituição**: no fim da própria caixa. Escolha o substituto e o período (a superintendente pode fazer isso para qualquer pessoa; cada analista, só para si). Itens **novos** do período vão para o substituto, marcados "em substituição de fulano", e ele(a) passa a abrir as unidades enquanto durar. Dá para cancelar. Tudo na trilha.
+- Aviso por e-mail **não existe** nesta versão. Há um ponto de extensão (`avisos.aoCriar` em `server/caixa.js`) para ligar no futuro.
+
+**Minhas unidades** (menu): as unidades da sua carteira com fase da conferência, pior prazo (20/25), pendências na caixa, achados e divergências abertos e data da última entrega. Cada cartão abre a unidade.
+
 ## Menu
 **Painel · Pareceres · Analista CTAI · Regras e decisões · Integrações · Trilha · Gestão CTAI** (superintendente e admin) **· Administração** (só admin).
 
@@ -70,7 +83,7 @@ Cada competência com envio tem a aba **Checklist de recebimento** (console da C
 
 ## Gestão CTAI (superintendente e administrador)
 
-Menu **Gestão CTAI**, com sete abas (Painel, Produção, Carteira, Importar, Usuários, Acessos, IA). Só a superintendente e o administrador veem esta área; as outras pessoas da CTAI não têm o menu e recebem "sem acesso" se tentarem pelo endereço.
+Menu **Gestão CTAI**, com oito abas (Painel, Produção, Carteira, Entregas por carteira, Importar, Usuários, Acessos, IA). Só a superintendente e o administrador veem esta área; as outras pessoas da CTAI não têm o menu e recebem "sem acesso" se tentarem pelo endereço.
 
 **Painel.** A visão da superintendente num só lugar. Filtros por **trimestre, unidade e funcionário**; botão **Exportar PDF** gera o mesmo painel em PDF.
 - Cartões: unidades, envios recebidos, incompletos e pendentes, prazos vencidos / a vencer / com atraso, achados abertos e vencidos, pareceres em rascunho e congelados, unidades sem carteira.
@@ -87,6 +100,8 @@ Menu **Gestão CTAI**, com sete abas (Painel, Produção, Carteira, Importar, Us
 - quem ainda não tem nenhuma unidade vê todas (modo compatível); o **modo estrito** faz essa pessoa não ver nada até receber unidades;
 - superintendente e administrador veem todas;
 - cada mudança entra no **histórico** (quem, quando, motivo) e na trilha.
+
+**Entregas por carteira.** Por analista e por unidade: quando cada relatório chegou, em qual caixa caiu (inclusive "em substituição de"), se foi lido, se foi tratado (quem e quando) e há quanto tempo está pendente. Relatórios **não lidos há mais de N dias** ficam em destaque (N configurável, padrão 3, botão Salvar limite). Unidades sem responsável aparecem à parte, na caixa da superintendente. Filtros por unidade e analista; **Exportar PDF**. Na aba **Produção** há duas colunas novas: tempo médio até a primeira leitura e até o tratamento (relatórios, respostas e minutas).
 
 **Importar (unidades e carteira em lote).** Para cadastrar de uma vez as unidades (UPA, UPAE, Hospital) e distribuí-las entre os analistas.
 1. Clique em **Baixar modelo** (dados fictícios) e preencha: `tipo` (UPA, UPAE ou Hospital), `unidade`, `municipio` (opcional) e `analista` (login ou nome; vários analistas na mesma unidade separados por `|`). CSV em UTF-8, separado por `;` ou `,`.

@@ -297,6 +297,22 @@ let base;
     await ir(sup, '#/gestao', 'text=Alertas'); await sup.waitForSelector('#fila-sem-gestor');
     assert.match(await sup.textContent('#fila-sem-gestor'), /Exemplo Alfa/);
     log('importação em lote da carteira e fila de unidades aguardando gestor');
+    // Caixa de entrada, minhas unidades e entregas por carteira
+    const CXs = require('../../server/caixa');
+    const uCol = S.db.get("SELECT usuario_id FROM usuarios WHERE login = 'colega1'").usuario_id;
+    await sup.evaluate(async (id) => { await fetch('/api/gestao/carteira/' + id, { method: 'PUT', headers: { 'content-type': 'application/json', 'x-ctai': '1' }, body: JSON.stringify({ unidades: ['DEMO-UPA'] }) }); }, uCol);
+    for (const e of S.db.all('SELECT envio_id, cid, versao FROM envios WHERE recebido_em IS NOT NULL ORDER BY envio_id DESC LIMIT 2')) { S.db.run("DELETE FROM caixa_destinos WHERE item_id IN (SELECT item_id FROM caixa_itens WHERE chave = ?)", 'envio:' + e.envio_id); S.db.run('DELETE FROM caixa_itens WHERE chave = ?', 'envio:' + e.envio_id); CXs.eventoEnvio(S.db, e); }
+    CXs.sincronizar(S.db, { forcar: true });
+    await colegaCart.goto(colegaCart.url().split('#')[0] + '#/caixa'); await colegaCart.waitForSelector('#cx-lista .cx-item', { timeout: 8000 });
+    assert.ok(await colegaCart.locator('#caixa-contador').count() >= 1, 'contador de não lidos no menu');
+    await colegaCart.setViewportSize({ width: 1280, height: 1500 }); await limpa(colegaCart); await colegaCart.screenshot({ path: path.join(CAP, '27-caixa-entrada.png') });
+    await colegaCart.locator('.cx-tratar').first().click(); await colegaCart.fill('#perg-campo', 'Conferido'); await colegaCart.click('dialog button:has-text("Confirmar")');
+    await colegaCart.waitForFunction(() => document.querySelectorAll('.cx-item').length >= 0, null, { timeout: 5000 }); await colegaCart.waitForTimeout(500);
+    await colegaCart.goto(colegaCart.url().split('#')[0] + '#/minhas-unidades'); await colegaCart.waitForSelector('#mu-lista .un-card', { timeout: 8000 });
+    await colegaCart.setViewportSize({ width: 1280, height: 900 }); await limpa(colegaCart); await colegaCart.screenshot({ path: path.join(CAP, '28-minhas-unidades.png') });
+    await ir(sup, '#/gestao/entregas', '#en-pdf'); await sup.waitForSelector('[data-analista="colega1"]', { timeout: 8000 });
+    await sup.setViewportSize({ width: 1280, height: 1100 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '29-gestao-entregas.png') });
+    log('caixa de entrada, minhas unidades e entregas por carteira');
     for (const p of paginas) assert.deepEqual(p.erros, [], 'erros de JavaScript na tela: ' + p.erros.join(' | '));
     console.log('\nE2E OK');
   } catch (e) {

@@ -120,3 +120,5 @@ label.ck{display:block;padding:5px 0;cursor:pointer}label.ck input{margin-right:
 .sem-carteira select{width:auto;min-width:220px}
 .sem-carteira button{white-space:nowrap}
 td .linha{flex-wrap:nowrap;white-space:nowrap}
+.nav .contador{background:var(--verm);color:#fff;border-radius:10px;padding:0 7px;font-size:12px;margin-left:8px;font-weight:700}
+.cx-item.nao-lido{border-left:4px solid var(--acento)}

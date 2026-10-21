@@ -2,7 +2,7 @@
   'use strict';
   // Gestão CTAI: painel da superintendente, produção, carteira, usuários e IA. Só superintendente e administrador.
   const { h, api, fmt, toast, janela, confirmar, selo, aviso, tabela, montar } = window.CTAI;
-  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['importar', 'Importar'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
+  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['entregas', 'Entregas por carteira'], ['importar', 'Importar'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
   const kpi = (r, v, nota, tom) => h('div', { class: 'kpi' + (tom ? ' ' + tom : '') }, h('div', { class: 'r' }, r), h('div', { class: 'num-grande' }, String(v)), nota ? h('div', { class: 'r' }, nota) : null);
   const F = { trimestre: '', contrato: '', usuario_id: '' }; // filtros lembrados enquanto a página está aberta
   const qs = (o) => { const p = new URLSearchParams(); for (const k of Object.keys(o)) if (o[k]) p.set(k, o[k]); const s = p.toString(); return s ? '?' + s : ''; };
@@ -98,10 +98,11 @@
       h('div', { class: 'kpis' }, kpi('Itens conferidos', t.itens_conferidos), kpi('Divergências tratadas', t.divergencias_tratadas), kpi('Achados encaminhados', t.achados_encaminhados, t.achados_respondidos + ' já respondidos'),
         kpi('Minutas criadas', t.minutas_criadas, t.minutas_congeladas + ' congeladas')),
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Por funcionário'),
-        tabela([{ t: 'Funcionário' }, { t: 'Itens', n: true }, { t: 'Diverg.', n: true }, { t: 'Achados enc./resp./desc.' }, { t: 'Minutas cri./cong.' }, { t: 'Receb. → conferido' }, { t: 'Carga atual' }],
+        tabela([{ t: 'Funcionário' }, { t: 'Itens', n: true }, { t: 'Diverg.', n: true }, { t: 'Achados enc./resp./desc.' }, { t: 'Minutas cri./cong.' }, { t: 'Receb. → conferido' }, { t: 'Até 1ª leitura' }, { t: 'Até tratar' }, { t: 'Carga atual' }],
           p.funcionarios.map((f) => [h('div', null, h('strong', null, f.nome), h('div', { class: 'r mudo peq' }, f.perfil)), f.itens_conferidos, f.divergencias_tratadas,
             f.achados.encaminhados + ' / ' + f.achados.respondidos + ' / ' + f.achados.descartados, f.minutas.criadas + ' / ' + f.minutas.congeladas,
             f.tempo_medio ? n1(f.tempo_medio.dias) + ' d (' + f.tempo_medio.amostra + ')' : '—',
+            f.caixa && f.caixa.horas_ate_leitura !== null ? n1(f.caixa.horas_ate_leitura) + ' h (' + f.caixa.lidos + ')' : '—', f.caixa && f.caixa.horas_ate_tratamento !== null ? n1(f.caixa.horas_ate_tratamento) + ' h (' + f.caixa.tratados_por_mim + ')' : '—',
             h('div', { class: 'peq carga' }, f.carga.unidades + ' unid. · ' + f.carga.divergencias_abertas + ' diverg. · ' + f.carga.achados_abertos + ' achados · ' + f.carga.minutas_abertas + ' minuta(s) · ' + f.carga.conferencias_pendentes + ' a conferir')]))));
   }
 
@@ -309,12 +310,39 @@
     desenhar();
   }
 
+  // ---------- Entregas por carteira ----------
+  async function entregas() {
+    const d = await api('GET', '/api/gestao/entregas' + qs({ contrato: F.contrato, usuario_id: F.usuario_id }));
+    const c = await api('GET', '/api/gestao/carteira');
+    const linha = (e) => [e.unidade, (e.competencia_id || '').split('-').reverse().join('/') + ' v' + e.versao, fmt.data(e.recebido_em),
+      e.caixa.length ? e.caixa.map((x) => x.nome + (x.em_substituicao_de ? ' (em substituição de ' + x.em_substituicao_de + ')' : '')).join(', ') : h('span', { class: 'mudo' }, 'sem registro na caixa'),
+      e.lido ? fmt.data(e.lido_em) : (e.destaque ? selo('não lido há ' + e.pendente_dias + ' d', 'alta') : selo('não lido', 'atencao')),
+      e.tratado ? e.tratado_por + ' · ' + fmt.data(e.tratado_em) : (e.pendente_dias === null ? '—' : selo('pendente há ' + e.pendente_dias + ' d', e.pendente_dias >= d.dias_nao_lido ? 'atencao' : ''))];
+    const cab = [{ t: 'Unidade' }, { t: 'Competência' }, { t: 'Chegou' }, { t: 'Caiu na caixa de' }, { t: 'Lido' }, { t: 'Tratado' }];
+    const dias = h('input', { type: 'number', id: 'en-dias', min: 1, max: 60, value: d.dias_nao_lido, style: 'width:80px' });
+    montar(cabecalho('entregas'),
+      h('div', { class: 'filtros cartao' },
+        seletor('en-un', 'Unidade', [['', 'Todas']].concat(c.unidades.map((u) => [u.contrato_id, u.unidade])), F.contrato, (v) => { F.contrato = v; entregas(); }),
+        seletor('en-func', 'Analista', [['', 'Todos']].concat(c.funcionarios.map((f) => [f.usuario_id, f.nome])), F.usuario_id, (v) => { F.usuario_id = v; entregas(); }),
+        h('div', { class: 'campo filtro' }, h('label', { for: 'en-dias' }, 'Destacar não lidos há (dias)'), dias),
+        h('button', { class: 'sec', id: 'en-dias-ok', onclick: async () => { try { await api('PUT', '/api/gestao/caixa-config', { dias_nao_lido: Number(dias.value) }); toast('Limite salvo.'); entregas(); } catch (e) { toast(e.message, true); } } }, 'Salvar limite'),
+        h('a', { class: 'btn sec', id: 'en-pdf', href: '/api/gestao/entregas.pdf' + qs({ contrato: F.contrato, usuario_id: F.usuario_id }), target: '_blank', rel: 'noopener' }, 'Exportar PDF')),
+      h('div', { class: 'kpis' }, kpi('Entregas', d.total.entregas), kpi('Não lidas', d.total.nao_lidas, '', d.total.nao_lidas ? 'atencao' : ''), kpi('Pendentes', d.total.pendentes), kpi('Não lidas há ' + d.dias_nao_lido + ' d ou mais', d.total.destacadas, '', d.total.destacadas ? 'alta' : ''),
+        kpi('Sem responsável', d.sem_responsavel.length, 'unidades', d.sem_responsavel.length ? 'atencao' : '')),
+      d.analistas.map((a) => h('div', { class: 'cartao', 'data-analista': a.login }, h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, a.nome), h('span', { class: 'mudo peq' }, a.resumo.entregas + ' entrega(s) · ' + a.resumo.nao_lidas + ' não lida(s) · ' + a.resumo.pendentes + ' pendente(s)' + (a.resumo.destacadas ? ' · ' + a.resumo.destacadas + ' em destaque' : ''))),
+        tabela(cab, a.unidades.flatMap((u) => u.entregas.map(linha))))),
+      d.analistas.length ? null : h('div', { class: 'cartao' }, h('p', { class: 'mudo' }, 'Nenhuma entrega registrada na caixa ainda.')),
+      h('div', { class: 'cartao', id: 'en-sem-resp' }, h('h2', { style: 'margin-top:0' }, 'Unidades sem responsável (caixa da superintendente)'),
+        d.sem_responsavel.length ? tabela(cab, d.sem_responsavel.flatMap((u) => (u.entregas.length ? u.entregas.map(linha) : [[u.unidade, '—', '—', selo('sem carteira', 'atencao'), '—', '—']]))) : h('p', { class: 'mudo' }, 'Todas as unidades têm responsável.')));
+  }
+
   async function aba() {
     const h2 = location.hash.replace(/^#\/gestao\/?/, '');
     if (!F.lista) { try { F.lista = (await api('GET', '/api/gestao/painel?trimestre=' + (F.trimestre || ''))).trimestres; } catch (_) { F.lista = []; } }
     if (h2 === 'producao') return producao();
     if (h2 === 'carteira') return carteira();
     if (h2 === 'importar') return importar();
+    if (h2 === 'entregas') return entregas();
     if (h2 === 'usuarios') return usuarios();
     if (h2 === 'acessos') return acessos();
     if (h2 === 'ia') return ia();
