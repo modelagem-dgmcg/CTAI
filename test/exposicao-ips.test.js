@@ -102,3 +102,14 @@ test('login e acessos: origem e IP mascarado; /api/origem ajuda a calibrar', asy
   assert.equal((await fetch(S.base + '/saude', { headers: xff('8.8.8.8, 10.0.0.1') })).status, 200, 'rota de saúde aberta para a plataforma');
   assert.equal((await fetch(S.base + '/api/saude', { headers: xff('8.8.8.8, 10.0.0.1') })).status, 200);
 });
+
+test('backup do banco: só administrador, arquivo SQLite válido', async () => {
+  limpar();
+  const adm = cliente(S.base); await adm.entrar('admin');
+  const r = await adm.get('/api/admin/backup');
+  assert.equal(r.status, 200); assert.equal(r.buffer.slice(0, 15).toString(), 'SQLite format 3');
+  assert.equal((await nath.get('/api/admin/backup')).status, 403);
+  cfg(ALVO);
+  assert.equal((await fetch(S.base + '/api/admin/backup', { headers: xff('8.8.8.8, 10.0.0.1') })).status, 404, 'por fora nem existe');
+  limpar();
+});

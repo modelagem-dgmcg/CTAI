@@ -19,9 +19,10 @@ Primeira versão para teste. Funciona de ponta a ponta com **dados fictícios**.
 | **Exposição por túnel** (20/10/2026) | origem externa só alcança o Portal da Unidade (404 no resto), perfis da CTAI recusados fora da rede interna, padrão seguro | `test/exposicao.test.js` (4) |
 | **Equipe pelo gestor da unidade** | cadastrar, fichas por pessoa, senha temporária, ativar/desativar, trocar responsável por ficha; sem alcance fora da própria unidade; trilha com quem fez | `test/equipe-acessos.test.js` + E2E |
 | **Aba Acessos** (Gestão CTAI) | entradas, falhas, bloqueios, saídas, origem, IP mascarado, agente, cadastros dos gestores; filtros; CSV e PDF; sem edição | `test/equipe-acessos.test.js` + E2E |
+| **Deploy no Render** (21/10/2026) | `render.yaml` (Docker, Starter, disco de 1 GB em `/dados`, saúde em `/api/saude`), `CTAI_IPS_INTERNOS` com IP de cliente seguro atrás de proxy (`CTAI_PROXY_SALTOS`, `CTAI_IP_CABECALHO`, `CTAI_PROXIES_CONFIAVEIS`), `/api/origem` para conferir, backup do banco pelo admin, guia `docs/GUIA-RENDER.md` | `test/exposicao-ips.test.js` (8: IP na lista, fora, forjado, indeterminado, IPv6/CIDR, proxies) |
 | Dados de demonstração | contrato fictício, recriar e apagar | testes + E2E |
 
-Números: `npm test` = **75 testes, 0 falhas**. `npm run e2e` = fluxo completo no Chromium (unidade envia, PDF válido, CTAI recalcula, minuta, congelar, três pessoas conferem, superintendente autoriza, SEI do parecer registrado, trilha íntegra, número do SEI do relatório registrado pela unidade, dois canais e alerta de nova versão, sem erro de JavaScript nas telas percorridas). Capturas em `docs/capturas/`.
+Números: `npm test` = **91 testes, 0 falhas**. `npm run e2e` = fluxo completo no Chromium (unidade envia, PDF válido, CTAI recalcula, minuta, congelar, três pessoas conferem, superintendente autoriza, SEI do parecer registrado, trilha íntegra, número do SEI do relatório registrado pela unidade, dois canais e alerta de nova versão, sem erro de JavaScript nas telas percorridas). Capturas em `docs/capturas/`.
 
 ## Vagas (encaixes) deixadas prontas
 
@@ -46,6 +47,9 @@ Números: `npm test` = **75 testes, 0 falhas**. `npm run e2e` = fluxo completo n
 - Android/iOS reais (testei largura de celular no Chromium).
 
 ## Limites conhecidos
+
+- **Render e restrição por IP**: o IP do cliente é lido do `X-Forwarded-For` contando do fim (`CTAI_PROXY_SALTOS=2`). Isso depende de o proxy do Render acrescentar exatamente um valor; **não foi testado em um Render real** (sem acesso a ele daqui). O teste de segurança do `docs/GUIA-RENDER.md` (passo 5, com `/api/origem`) é obrigatório antes de divulgar. Falha para o lado seguro (todos externos). O disco exige plano pago; instância única.
+
 
 - **Gestão CTAI**: a conexão com provedor de IA só foi testada contra um provedor falso local (sem internet). Com chave real, use "Testar" na tela IA. O modo estrito da carteira vem desligado.
 

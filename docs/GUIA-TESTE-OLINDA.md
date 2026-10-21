@@ -1,5 +1,7 @@
 # Guia: teste com a UPA Olinda a partir de um computador da SES
 
+> **Hospedagem na nuvem:** para o teste sem depender de um computador ligado na SES, use o **Render**: `docs/GUIA-RENDER.md` (todos entram pelo mesmo endereço; só o IP da SES vê o console). A restrição de acesso está em `docs/EXPOSICAO.md`.
+
 Para quem vai montar o teste (sem precisar programar). Tempo: de 30 a 60 minutos.
 Use **somente dados de demonstração**. Nada real de paciente, escala ou CPF.
 

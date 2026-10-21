@@ -18,6 +18,7 @@ npm start            # 3. sobe em http://localhost:3000
 
 - Portal da Unidade: `http://localhost:3000/unidade`
 - Console da CTAI: `http://localhost:3000/ctai` (menu **Analista CTAI**: veja `docs/ANALISTA-CTAI.md`; menu **Gestão CTAI** para a superintendente: veja `docs/MANUAL-CTAI.md`)
+- Deploy no Render: `docs/GUIA-RENDER.md` (`render.yaml` na raiz)
 - Exposição por túnel (só o Portal da Unidade): `docs/EXPOSICAO.md`
 - Entrada comum: `http://localhost:3000/` (cada perfil vai para o seu lado)
 

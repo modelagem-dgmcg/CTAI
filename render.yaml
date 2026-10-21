@@ -1,0 +1,32 @@
+# Blueprint do Render para o sistema CTAI (veja docs/GUIA-RENDER.md).
+# Render > New > Blueprint > escolha este repositório. As variáveis marcadas com sync: false são pedidas na tela (não ficam no repositório).
+services:
+  - type: web
+    name: ctai
+    runtime: docker
+    plan: starter            # disco persistente exige plano pago
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/saude   # responde {"ok":true}, sem dados
+    autoDeploy: true         # cada push na branch principal atualiza o sistema
+    disk:
+      name: dados
+      mountPath: /dados      # banco SQLite, PDFs e chave de pseudônimo
+      sizeGB: 1
+    envVars:
+      - key: CTAI_DATA_DIR
+        value: /dados
+      - key: CTAI_COOKIE_SEGURO
+        value: "sim"         # o Render serve em https
+      - key: CTAI_EXPOSICAO
+        value: restrita      # origem externa só alcança o Portal da Unidade
+      - key: CTAI_SENHA_TEMPORARIA
+        sync: false          # preencher no painel (senha provisória dos usuários criados; cada um troca no 1º acesso)
+      - key: CTAI_SEGREDO
+        sync: false          # preencher no painel (mínimo de 16 caracteres; cifra as chaves de IA)
+      - key: CTAI_IPS_INTERNOS
+        sync: false          # preencher no painel: IP público da SES (ex.: 200.1.2.3). Só esses IPs veem o console da CTAI
+      # Como o IP do cliente é lido atrás do proxy do Render (confira em /api/origem; veja docs/EXPOSICAO.md):
+      - key: CTAI_PROXY_SALTOS
+        value: "2"           # o proxy da plataforma acrescenta 1 valor no fim do X-Forwarded-For; o cliente é o 2º contado do fim
+      - key: CTAI_SEMEAR
+        value: "sim"         # primeira subida cria usuários e dados de DEMONSTRAÇÃO

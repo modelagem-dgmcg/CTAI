@@ -47,6 +47,19 @@ module.exports = (db) => {
     res.json({ ok: true });
   });
 
+  // Cópia consistente do banco (sem parar o sistema) para baixar como backup. Só administrador, só de dentro (a exposição bloqueia /api/admin por fora).
+  r.get('/backup', (req, res) => {
+    const fs = require('fs'), path = require('path');
+    const arq = path.join(config.dataDir, 'backup-' + Date.now() + '.sqlite');
+    try {
+      db.exec("VACUUM INTO '" + arq.replace(/'/g, "''") + "'");
+      trilha.registrar(db, { usuario: req.usuario.login, tabela: 'sistema', registro: 'banco', campo: 'backup', valor_novo: 'baixado' });
+      const nome = 'ctai-backup-' + new Date().toISOString().slice(0, 10) + '.sqlite';
+      res.setHeader('Content-Type', 'application/octet-stream'); res.setHeader('Content-Disposition', 'attachment; filename="' + nome + '"');
+      res.send(fs.readFileSync(arq));
+    } finally { try { fs.unlinkSync(arq); } catch (_) { /* já removido */ } }
+  });
+
   r.get('/saude', (req, res) => {
     const v = trilha.verificar(db);
     res.json({ trilha: { ok: v.ok, eventos: v.total }, contratos: db.get('SELECT COUNT(*) AS n FROM contratos').n, envios: db.get('SELECT COUNT(*) AS n FROM envios').n, node: process.version, senhaTemporariaPadrao: config.senhaTemporaria === 'Trocar@123' });
