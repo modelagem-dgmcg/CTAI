@@ -281,6 +281,22 @@ let base;
     const csvAc = await sup.evaluate(async () => { const r = await fetch(document.querySelector('#ga-csv').getAttribute('href')); return { ok: r.ok, t: (await r.text()).slice(0, 80) }; });
     assert.ok(csvAc.ok && /data_hora;evento/.test(csvAc.t));
     log('equipe da unidade pelo gestor e aba Acessos (CSV/PDF)');
+    // Importação em lote de unidades e carteira (arquivo fictício)
+    const arqImp = path.join(S.dir, 'lote-ficticio.csv');
+    fs.writeFileSync(arqImp, ['tipo;unidade;municipio;analista', 'UPA;Exemplo Alfa;Cidade Alfa;colega1', 'UPAE;Exemplo Alfa;Cidade Alfa;colega1', 'Hospital;Exemplo Beta;Cidade Beta;colega2', 'UPA;Exemplo Beta;Cidade Beta;Pessoa Nova Ficticia',
+      'UPA;Exemplo Gama;Cidade Gama;colega1', 'UPA;Exemplo Gama;Cidade Gama;colega2', 'Clinica;Exemplo Erro;;colega1'].join('\n'));
+    await ir(sup, '#/gestao/importar', '#imp-arquivo');
+    await sup.setInputFiles('#imp-arquivo', arqImp);
+    await sup.waitForSelector('#imp-conflitos', { timeout: 8000 });
+    assert.equal(await sup.locator('#imp-gravar').isDisabled(), true, 'não grava com decisões pendentes');
+    await sup.selectOption('.imp-dec-analista', 'criar'); await sup.waitForSelector('.imp-dec-conflito', { timeout: 8000 });
+    await sup.selectOption('.imp-dec-conflito', 'dividir'); await sup.waitForTimeout(400);
+    await sup.check('#imp-ignorar'); await sup.waitForFunction(() => !document.querySelector('#imp-gravar').disabled, null, { timeout: 8000 });
+    await sup.setViewportSize({ width: 1280, height: 1700 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '26-gestao-importar.png') });
+    await sup.click('#imp-gravar'); await sup.waitForSelector('.aviso.ok >> text=Importação #', { timeout: 8000 });
+    await ir(sup, '#/gestao', 'text=Alertas'); await sup.waitForSelector('#fila-sem-gestor');
+    assert.match(await sup.textContent('#fila-sem-gestor'), /Exemplo Alfa/);
+    log('importação em lote da carteira e fila de unidades aguardando gestor');
     for (const p of paginas) assert.deepEqual(p.erros, [], 'erros de JavaScript na tela: ' + p.erros.join(' | '));
     console.log('\nE2E OK');
   } catch (e) {

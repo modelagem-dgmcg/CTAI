@@ -70,7 +70,7 @@ Cada competência com envio tem a aba **Checklist de recebimento** (console da C
 
 ## Gestão CTAI (superintendente e administrador)
 
-Menu **Gestão CTAI**, com seis abas (Painel, Produção, Carteira, Usuários, Acessos, IA). Só a superintendente e o administrador veem esta área; as outras pessoas da CTAI não têm o menu e recebem "sem acesso" se tentarem pelo endereço.
+Menu **Gestão CTAI**, com sete abas (Painel, Produção, Carteira, Importar, Usuários, Acessos, IA). Só a superintendente e o administrador veem esta área; as outras pessoas da CTAI não têm o menu e recebem "sem acesso" se tentarem pelo endereço.
 
 **Painel.** A visão da superintendente num só lugar. Filtros por **trimestre, unidade e funcionário**; botão **Exportar PDF** gera o mesmo painel em PDF.
 - Cartões: unidades, envios recebidos, incompletos e pendentes, prazos vencidos / a vencer / com atraso, achados abertos e vencidos, pareceres em rascunho e congelados, unidades sem carteira.
@@ -78,6 +78,7 @@ Menu **Gestão CTAI**, com seis abas (Painel, Produção, Carteira, Usuários, A
 - **Por unidade**: fase da conferência (aguardando envio, recebido, tratando divergências, minuta em elaboração, mesa de conferência, autorizado, anexado no SEI), prazos de cada mês, IGQ médio em pontos, percentual pago em média, comparação com o trimestre anterior, achados abertos e parecer.
 - **Divergências recorrentes por indicador**: itens que voltam em mais de uma competência.
 - **Unidades sem carteira**: o envio delas não tem responsável; escolha o funcionário e clique em Atribuir.
+- **Unidades aguardando gestor**: unidades cadastradas em que ninguém foi cadastrado como gestor da unidade (fase "Aguardando gestor", cartão "Sem gestor" e alerta). Saem da fila quando o gestor é criado em Usuários.
 
 **Produção.** Por funcionário e por período (trimestre ou todo o período), com filtro de unidade: itens conferidos na mesa, divergências tratadas, achados encaminhados / respondidos / descartados, minutas criadas e congeladas, tempo médio entre o recebimento do envio e a autorização do parecer, e a **carga atual** (unidades, divergências e achados abertos, minutas em andamento, conferências a fazer). Tudo sai de ações já registradas na trilha e no fluxo. **Não há monitoramento de digitação, de tela aberta nem de tempo online.**
 
@@ -86,6 +87,15 @@ Menu **Gestão CTAI**, com seis abas (Painel, Produção, Carteira, Usuários, A
 - quem ainda não tem nenhuma unidade vê todas (modo compatível); o **modo estrito** faz essa pessoa não ver nada até receber unidades;
 - superintendente e administrador veem todas;
 - cada mudança entra no **histórico** (quem, quando, motivo) e na trilha.
+
+**Importar (unidades e carteira em lote).** Para cadastrar de uma vez as unidades (UPA, UPAE, Hospital) e distribuí-las entre os analistas.
+1. Clique em **Baixar modelo** (dados fictícios) e preencha: `tipo` (UPA, UPAE ou Hospital), `unidade`, `municipio` (opcional) e `analista` (login ou nome; vários analistas na mesma unidade separados por `|`). CSV em UTF-8, separado por `;` ou `,`.
+2. Escolha o arquivo. A **prévia** mostra unidades por tipo e por analista, quantas são novas, quantas entram e saem de carteira e o **relatório de problemas** (linha e motivo). **Nada é gravado nesta etapa.**
+3. Decida o que a prévia pedir: **analista que não existe** (criar como criador, com a senha temporária, ou pular) e **unidade em duas carteiras** (dividir como co-responsáveis ou manter só um). Linha com erro (tipo inválido, unidade em branco) impede gravar, a não ser que marque **Ignorar linhas com erro**.
+4. **Modo**: *Acrescentar* soma às carteiras; *Substituir* faz a carteira de cada analista do arquivo ficar exatamente como o arquivo (quem não está no arquivo não é mexido).
+5. **Gravar importação**: tudo ou nada, numa única operação. Fica registrado quem importou, o resumo e cada entrada ou saída de carteira (histórico da aba Carteira, motivo "Importação em lote #n") e na trilha.
+
+Regras: a unidade é identificada por **tipo + nome + município** (UPA Caruaru e UPAE Caruaru são unidades diferentes; o relatório avisa nomes parecidos). Reimportar o mesmo arquivo não duplica unidade nem carteira. Linha repetida na mesma carteira é ignorada. Unidade nova nasce **sem gestor** (aguardando gestor, na fila do Painel) e sem regras do contrato, que são cadastradas depois. A superintendente nunca precisa mexer em banco ou arquivos do servidor.
 
 **Usuários.** Criar, editar nome e perfil, trocar senha (volta para a senha temporária e a pessoa troca no próximo acesso), ativar e desativar. Perfis: administrador, criador, colega, superintendente, gestor da unidade e responsável de setor. A superintendente não cria nem altera administradores. Tudo vai para a trilha; a senha nunca é gravada.
 

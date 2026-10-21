@@ -2,7 +2,7 @@
   'use strict';
   // Gestão CTAI: painel da superintendente, produção, carteira, usuários e IA. Só superintendente e administrador.
   const { h, api, fmt, toast, janela, confirmar, selo, aviso, tabela, montar } = window.CTAI;
-  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
+  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['importar', 'Importar'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
   const kpi = (r, v, nota, tom) => h('div', { class: 'kpi' + (tom ? ' ' + tom : '') }, h('div', { class: 'r' }, r), h('div', { class: 'num-grande' }, String(v)), nota ? h('div', { class: 'r' }, nota) : null);
   const F = { trimestre: '', contrato: '', usuario_id: '' }; // filtros lembrados enquanto a página está aberta
   const qs = (o) => { const p = new URLSearchParams(); for (const k of Object.keys(o)) if (o[k]) p.set(k, o[k]); const s = p.toString(); return s ? '?' + s : ''; };
@@ -42,7 +42,8 @@
         kpi('Prazos vencidos', prz.vencido, prz.a_vencer + ' a vencer · ' + prz.atraso + ' com atraso', prz.vencido ? 'alta' : ''),
         kpi('Achados abertos', k.achados_abertos, k.achados_vencidos + ' vencido(s)', k.achados_vencidos ? 'alta' : ''),
         kpi('Pareceres', k.pareceres_rascunho + ' / ' + k.pareceres_congelados, 'rascunho / congelados'),
-        kpi('Sem carteira', k.sem_carteira, 'unidades', k.sem_carteira ? 'atencao' : '')),
+        kpi('Sem carteira', k.sem_carteira, 'unidades', k.sem_carteira ? 'atencao' : ''),
+        kpi('Sem gestor', k.sem_gestor, 'aguardando gestor', k.sem_gestor ? 'atencao' : '')),
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Alertas'), linhaAlertas),
       p.sem_carteira.length ? h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Unidades sem carteira'),
         h('p', { class: 'mudo peq' }, 'O envio dessas unidades não tem funcionário responsável. Escolha quem acompanha:'),
@@ -51,6 +52,9 @@
           return h('div', { class: 'linha sem-carteira' }, h('strong', null, u.unidade), u.demo ? selo('demonstração', 'demo') : null, sel,
             h('button', { class: 'sec', onclick: async () => { try { await api('POST', '/api/gestao/carteira/atribuir', { usuario_id: Number(sel.value), contrato_id: u.contrato_id, motivo: 'Distribuição pelo painel' }); toast('Unidade atribuída.'); refazer(); } catch (e) { toast(e.message, true); } } }, 'Atribuir'));
         })) : null,
+      p.sem_gestor.length ? h('div', { class: 'cartao', id: 'fila-sem-gestor' }, h('h2', { style: 'margin-top:0' }, 'Unidades aguardando gestor (' + p.sem_gestor.length + ')'),
+        h('p', { class: 'mudo peq' }, 'Ninguém da unidade foi cadastrado para usar o Portal da Unidade. Cadastre o gestor em Usuários (perfil gestor de unidade).'),
+        h('div', null, p.sem_gestor.map((u) => h('span', { class: 'selo atencao', style: 'margin:0 4px 4px 0' }, u.unidade + (u.municipio ? ' · ' + u.municipio : ''))))) : null,
       h('div', { class: 'unidades-grid' }, p.unidades.length ? p.unidades.map((u) => cartaoUnidade(u, p)) : h('div', { class: 'cartao' }, h('p', { class: 'mudo' }, 'Nenhuma unidade para esse filtro.'))),
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Divergências recorrentes por indicador'),
         h('p', { class: 'mudo peq' }, 'Itens do IGQ que voltam a divergir em mais de uma competência são candidatos a orientação direta à unidade.'),
@@ -116,10 +120,11 @@
     };
     montar(cabecalho('carteira'),
       aviso('info', h('strong', null, 'Como funciona. '), c.regra),
+      h('p', null, h('a', { href: '#/gestao/importar', class: 'btn sec', id: 'ir-importar' }, 'Importar unidades e carteira de um arquivo CSV')),
       h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, 'Quem acompanha cada unidade'),
         h('label', { class: 'ck' }, h('input', Object.assign({ type: 'checkbox', id: 'cart-estrito', onchange: async (e) => { try { await api('PUT', '/api/gestao/carteira-modo', { estrita: e.target.checked }); toast(e.target.checked ? 'Modo estrito ligado.' : 'Modo estrito desligado.'); carteira(); } catch (x) { toast(x.message, true); } } }, c.estrita ? { checked: true } : {})), ' Modo estrito (sem carteira = não vê nada)')),
         tabela([{ t: 'Funcionário' }, { t: 'Perfil' }, { t: 'Unidades da carteira' }, { t: '' }], c.funcionarios.map((f) => [h('strong', null, f.nome), f.perfil, f.unidades.length ? f.unidades.map((id) => { const u = c.unidades.find((x) => x.contrato_id === id); return h('span', { class: 'selo', style: 'margin-right:4px' }, u ? u.unidade : id); }) : h('span', { class: 'mudo' }, f.ativo ? 'vê todas (sem carteira)' : 'desativado'), h('button', { class: 'sec', id: 'cart-ed-' + f.login, onclick: () => editar(f) }, 'Editar carteira')]))),
-      h('div', { class: 'cartao' }, h('h3', null, 'Unidades'), tabela([{ t: 'Unidade' }, { t: 'Responsáveis' }], c.unidades.map((u) => [u.unidade + (u.demo ? ' (demonstração)' : ''), u.responsaveis.length ? u.responsaveis.map((r) => r.nome).join(', ') : selo('sem carteira', 'atencao')]))),
+      h('div', { class: 'cartao' }, h('h3', null, 'Unidades'), tabela([{ t: 'Unidade' }, { t: 'Responsáveis' }, { t: 'Situação' }], c.unidades.map((u) => [u.unidade + (u.municipio ? ' · ' + u.municipio : '') + (u.demo ? ' (demonstração)' : ''), u.responsaveis.length ? u.responsaveis.map((r) => r.nome).join(', ') : selo('sem carteira', 'atencao'), u.sem_gestor ? selo('aguardando gestor', 'atencao') : selo('com gestor', 'ok')]))),
       h('div', { class: 'cartao' }, h('h3', null, 'Histórico de mudanças'), tabela([{ t: 'Funcionário' }, { t: 'Unidade' }, { t: 'Entrou' }, { t: 'Saiu' }, { t: 'Por' }],
         hist.historico.slice(0, 40).map((x) => [x.nome, x.unidade || x.contrato_id, fmt.data(x.desde), x.ate ? fmt.data(x.ate) : h('span', { class: 'selo ok' }, 'ativa'), x.ate ? (x.removido_por || '') : (x.atribuido_por || '')]), { vazio: 'Nenhuma atribuição ainda.' })));
   }
@@ -225,11 +230,91 @@
       e.provedores.map(cartao));
   }
 
+
+  // ---------- Importar unidades e carteira (CSV) ----------
+  const E = { csv: '', nomeArquivo: '', modo: 'acrescentar', ignorar: false, decisoes: { conflitos: {}, analistas: {} }, previa: null, ultimo: null };
+  const ROT_TIPO = { UPA: 'UPA', UPAE: 'UPAE', HOSPITAL: 'Hospital' };
+  async function importar() {
+    const ref = async () => {
+      if (!E.csv) { E.previa = null; return desenhar(); }
+      try { E.previa = await api('POST', '/api/gestao/carteira/importar/previa', { csv: E.csv, modo: E.modo, ignorarErros: E.ignorar, decisoes: E.decisoes }); } catch (e) { E.previa = null; toast(e.message, true); }
+      desenhar();
+    };
+    const hist = await api('GET', '/api/gestao/carteira/importar/historico').catch(() => ({ importacoes: [] }));
+    const arquivo = h('input', { type: 'file', id: 'imp-arquivo', accept: '.csv,text/csv,text/plain', onchange: async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      E.csv = await f.text(); E.nomeArquivo = f.name; E.decisoes = { conflitos: {}, analistas: {} }; E.ultimo = null; ref();
+    } });
+    function desenhar() {
+      const p = E.previa;
+      const modo = h('select', { id: 'imp-modo', onchange: (e) => { E.modo = e.target.value; ref(); } },
+        [['acrescentar', 'Acrescentar às carteiras'], ['substituir', 'Substituir a carteira de quem está no arquivo']].map(([v, t]) => h('option', Object.assign({ value: v }, E.modo === v ? { selected: true } : {}), t)));
+      const ign = h('input', Object.assign({ type: 'checkbox', id: 'imp-ignorar', onchange: (e) => { E.ignorar = e.target.checked; ref(); } }, E.ignorar ? { checked: true } : {}));
+      const blocos = [];
+      if (p) {
+        const r = p.resumo;
+        blocos.push(h('div', { class: 'kpis' }, kpi('Linhas', r.linhas, r.vazias + ' em branco'), kpi('Unidades', r.unidades, r.novas + ' nova(s) · ' + r.jaExistiam + ' já cadastrada(s)'),
+          kpi('Entram na carteira', r.entradas, r.saidas + ' saem'), kpi('Com erro', r.comErro, E.ignorar ? 'serão ignoradas' : 'impedem gravar', r.comErro ? 'alta' : ''), kpi('Sem analista', r.semAnalista, 'ficam sem carteira', r.semAnalista ? 'atencao' : '')));
+        blocos.push(h('div', { class: 'cartao' }, h('h3', null, 'Por tipo e por analista'),
+          h('p', null, ['UPA', 'UPAE', 'HOSPITAL'].map((t) => h('span', { class: 'selo', style: 'margin-right:6px' }, ROT_TIPO[t] + ': ' + p.porTipo[t]))),
+          tabela([{ t: 'Analista' }, { t: 'UPA', n: true }, { t: 'UPAE', n: true }, { t: 'Hospital', n: true }, { t: 'Total', n: true }, { t: '' }], p.porAnalista.map((a) => [a.nome, a.UPA, a.UPAE, a.HOSPITAL, h('strong', null, a.total), a.novo ? selo('novo usuário', 'atencao') : '']), { vazio: 'Nenhuma atribuição.' })));
+        if (p.analistas.some((a) => a.situacao !== 'existe')) {
+          blocos.push(h('div', { class: 'cartao', id: 'imp-analistas' }, h('h3', null, 'Analistas que não puderam ser encontrados'),
+            p.analistas.filter((a) => a.situacao !== 'existe').map((a) => a.situacao === 'nao_existe'
+              ? h('div', { class: 'linha' }, h('strong', null, a.valor), h('span', { class: 'mudo peq' }, 'não existe · login proposto ' + a.loginProposto), h('select', { 'aria-label': 'Decisão para ' + a.valor, class: 'imp-dec-analista', onchange: (e) => { E.decisoes.analistas[a.valor] = e.target.value; ref(); } },
+                [['', 'Decidir…'], ['criar', 'Criar usuário (criador, senha temporária)'], ['pular', 'Pular este analista']].map(([v, t]) => h('option', Object.assign({ value: v }, (a.decisao || '') === v ? { selected: true } : {}), t))))
+              : h('div', { class: 'linha' }, h('strong', null, a.valor), selo(a.problema, 'alta')))));
+        }
+        if (p.conflitos.length) {
+          blocos.push(h('div', { class: 'cartao', id: 'imp-conflitos' }, h('h3', null, 'Unidade em mais de uma carteira'),
+            h('p', { class: 'mudo peq' }, 'Escolha entre dividir (todos ficam como responsáveis) ou manter só um responsável.'),
+            p.conflitos.map((c) => h('div', { class: 'linha' }, h('strong', null, c.unidade), h('span', { class: 'mudo peq' }, 'hoje/arquivo: ' + [...new Set(c.atuais.concat(c.novos))].join(', ')),
+              h('select', { 'aria-label': 'Decisão para ' + c.unidade, class: 'imp-dec-conflito', onchange: (e) => { E.decisoes.conflitos[c.key] = e.target.value; ref(); } },
+                [['', 'Decidir…']].concat(c.opcoes.map((o) => [o, o === 'dividir' ? 'Dividir (co-responsáveis)' : 'Manter só ' + o])).map(([v, t]) => h('option', Object.assign({ value: v }, (c.decisao || '') === v ? { selected: true } : {}), t)))))));
+        }
+        if (p.erros.length || p.avisos.length) {
+          blocos.push(h('div', { class: 'cartao' }, h('h3', null, 'Relatório de problemas'),
+            p.erros.length ? tabela([{ t: 'Linha', n: true }, { t: 'Erro' }], p.erros.map((e) => [e.linha, e.motivo])) : null,
+            p.avisos.length ? tabela([{ t: 'Linha', n: true }, { t: 'Aviso' }], p.avisos.map((e) => [e.linha, e.motivo])) : null));
+        }
+        blocos.push(h('div', { class: 'cartao' }, h('h3', null, 'Unidades do arquivo'),
+          tabela([{ t: 'Unidade' }, { t: 'Município' }, { t: 'Situação' }, { t: 'Responsáveis' }], p.unidades.map((u) => [u.unidade, u.municipio || '—', u.existente ? selo('já cadastrada', 'ok') : selo('nova · aguardando gestor', 'atencao'), u.conflito ? selo('decidir', 'alta') : (u.analistas.join(', ') || '—')]))));
+        const pend = p.pendencias.filter((x) => !x.bloqueia).length;
+        blocos.push(h('div', { class: 'linha' }, h('button', Object.assign({ id: 'imp-gravar', onclick: gravar }, p.podeGravar ? {} : { disabled: true }), 'Gravar importação'),
+          h('span', { class: 'mudo peq' }, p.podeGravar ? 'Tudo será gravado de uma vez (ou nada).' : (p.pendencias.some((x) => x.bloqueia) ? 'Corrija os analistas indicados no arquivo.' : (pend ? 'Faltam ' + pend + ' decisão(ões).' : (p.resumo.comErro ? 'Corrija as linhas com erro ou marque "ignorar linhas com erro".' : 'Nada para gravar.'))))));
+      }
+      if (E.ultimo) {
+        const u = E.ultimo;
+        blocos.unshift(aviso('ok', h('strong', null, 'Importação #' + u.importacao_id + ' gravada. '), u.unidades_novas + ' unidade(s) criada(s) aguardando gestor, ' + u.entradas + ' entrada(s) e ' + u.saidas + ' saída(s) de carteira' + (u.analistas_criados ? ', ' + u.analistas_criados + ' usuário(s) criado(s) com a senha temporária ' + u.senhaTemporaria : '') + '.'));
+      }
+      montar(cabecalho('importar'),
+        aviso('info', h('strong', null, 'Como funciona. '), 'Carregue um CSV (UTF-8, separado por ; ou ,) com as colunas tipo (UPA, UPAE ou Hospital), unidade, municipio (opcional) e analista (login ou nome; vários separados por |). A unidade é identificada por tipo + nome + município. Nada é gravado antes de você conferir a prévia.'),
+        h('div', { class: 'cartao' },
+          h('div', { class: 'linha' }, h('a', { href: '/api/gestao/carteira/importar/modelo.csv', download: 'modelo-importacao-carteira.csv', class: 'btn sec', id: 'imp-modelo' }, 'Baixar modelo (dados fictícios)')),
+          h('div', { class: 'campo' }, h('label', { for: 'imp-arquivo' }, 'Arquivo CSV'), arquivo, E.nomeArquivo ? h('span', { class: 'mudo peq' }, E.nomeArquivo) : null),
+          h('div', { class: 'campo' }, h('label', { for: 'imp-modo' }, 'Modo'), modo),
+          h('label', { class: 'ck' }, ign, ' Ignorar linhas com erro (grava só as boas)')),
+        blocos,
+        h('div', { class: 'cartao' }, h('h3', null, 'Importações anteriores'), tabela([{ t: 'Nº', n: true }, { t: 'Quando' }, { t: 'Por' }, { t: 'Modo' }, { t: 'Resultado' }],
+          hist.importacoes.map((i) => [i.importacao_id, fmt.data(i.em), i.quem, i.modo, i.resumo ? (i.resumo.unidades_novas + ' nova(s), ' + i.resumo.entradas + ' entrada(s), ' + i.resumo.saidas + ' saída(s)') : '—']), { vazio: 'Nenhuma importação ainda.' })));
+      const el = document.getElementById('imp-arquivo'); void el;
+    }
+    async function gravar() {
+      try {
+        const u = await api('POST', '/api/gestao/carteira/importar/gravar', { csv: E.csv, modo: E.modo, ignorarErros: E.ignorar, decisoes: E.decisoes });
+        E.ultimo = u; E.csv = ''; E.nomeArquivo = ''; E.previa = null; E.decisoes = { conflitos: {}, analistas: {} };
+        toast('Importação gravada.'); importar();
+      } catch (e) { toast(e.message, true); }
+    }
+    desenhar();
+  }
+
   async function aba() {
     const h2 = location.hash.replace(/^#\/gestao\/?/, '');
     if (!F.lista) { try { F.lista = (await api('GET', '/api/gestao/painel?trimestre=' + (F.trimestre || ''))).trimestres; } catch (_) { F.lista = []; } }
     if (h2 === 'producao') return producao();
     if (h2 === 'carteira') return carteira();
+    if (h2 === 'importar') return importar();
     if (h2 === 'usuarios') return usuarios();
     if (h2 === 'acessos') return acessos();
     if (h2 === 'ia') return ia();

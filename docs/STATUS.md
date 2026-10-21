@@ -20,9 +20,10 @@ Primeira versão para teste. Funciona de ponta a ponta com **dados fictícios**.
 | **Equipe pelo gestor da unidade** | cadastrar, fichas por pessoa, senha temporária, ativar/desativar, trocar responsável por ficha; sem alcance fora da própria unidade; trilha com quem fez | `test/equipe-acessos.test.js` + E2E |
 | **Aba Acessos** (Gestão CTAI) | entradas, falhas, bloqueios, saídas, origem, IP mascarado, agente, cadastros dos gestores; filtros; CSV e PDF; sem edição | `test/equipe-acessos.test.js` + E2E |
 | **Deploy no Render** (21/10/2026) | `render.yaml` (Docker, Starter, disco de 1 GB em `/dados`, saúde em `/api/saude`), `CTAI_IPS_INTERNOS` com IP de cliente seguro atrás de proxy (`CTAI_PROXY_SALTOS`, `CTAI_IP_CABECALHO`, `CTAI_PROXIES_CONFIAVEIS`), `/api/origem` para conferir, backup do banco pelo admin, guia `docs/GUIA-RENDER.md` | `test/exposicao-ips.test.js` (8: IP na lista, fora, forjado, indeterminado, IPv6/CIDR, proxies) |
+| **Importação em lote de unidades e carteira** (21/10/2026) | CSV (tipo, unidade, município, analista), modelo fictício, prévia sem gravar, relatório de problemas, decisões (analista inexistente, unidade em duas carteiras), modos acrescentar/substituir, gravação atômica, trilha e histórico, reimportação sem duplicar, unidade nova "aguardando gestor" na fila do Painel | `test/importacao-carteira.test.js` + E2E |
 | Dados de demonstração | contrato fictício, recriar e apagar | testes + E2E |
 
-Números: `npm test` = **91 testes, 0 falhas**. `npm run e2e` = fluxo completo no Chromium (unidade envia, PDF válido, CTAI recalcula, minuta, congelar, três pessoas conferem, superintendente autoriza, SEI do parecer registrado, trilha íntegra, número do SEI do relatório registrado pela unidade, dois canais e alerta de nova versão, sem erro de JavaScript nas telas percorridas). Capturas em `docs/capturas/`.
+Números: `npm test` = **101 testes, 0 falhas**. `npm run e2e` = fluxo completo no Chromium (unidade envia, PDF válido, CTAI recalcula, minuta, congelar, três pessoas conferem, superintendente autoriza, SEI do parecer registrado, trilha íntegra, número do SEI do relatório registrado pela unidade, dois canais e alerta de nova versão, sem erro de JavaScript nas telas percorridas). Capturas em `docs/capturas/`.
 
 ## Vagas (encaixes) deixadas prontas
 
