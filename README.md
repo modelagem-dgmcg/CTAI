@@ -83,3 +83,7 @@ test/          testes automáticos e E2E
 - Provedores de IA em nuvem: desligados sem chave e sem `ANALISTA_ENVIAR_NUVEM=sim`; só vai texto mascarado.
 - Envios, trilha e conferências são **imutáveis** (gatilhos no banco) e a trilha tem cadeia de códigos; o botão "Verificar" prova que nada foi alterado.
 - O "OK" da mesa é **controle interno**, não assinatura. Ninguém confere nem autoriza o próprio trabalho.
+
+## Autoria
+
+Criado por Antonio Cleuton Eufrasio Vieira, Analista Administrativo (SES-PE). Colaboração: Juliana Rocha. Os direitos econômicos pertencem à SES-PE; a paternidade da autoria é preservada (Lei nº 9.609/98, art. 2º, §1º; Lei nº 9.610/98, art. 24, I).

@@ -122,3 +122,12 @@ label.ck{display:block;padding:5px 0;cursor:pointer}label.ck input{margin-right:
 td .linha{flex-wrap:nowrap;white-space:nowrap}
 .nav .contador{background:var(--verm);color:#fff;border-radius:10px;padding:0 7px;font-size:12px;margin-left:8px;font-weight:700}
 .cx-item.nao-lido{border-left:4px solid var(--acento)}
+
+/* Tela de entrada: texto "O que é o Analista CTAI?" e créditos */
+.login{display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sobre{margin-top:14px;border-top:1px solid #dfe5e8;padding-top:10px}
+.sobre summary{cursor:pointer;font-size:13.5px;color:var(--escuro);font-weight:600}
+.sobre-texto{max-height:42vh;overflow-y:auto;padding-right:6px;margin-top:8px;font-size:13px;line-height:1.6;color:var(--cinza)}
+.sobre-texto p{margin:0 0 10px}
+.sobre-texto h3{font-size:13.5px;margin:12px 0 4px;color:var(--escuro)}
+.creditos{margin:14px 0 0;font-size:12px;color:#c9d6db;text-align:center}
