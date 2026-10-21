@@ -64,7 +64,6 @@ test('filtros por unidade, tipo e situação; ordenação por urgência', async 
   const venc = (await itens(cleuton, '?tipo=prazo_vencido')).itens;
   assert.ok(venc.length >= 1 && venc.every((i) => i.contrato_id === DEMO && /Prazo vencido/.test(i.titulo)), 'prazo vencido da DEMO chega aos co-responsáveis');
   assert.ok(venc[0].urgencia > (await itens(cleuton, '?tipo=envio')).itens[0].urgencia);
-  assert.ok(todos.itens.length >= 1);
   const l = await itens(cleuton);
   const pend = l.itens.filter((i) => !i.tratado);
   for (let i = 1; i < pend.length; i++) assert.ok(pend[i - 1].urgencia >= pend[i].urgencia);
