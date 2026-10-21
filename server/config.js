@@ -40,6 +40,8 @@ module.exports = {
   dataDir,
   arquivoBanco: path.resolve(RAIZ, env('CTAI_DB', path.join(dataDir, 'ctai.sqlite'))),
   sessaoHoras: Number(env('CTAI_SESSAO_HORAS', '12')),
+  // CTAI_PAINEL_ANALISTA=sim devolve o item "Painel" (e a tela inicial) a criadores e colegas. Padrão: não (começam na Caixa de entrada).
+  painelAnalista: env('CTAI_PAINEL_ANALISTA', 'nao').toLowerCase() === 'sim',
   senhaTemporaria: env('CTAI_SENHA_TEMPORARIA', 'Trocar@123'),
   cookieSeguro: env('CTAI_COOKIE_SEGURO', 'nao') === 'sim',
   chavePseudonimo: env('CTAI_CHAVE_PSEUDONIMO', '') || chaveLocal(),

@@ -2,6 +2,12 @@
 
 Endereço: `/ctai`. Perfis: **criador** (monta o parecer), **colega** (confere), **superintendente** (confere de novo e autoriza), **administrador** (usuários, demonstração, integrações; **não** confere nem autoriza na mesa).
 
+## Tela inicial e Painel reduzido
+
+- **Criador e colega (analistas):** o menu **não tem o item Painel**; ao entrar, a tela inicial é a **Caixa de entrada**. No topo dela há uma **faixa de resumo** de uma linha, clicável: não lidos, prazos vencidos, prazos a vencer, achados com resposta e unidades sem gestor (só as da carteira da pessoa). Cada número abre a lista já filtrada. Links antigos para o Painel (`#/`) levam à Caixa de entrada, sem erro.
+- **Superintendente e administrador:** a tela inicial continua sendo o **Painel**, sem mudança. A visão completa por unidade, prazos e alertas fica no **Gestão CTAI**.
+- **Para voltar atrás:** coloque `CTAI_PAINEL_ANALISTA=sim` no `.env` (no Render, em Environment) e reinicie. O item Painel e a tela inicial antiga voltam para criadores e colegas. Padrão: `nao`.
+
 ## Caixa de entrada e Minhas unidades (todos da CTAI)
 
 **Caixa de entrada** (menu, com o número de não lidos). Um item para cada fato que pede atenção: relatório recebido, reenvio ou correção, resposta da unidade a um esclarecimento, prazo do SEI (dia 20) ou do SIMAS (dia 25) **a vencer** ou **vencido**, minuta aguardando a sua conferência, unidade sem gestor, unidade sem carteira (só a superintendente recebe esta) e item redirecionado a você.

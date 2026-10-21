@@ -36,6 +36,7 @@ No Render: **Account Settings > Git providers (GitHub)** e autorize o acesso ao 
 | Variável | O que colocar |
 |---|---|
 | `CTAI_SENHA_TEMPORARIA` | uma senha provisória sua, ex.: `Provisoria#2026` (todos os usuários de teste começam com ela e **trocam no primeiro acesso**) |
+| `CTAI_PAINEL_ANALISTA` | opcional. `nao` (padrão): criadores e colegas começam na Caixa de entrada, sem o item Painel. `sim` devolve o Painel a eles |
 | `CTAI_SEGREDO` | uma frase longa sua, **no mínimo 16 caracteres**, ex.: `minha-frase-secreta-da-ctai-2026`. Guarde em local seguro: ela cifra as chaves de IA |
 | `CTAI_IPS_INTERNOS` | o **IP público da SES** do passo "Antes de começar" (vários separados por vírgula; aceita faixa, como `200.123.45.0/24`) |
 

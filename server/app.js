@@ -41,6 +41,7 @@ function criarApp(db) {
 
   app.get('/api/meta', A.exigir(db), (req, res) => {
     res.json({
+      painelAnalista: require('./config').painelAnalista,
       setores: F.SETORES, perfis: A.PERFIS, itensMesa: M.ITENS, questoesRegra: D.QUESTOES_REGRA.map((q) => ({ chave: q.chave, pergunta: q.pergunta, opcoes: q.opcoes })),
       fontes: Object.fromEntries(Object.entries(F.FONTES).map(([k, f]) => [k, { nome: f.nome, setor: f.setor }])),
     });

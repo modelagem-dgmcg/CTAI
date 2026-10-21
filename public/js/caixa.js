@@ -21,6 +21,7 @@
   async function caixa() {
     const d = await api('GET', '/api/caixa' + qs(F));
     const s = await api('GET', '/api/caixa/substituicoes');
+    const rs = await api('GET', '/api/caixa/resumo');
     const refazer = () => { caixa(); atualizarContador(); };
     const abrir = async (i) => { try { await api('POST', '/api/caixa/' + i.item_id + '/lido'); } catch (_) { /* segue */ } atualizarContador(); if (i.link) location.hash = i.link; };
     const tratar = async (i) => { const o = await perguntar('Marcar como tratado', 'Observação (opcional)', { obrigatorio: false, longo: true, texto: 'Vale para todos que recebem este item.' }); if (o === null) return; try { await api('POST', '/api/caixa/' + i.item_id + '/tratar', { obs: o }); toast('Tratado.'); refazer(); } catch (e) { toast(e.message, true); refazer(); } };
@@ -38,6 +39,7 @@
       await janela('Histórico do item', h('div', null, h('p', { class: 'mudo peq' }, 'Recebem: ' + x.destinatarios.map((p) => p.nome + (p.lido_em ? ' (leu ' + fmt.data(p.lido_em) + ')' : ' (não leu)')).join(', ')),
         tabela([{ t: 'Quando' }, { t: 'Quem' }, { t: 'O quê' }], x.historico.map((e) => [fmt.data(e.em), e.quem, e.acao + (e.detalhe ? ' — ' + e.detalhe : '')]))));
     };
+    const faixa = (id, n, rot, tom, tipo, sit) => h('a', { href: '#/caixa', id: 'cx-rs-' + id, style: 'text-decoration:none;color:inherit', onclick: (e) => { e.preventDefault(); F.tipo = tipo || ''; F.situacao = sit || 'pendentes'; caixa(); } }, h('strong', { class: 'num-grande', style: 'font-size:20px' }, String(n)), ' ', h('span', { class: 'peq' }, rot));
     const card = (i) => h('div', { class: 'cartao cx-item' + (i.lido || i.tratado ? '' : ' nao-lido'), 'data-item': i.item_id },
       h('div', { class: 'linha espaco' }, h('div', null, selo(i.tipo_rotulo, tomTipo[i.tipo] || ''), ' ', i.em_substituicao_de ? selo('em substituição de ' + i.em_substituicao_de, 'atencao') : null, ' ', !i.lido && !i.tratado ? selo('não lido', 'alta') : null, ' ', i.tratado ? selo('tratado', 'ok') : selo('pendente', 'atencao')), h('span', { class: 'mudo peq' }, fmt.data(i.criado_em))),
       h('h3', { style: 'margin:6px 0 2px' }, i.titulo),
@@ -59,6 +61,10 @@
       try { await api('POST', '/api/caixa/substituicoes', { de_usuario_id: ehSuper ? Number(f.de.value) : undefined, para_usuario_id: Number(f.para.value), desde: f.desde.value, ate: f.ate.value, motivo: f.motivo.value }); toast('Caixa redirecionada.'); refazer(); } catch (e) { toast(e.message, true); }
     };
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Caixa de entrada'), h('p', null, 'Tudo que chegou das unidades e o que está a vencer, nas unidades da sua carteira. Quem divide a unidade com você recebe os mesmos itens; o primeiro que tratar marca para todos.'))),
+      h('div', { class: 'cartao cx-resumo', id: 'cx-resumo', style: 'padding:10px 14px' }, h('div', { class: 'linha', style: 'gap:18px;flex-wrap:wrap' },
+        faixa('nao_lidos', rs.naoLidos, 'não lidos', rs.naoLidos ? 'atencao' : '', '', 'nao_lidos'), faixa('prazos', rs.prazos_vencidos, 'prazo(s) vencido(s)', rs.prazos_vencidos ? 'alta' : '', 'prazo_vencido'),
+        faixa('prazos2', rs.prazos_a_vencer, 'a vencer', rs.prazos_a_vencer ? 'atencao' : '', 'prazo_vencer'), faixa('resp', rs.respostas, 'achado(s) com resposta', rs.respostas ? 'atencao' : '', 'resposta'),
+        faixa('semg', rs.sem_gestor, 'unidade(s) sem gestor', rs.sem_gestor ? 'atencao' : '', 'sem_gestor'))),
       h('div', { class: 'filtros cartao' },
         opc('cx-f-un', 'Unidade', [['', 'Todas']].concat(d.unidades.map((u) => [u.contrato_id, u.unidade])), F.unidade, (v) => { F.unidade = v; caixa(); }),
         opc('cx-f-tipo', 'Tipo', [['', 'Todos']].concat(Object.entries(d.tipos)), F.tipo, (v) => { F.tipo = v; caixa(); }),

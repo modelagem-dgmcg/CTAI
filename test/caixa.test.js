@@ -188,3 +188,16 @@ test('ponto de extensão do aviso por e-mail existe e não envia nada', () => {
   CX.eventoResposta(S.db, { achado_id: 9100, cid: S.db.get("SELECT cid FROM competencias WHERE contrato_id = 'UPA-OLINDA' LIMIT 1").cid, respondido_em: new Date().toISOString() });
   CX.avisos.aoCriar = null; assert.equal(chamado, 1);
 });
+
+test('painel reduzido: /api/meta informa a configuração; resumo da caixa respeita a carteira', async () => {
+  const CFG = require('../server/config');
+  assert.equal(CFG.painelAnalista, false, 'padrão: analista começa na Caixa de entrada');
+  assert.equal((await cleuton.get('/api/meta')).json.painelAnalista, false);
+  CFG.painelAnalista = true;
+  try { assert.equal((await cleuton.get('/api/meta')).json.painelAnalista, true, 'CTAI_PAINEL_ANALISTA=sim devolve o Painel'); } finally { CFG.painelAnalista = false; }
+  CX.sincronizar(S.db, { forcar: true });
+  const r = (await cleuton.get('/api/caixa/resumo')).json;
+  for (const k of ['naoLidos', 'prazos_vencidos', 'prazos_a_vencer', 'respostas', 'sem_gestor']) assert.equal(typeof r[k], 'number');
+  assert.ok(r.prazos_vencidos >= 1);
+  assert.equal((await gestor.get('/api/caixa/resumo')).status, 403);
+});

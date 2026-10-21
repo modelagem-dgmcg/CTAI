@@ -174,6 +174,12 @@ function listar(db, u, f) {
 }
 function nome2(db, login) { const x = db.get('SELECT nome FROM usuarios WHERE login = ?', login); return x ? x.nome : login; }
 
+// Faixa de resumo do topo da Caixa de entrada (só o que está pendente e dentro da carteira da pessoa).
+function resumo(db, u) {
+  const p = listar(db, u, { situacao: 'pendentes' });
+  const n = (...t) => p.itens.filter((i) => t.includes(i.tipo)).length;
+  return { naoLidos: p.contagem.naoLidos, prazos_vencidos: n('prazo_vencido'), prazos_a_vencer: n('prazo_vencer'), respostas: n('resposta'), sem_gestor: n('sem_gestor') };
+}
 function contador(db, u) { const l = listar(db, u, {}); return l.contagem; }
 
 function meuItem(db, u, id) {
@@ -358,5 +364,5 @@ function tempos(db, usuarioId, de, ate, contrato) {
 // Ponto de extensão (aviso por e-mail): nada é enviado hoje. Para ligar no futuro, registre aqui uma função que receba
 // { item_id, tipo, unidade, titulo, destinatarios:[{login,nome}] } — ela é chamada depois que o item é criado.
 
-module.exports = { TIPOS, PERFIS_CAIXA, criar, eventoEnvio, eventoResposta, eventoMinuta, sincronizar, listar, contador, detalhe, marcarLido, marcarTodosLidos, tratar, reabrir, redirecionarItem,
+module.exports = { TIPOS, PERFIS_CAIXA, criar, eventoEnvio, eventoResposta, eventoMinuta, sincronizar, listar, resumo, contador, detalhe, marcarLido, marcarTodosLidos, tratar, reabrir, redirecionarItem,
   criarSubstituicao, cancelarSubstituicao, listarSubstituicoes, minhasUnidades, entregas, tempos, diasNaoLido, destinatariosDaUnidade, avisos };

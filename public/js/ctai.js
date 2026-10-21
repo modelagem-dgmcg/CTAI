@@ -559,14 +559,16 @@
 
   async function iniciar() {
     const me0 = await api('GET', '/api/auth/me').catch(() => null);
+    const meta0 = await api('GET', '/api/meta').catch(() => null);
+    window.__semPainel = !!(me0 && ['criador', 'colega'].includes(me0.usuario.perfil) && meta0 && !meta0.painelAnalista);
     window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão CTAI' }] : [];
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/', rotulo: 'Painel' }, { href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/minhas-unidades', rotulo: 'Minhas unidades' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }].concat(window.__soGestao || []) });
+    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/minhas-unidades', rotulo: 'Minhas unidades' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_CAIXA.atualizarContador(); setInterval(() => window.CTAI_CAIXA.atualizarContador(), 60000);
     if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), nav); }
     META = await api('GET', '/api/meta');
-    rotear([['/', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_CAIXA.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_CAIXA.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();

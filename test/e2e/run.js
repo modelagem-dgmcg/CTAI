@@ -37,6 +37,7 @@ process.env.CTAI_SEGREDO = 'segredo-e2e-com-mais-de-16-caracteres';
 let base;
 (async () => {
   const S = await H.iniciar(); base = S.base;
+  const CFG = require('../../server/config'); CFG.painelAnalista = true; // as primeiras etapas usam o Painel do analista; a tela inicial padrão é testada no fim
   const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' });
   const paginas = [];
   const mockSrv = await new Promise((ok) => { const m = mock.criar(); m.listen(4010, '127.0.0.1', () => ok(m)); m.on('error', () => ok(null)); });
@@ -313,6 +314,22 @@ let base;
     await ir(sup, '#/gestao/entregas', '#en-pdf'); await sup.waitForSelector('[data-analista="colega1"]', { timeout: 8000 });
     await sup.setViewportSize({ width: 1280, height: 1100 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '29-gestao-entregas.png') });
     log('caixa de entrada, minhas unidades e entregas por carteira');
+    // Tela inicial por perfil e configuração de volta (CTAI_PAINEL_ANALISTA)
+    CFG.painelAnalista = false;
+    const an = await entrar(browser, 'colega1', 1280, true); paginas.push(an);
+    await an.waitForSelector('#cx-resumo', { timeout: 8000 });
+    assert.match(an.url(), /#\/caixa$/, 'analista começa na Caixa de entrada');
+    assert.equal(await an.locator('a.nav:text-is("Painel")').count(), 0, 'sem item Painel para o analista');
+    assert.ok(await an.locator('#cx-resumo a').count() >= 4, 'faixa de resumo com atalhos');
+    await an.setViewportSize({ width: 1280, height: 900 }); await limpa(an); await an.screenshot({ path: path.join(CAP, '30-inicio-analista-caixa.png') });
+    await an.goto(base + '/ctai#/'); await an.waitForSelector('#cx-resumo', { timeout: 8000 }); assert.match(an.url(), /#\/caixa$/, 'link antigo do Painel redireciona sem erro');
+    const sup2 = await entrar(browser, 'nathalia', 1280, true); paginas.push(sup2);
+    await sup2.waitForSelector('#conteudo h1', { timeout: 8000 }); assert.match(await sup2.textContent('#conteudo h1'), /Painel/, 'inicio superintendente: ' + sup2.url()); assert.equal(await sup2.locator('a.nav:text-is("Painel")').count(), 1, 'superintendente mantém o Painel');
+    CFG.painelAnalista = true;
+    await an.goto(base + '/ctai?v=2#/'); await an.waitForSelector('#conteudo h1', { timeout: 8000 }); assert.match(await an.textContent('#conteudo h1'), /Painel/, 'painel de volta: ' + an.url());
+    assert.equal(await an.locator('a.nav:text-is("Painel")').count(), 1, 'configuração devolve o Painel ao analista');
+    CFG.painelAnalista = false;
+    log('tela inicial por perfil: analista na Caixa de entrada, superintendente no Painel, configuração de volta');
     for (const p of paginas) assert.deepEqual(p.erros, [], 'erros de JavaScript na tela: ' + p.erros.join(' | '));
     console.log('\nE2E OK');
   } catch (e) {
