@@ -88,7 +88,7 @@ module.exports = (db) => {
 
   // ---------- Carteira ----------
   r.get('/carteira', (req, res) => res.json({
-    funcionarios: CART.porFuncionario(db), unidades: db.all('SELECT contrato_id, unidade, demo FROM contratos ORDER BY demo, unidade').map((c) => Object.assign(c, { demo: !!c.demo, responsaveis: CART.responsaveis(db, c.contrato_id) })),
+    funcionarios: CART.porFuncionario(db), unidades: db.all('SELECT contrato_id, unidade, demo, tipo, municipio FROM contratos ORDER BY demo, unidade').map((c) => Object.assign(c, { demo: !!c.demo, responsaveis: CART.responsaveis(db, c.contrato_id), sem_gestor: G.semGestor(db, c.contrato_id) })),
     semCarteira: CART.semCarteira(db), estrita: CART.estrita(db),
     regra: 'Quem tem unidades na carteira vê só essas unidades. Quem ainda não tem nenhuma vê todas (modo compatível) — a menos que o modo estrito esteja ligado. Superintendente e administrador veem todas.',
   }));
@@ -104,6 +104,18 @@ module.exports = (db) => {
   });
   r.put('/carteira-modo', (req, res) => { CART.definirCfg(db, req.usuario.login, 'carteira_estrita', req.body && req.body.estrita ? 'sim' : 'nao'); res.json({ estrita: CART.estrita(db) }); });
   r.get('/carteira/historico', (req, res) => res.json({ historico: CART.historico(db, { usuario_id: req.query.usuario_id, contrato_id: req.query.contrato }) }));
+
+  // Importação em lote de unidades e carteira
+  const IMP = require('../importacao');
+  const entradaImp = (req) => {
+    const b = req.body || {};
+    if (typeof b.csv !== 'string' || !b.csv.trim()) throw erro(400, 'Envie o conteúdo do arquivo CSV.');
+    return { csv: b.csv, modo: b.modo, decisoes: b.decisoes, ignorarErros: !!b.ignorarErros };
+  };
+  r.get('/carteira/importar/modelo.csv', (req, res) => { res.setHeader('Content-Type', 'text/csv; charset=utf-8'); res.setHeader('Content-Disposition', 'attachment; filename="modelo-importacao-carteira.csv"'); res.send(IMP.modeloCsv()); });
+  r.post('/carteira/importar/previa', (req, res) => res.json(IMP.previa(db, entradaImp(req))));
+  r.post('/carteira/importar/gravar', (req, res) => res.json(IMP.gravar(db, req.usuario.login, entradaImp(req))));
+  r.get('/carteira/importar/historico', (req, res) => res.json({ importacoes: IMP.historico(db) }));
 
   // ---------- IA ----------
   r.get('/ia', (req, res) => res.json(IA.estado(db)));

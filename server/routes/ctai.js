@@ -32,9 +32,9 @@ module.exports = (db) => {
         const div = db.get("SELECT COUNT(*) AS n FROM divergencias WHERE cid = ? AND status = 'aberta'", k.cid).n;
         return Object.assign(k, { mes_implantacao: !!k.mes_implantacao, versaoEnvio: ult ? ult.versao : null, recebido_em: ult ? ult.recebido_em : null, divergenciasAbertas: div, seiAlertas: SEI.resumoAlertas(db, k.cid), prazos: PZ.resumo(PZ.daCompetencia(db, Object.assign({ contrato_id: c.contrato_id }, k))) });
       });
-      const { regras } = D.regrasDoContrato(db, c.contrato_id);
-      const p = D.pendenciasDeRegra(db, c.contrato_id, regras);
-      return Object.assign(c, { demo: !!c.demo, competencias: comps, decisoesAbertas: p.abertas.length });
+      let abertas = 0, semRegras = false;
+      try { const { regras } = D.regrasDoContrato(db, c.contrato_id); abertas = D.pendenciasDeRegra(db, c.contrato_id, regras).abertas.length; } catch (e) { if (e.status !== 409) throw e; semRegras = true; }
+      return Object.assign(c, { demo: !!c.demo, competencias: comps, decisoesAbertas: abertas, semRegras, semGestor: !db.get("SELECT 1 FROM usuarios WHERE perfil = 'gestor_unidade' AND ativo = 1 AND contrato_id = ?", c.contrato_id) });
     });
     res.json({ contratos: lista, escopo: req.escopo ? 'carteira' : 'todas' });
   });
@@ -126,7 +126,8 @@ module.exports = (db) => {
 
   // ---------- Regras e decisões ----------
   r.get('/contratos/:id/decisoes', (req, res) => {
-    const { regras } = D.regrasDoContrato(db, req.params.id);
+    let regras;
+    try { regras = D.regrasDoContrato(db, req.params.id).regras; } catch (e) { if (e.status === 409) return res.json({ decisoes: [], regraPendencias: [], semRegras: true }); throw e; }
     res.json({ decisoes: Object.values(D.decisoes(db, req.params.id)), regraPendencias: R.pendencias(regras) });
   });
   r.put('/contratos/:id/decisoes/:chave', (req, res) => {

@@ -23,7 +23,7 @@ function competenciaPorCid(db, cid) {
 function regrasDoContrato(db, contratoId, regraId) {
   let linha = regraId ? db.get('SELECT * FROM regras WHERE regra_id = ?', regraId) : null;
   if (!linha) linha = db.get('SELECT * FROM regras WHERE contrato_id = ? ORDER BY vigente_de DESC, regra_id DESC', contratoId);
-  if (!linha) throw erro(500, 'O contrato ainda não tem regras cadastradas.');
+  if (!linha) throw erro(409, 'Esta unidade ainda não tem as regras do contrato cadastradas.');
   const conteudo = JSON.parse(linha.conteudo);
   return { regra: linha, regras: conteudo };
 }

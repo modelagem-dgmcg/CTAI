@@ -157,6 +157,14 @@ function igqDaCompetencia(db, comp) {
   } catch (_) { return null; }
 }
 
+// Unidade sem nenhum gestor ativo (cadastrada, mas ainda ninguém da unidade pode entrar no Portal da Unidade).
+function semGestor(db, contratoId) {
+  return !db.get("SELECT 1 FROM usuarios WHERE perfil = 'gestor_unidade' AND ativo = 1 AND contrato_id = ?", contratoId);
+}
+function listaSemGestor(db) {
+  return db.all('SELECT contrato_id, unidade, tipo, municipio, demo FROM contratos ORDER BY demo, unidade').filter((c) => semGestor(db, c.contrato_id)).map((c) => Object.assign(c, { demo: !!c.demo }));
+}
+
 function faseDa(db, contratoId, tri, comps) {
   const par = db.get('SELECT * FROM pareceres WHERE contrato_id = ? AND trimestre = ?', contratoId, tri);
   const ver = par ? db.get('SELECT numero, status FROM versoes_minuta WHERE parecer_id = ? ORDER BY numero DESC LIMIT 1', par.parecer_id) : null;
@@ -208,7 +216,7 @@ function painel(db, filtro) {
   const tri = filtro.trimestre || trimestrePadrao(db);
   if (!mesesDe(tri)) { const e = new Error('Trimestre inválido (use 2026-T2).'); e.status = 400; throw e; }
   const triAnt = anterior(tri);
-  let contratos = db.all('SELECT contrato_id, unidade, oss, demo FROM contratos ORDER BY demo, unidade');
+  let contratos = db.all('SELECT contrato_id, unidade, oss, demo, tipo, municipio FROM contratos ORDER BY demo, unidade');
   if (filtro.contrato) contratos = contratos.filter((c) => c.contrato_id === filtro.contrato);
   if (filtro.usuario_id) { const meus = new Set(CART.doUsuario(db, Number(filtro.usuario_id))); contratos = contratos.filter((c) => meus.has(c.contrato_id)); }
 
@@ -228,7 +236,8 @@ function painel(db, filtro) {
     return {
       contrato_id: c.contrato_id, unidade: c.unidade, oss: c.oss, demo: !!c.demo,
       responsaveis: CART.responsaveis(db, c.contrato_id), sem_carteira: CART.responsaveis(db, c.contrato_id).length === 0,
-      competencias: atual.comps, fase: f.fase, parecer: f.parecer, pior_prazo: pior,
+      tipo: c.tipo || null, municipio: c.municipio || null, sem_gestor: semGestor(db, c.contrato_id),
+      competencias: atual.comps, fase: (semGestor(db, c.contrato_id) && f.fase === 'Aguardando envio da unidade') ? 'Aguardando gestor' : f.fase, parecer: f.parecer, pior_prazo: pior,
       achados: { abertos, vencidos }, igq: atual.igq, igq_anterior: ant.igq, igq_delta: delta,
     };
   });
@@ -249,6 +258,7 @@ function painel(db, filtro) {
     achados_abertos: unidades.reduce((s, u) => s + u.achados.abertos, 0), achados_vencidos: unidades.reduce((s, u) => s + u.achados.vencidos, 0),
     pareceres_rascunho: pareceres.filter((p) => !p.congelado).length, pareceres_congelados: pareceres.filter((p) => p.congelado).length,
     sem_carteira: unidades.filter((u) => u.sem_carteira).length,
+    sem_gestor: unidades.filter((u) => u.sem_gestor).length,
   };
 
   // Divergências recorrentes por indicador (no trimestre filtrado)
@@ -265,6 +275,7 @@ function painel(db, filtro) {
   const alertas = [];
   for (const u of unidades) {
     if (u.sem_carteira) alertas.push({ nivel: 'atencao', tipo: 'sem carteira', unidade: u.unidade, texto: 'Sem funcionário responsável. Distribua em Gestão CTAI > Carteira.' });
+    if (u.sem_gestor) alertas.push({ nivel: 'atencao', tipo: 'sem gestor', unidade: u.unidade, texto: 'Aguardando gestor: ninguém da unidade foi cadastrado para usar o Portal da Unidade. Cadastre em Gestão CTAI > Usuários.' });
     for (const k of u.competencias) if (k.prazos) for (const canal of ['sei', 'simas']) {
       const s = k.prazos[canal];
       if (s.situacao === 'vencido') alertas.push({ nivel: 'alta', tipo: 'prazo vencido', unidade: u.unidade, texto: (canal === 'sei' ? 'SEI' : 'SIMAS') + ' da competência ' + k.competencia_id + ' venceu há ' + s.dias + ' dia(s).' });
@@ -284,8 +295,8 @@ function painel(db, filtro) {
     gerado_em: new Date().toISOString(), hoje, trimestre: tri, trimestre_anterior: triAnt, trimestres: trimestresDisponiveis(db),
     filtros: { contrato: filtro.contrato || null, usuario_id: filtro.usuario_id ? Number(filtro.usuario_id) : null },
     cartoes, unidades, recorrentes, alertas, trilha: { ok: v.ok, eventos: v.total },
-    sem_carteira: CART.semCarteira(db),
+    sem_carteira: CART.semCarteira(db), sem_gestor: listaSemGestor(db),
   };
 }
 
-module.exports = { trimestrePadrao, trimestreDe, mesesDe, anterior, trimestreAtual, trimestresDisponiveis, periodo, producao, painel };
+module.exports = { semGestor, trimestrePadrao, trimestreDe, mesesDe, anterior, trimestreAtual, trimestresDisponiveis, periodo, producao, painel };

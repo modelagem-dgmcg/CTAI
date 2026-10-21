@@ -142,6 +142,9 @@ CREATE TABLE IF NOT EXISTS carteira (
 );
 CREATE INDEX IF NOT EXISTS ix_carteira ON carteira (contrato_id, ate);
 CREATE INDEX IF NOT EXISTS ix_carteira_u ON carteira (usuario_id, ate);
+CREATE TABLE IF NOT EXISTS importacoes (
+  importacao_id INTEGER PRIMARY KEY AUTOINCREMENT, em TEXT NOT NULL, quem TEXT NOT NULL, modo TEXT NOT NULL, arquivo_hash TEXT, resumo TEXT
+);
 CREATE TABLE IF NOT EXISTS gestao_config (chave TEXT PRIMARY KEY, valor TEXT, atualizado_por TEXT, atualizado_em TEXT);
 CREATE TABLE IF NOT EXISTS ia_config (
   provedor TEXT PRIMARY KEY, ativo INTEGER NOT NULL DEFAULT 0, modelo TEXT, url TEXT, chave_cifrada TEXT, chave_final TEXT,
@@ -188,6 +191,7 @@ CREATE TRIGGER IF NOT EXISTS trg_conf_no_delete BEFORE DELETE ON conferencias
 // Colunas acrescentadas depois da primeira versão (migração segura: só acrescenta, nunca altera o que existe).
 const COLUNAS_NOVAS = {
   usuarios: ['setores TEXT'],
+  contratos: ['tipo TEXT', 'municipio TEXT', 'criado_por TEXT', 'criado_em TEXT'],
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
   achados: ['encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
 };
@@ -209,15 +213,18 @@ function abrir(arquivo) {
 
 // Envoltório com os métodos usados no resto do sistema.
 function envolver(db) {
+  let prof = 0;
   const api = {
     raw: db,
     all: (sql, ...p) => db.prepare(sql).all(...p).map((r) => Object.assign({}, r)),
     get: (sql, ...p) => { const r = db.prepare(sql).get(...p); return r ? Object.assign({}, r) : undefined; },
     run: (sql, ...p) => db.prepare(sql).run(...p),
     exec: (sql) => db.exec(sql),
+    // Transação que aceita ser chamada dentro de outra (a de fora é quem confirma ou desfaz tudo).
     tx(fn) {
-      db.exec('BEGIN IMMEDIATE');
-      try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (_) { /* já revertido */ } throw e; }
+      if (prof > 0) return fn();
+      db.exec('BEGIN IMMEDIATE'); prof = 1;
+      try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (_) { /* já revertido */ } throw e; } finally { prof = 0; }
     },
     fechar: () => db.close(),
   };
