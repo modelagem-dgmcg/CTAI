@@ -32,6 +32,7 @@ function criarApp(db) {
   app.use('/api/auth', require('./routes/auth')(db));
   app.use('/api/unidade', require('./routes/unidade')(db));
   app.use('/api/ctai', require('./routes/ctai')(db));
+  app.use('/api/caixa', require('./routes/caixa')(db));
   app.use('/api/analista', require('./routes/analista')(db));
   app.use('/api/integracoes', require('./routes/integracoes')(db));
   app.use('/api/admin', require('./routes/admin')(db));

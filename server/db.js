@@ -145,6 +145,24 @@ CREATE INDEX IF NOT EXISTS ix_carteira_u ON carteira (usuario_id, ate);
 CREATE TABLE IF NOT EXISTS importacoes (
   importacao_id INTEGER PRIMARY KEY AUTOINCREMENT, em TEXT NOT NULL, quem TEXT NOT NULL, modo TEXT NOT NULL, arquivo_hash TEXT, resumo TEXT
 );
+-- Caixa de entrada da CTAI: item (um só por evento), destinatários (lido por pessoa) e histórico (só acrescenta).
+CREATE TABLE IF NOT EXISTS caixa_itens (
+  item_id INTEGER PRIMARY KEY AUTOINCREMENT, chave TEXT NOT NULL UNIQUE, tipo TEXT NOT NULL, contrato_id TEXT, cid INTEGER, competencia_id TEXT,
+  titulo TEXT NOT NULL, texto TEXT, link TEXT, urgencia INTEGER NOT NULL DEFAULT 0, criado_em TEXT NOT NULL,
+  tratado_por TEXT, tratado_em TEXT, tratado_obs TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_caixa_contrato ON caixa_itens (contrato_id, tipo);
+CREATE TABLE IF NOT EXISTS caixa_destinos (
+  item_id INTEGER NOT NULL, usuario_id INTEGER NOT NULL, em_substituicao_de INTEGER, lido_em TEXT, PRIMARY KEY (item_id, usuario_id)
+);
+CREATE INDEX IF NOT EXISTS ix_caixa_dest_u ON caixa_destinos (usuario_id, lido_em);
+CREATE TABLE IF NOT EXISTS caixa_historico (
+  hist_id INTEGER PRIMARY KEY AUTOINCREMENT, item_id INTEGER NOT NULL, em TEXT NOT NULL, quem TEXT NOT NULL, acao TEXT NOT NULL, detalhe TEXT
+);
+CREATE TABLE IF NOT EXISTS caixa_substituicoes (
+  subst_id INTEGER PRIMARY KEY AUTOINCREMENT, de_usuario_id INTEGER NOT NULL, para_usuario_id INTEGER NOT NULL, desde TEXT NOT NULL, ate TEXT NOT NULL,
+  motivo TEXT, criado_por TEXT NOT NULL, criado_em TEXT NOT NULL, cancelado_por TEXT, cancelado_em TEXT
+);
 CREATE TABLE IF NOT EXISTS gestao_config (chave TEXT PRIMARY KEY, valor TEXT, atualizado_por TEXT, atualizado_em TEXT);
 CREATE TABLE IF NOT EXISTS ia_config (
   provedor TEXT PRIMARY KEY, ativo INTEGER NOT NULL DEFAULT 0, modelo TEXT, url TEXT, chave_cifrada TEXT, chave_final TEXT,

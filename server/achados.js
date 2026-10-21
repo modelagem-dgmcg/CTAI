@@ -80,6 +80,7 @@ function responder(db, achadoId, usuario, texto) {
   const agora = new Date().toISOString();
   db.run("UPDATE achados SET status = 'respondido', resposta = ?, respondido_por = ?, respondido_em = ?, atualizado_em = ? WHERE achado_id = ?", resposta, usuario.login, agora, agora, a.achado_id);
   trilha.registrar(db, { usuario: usuario.login, tabela: 'achados', registro: a.achado_id, campo: 'resposta', valor_anterior: 'encaminhado', valor_novo: 'respondido', motivo: resposta });
+  require('./caixa').eventoResposta(db, Object.assign({}, a, { respondido_em: agora }));
 }
 
 // Visão da unidade: só o que foi encaminhado a ela (nunca os achados internos da CTAI).

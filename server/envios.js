@@ -171,6 +171,7 @@ async function receber(db, envioId, opcoes) {
     require('./checklist').sincronizar(db, envio.cid);
     db.run('UPDATE envios SET recebido_em = ?, recebido_por = ? WHERE envio_id = ?', agora(), (opcoes && opcoes.usuario) || 'sistema', envio.envio_id);
     db.run("UPDATE competencias SET status = 'recebida' WHERE cid = ? AND status IN ('aberta','enviada','recebida')", envio.cid);
+    require('./caixa').eventoEnvio(db, envio);
     trilha.registrar(db, { usuario: (opcoes && opcoes.usuario) || 'sistema', tabela: 'envios', registro: envio.cid + '/v' + envio.versao, campo: 'recepcao', valor_novo: { igqRecalculado: resultado.igqRecalculado, igqDeclarado: resultado.igqDeclarado, divergencias: resultado.divergencias.length, alertas: resultado.alertas.length } });
   });
   // Analista sobre o texto do relatório (não bloqueia se não houver provedor).

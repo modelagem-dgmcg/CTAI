@@ -147,6 +147,22 @@ module.exports = (db) => {
     res.send(buf);
   });
 
+  // ---------- Entregas por carteira (caixa de entrada) ----------
+  const CX = require('../caixa');
+  r.get('/entregas', (req, res) => { CX.sincronizar(db); res.json(CX.entregas(db, { contrato: req.query.contrato, usuario_id: req.query.usuario_id })); });
+  r.get('/entregas.pdf', async (req, res) => {
+    CX.sincronizar(db);
+    const buf = await require('../pdf/entregas').gerar(CX.entregas(db, { contrato: req.query.contrato, usuario_id: req.query.usuario_id }), req.usuario.nome);
+    trilha.registrar(db, { usuario: req.usuario.login, tabela: 'gestao', registro: 'entregas', campo: 'exportacao', valor_novo: 'pdf' });
+    res.setHeader('Content-Type', 'application/pdf'); res.setHeader('Content-Disposition', 'inline; filename="entregas-por-carteira.pdf"'); res.send(buf);
+  });
+  r.put('/caixa-config', (req, res) => {
+    const n = Number(req.body && req.body.dias_nao_lido);
+    if (!Number.isInteger(n) || n < 1 || n > 60) throw erro(400, 'Informe de 1 a 60 dias.');
+    CART.definirCfg(db, req.usuario.login, 'caixa_dias_nao_lido', n);
+    res.json({ dias_nao_lido: CX.diasNaoLido(db) });
+  });
+
   // ---------- Painel da superintendente ----------
   const filtroPainel = (q) => ({ trimestre: q.trimestre, contrato: q.contrato, usuario_id: q.usuario_id });
   r.get('/painel', (req, res) => res.json(G.painel(db, filtroPainel(req.query))));

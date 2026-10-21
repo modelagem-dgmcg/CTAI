@@ -263,6 +263,7 @@ function congelar(db, parecerId, usuario, dados) {
       p.parecer_id, numero, JSON.stringify(conteudo), hash, usuario.usuario_id, agora(), 'em conferência', JSON.stringify(convocados), dados.motivo || null);
     db.run("UPDATE pareceres SET status = 'em conferência', versao_alterada = 0, atualizado_em = ? WHERE parecer_id = ?", agora(), p.parecer_id);
     trilha.registrar(db, { usuario: usuario.login, tabela: 'versoes_minuta', registro: p.parecer_id + '/v' + numero, campo: 'congelamento', valor_novo: { hash, convocados }, motivo: dados.motivo || 'Primeira versão' });
+    require('./caixa').eventoMinuta(db, p, Number(r.lastInsertRowid), numero, convocados);
     return Number(r.lastInsertRowid);
   });
 }

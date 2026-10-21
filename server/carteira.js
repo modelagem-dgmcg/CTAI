@@ -31,8 +31,12 @@ function permitidos(db, u) {
   if (!u || ['admin', 'superintendente'].includes(u.perfil)) return null;
   if (!ELEGIVEIS.includes(u.perfil)) return null;
   const meus = doUsuario(db, u.usuario_id);
-  if (!meus.length) return estrita(db) ? new Set() : null;
-  return new Set(meus);
+  if (!meus.length && !estrita(db)) return null;
+  // Quem substitui alguém (caixa de entrada redirecionada por período) enxerga também as unidades dessa pessoa enquanto durar a substituição.
+  const hoje = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
+  const subs = db.all('SELECT de_usuario_id FROM caixa_substituicoes WHERE para_usuario_id = ? AND cancelado_em IS NULL AND desde <= ? AND ate >= ?', u.usuario_id, hoje, hoje);
+  const extra = subs.flatMap((x) => doUsuario(db, x.de_usuario_id));
+  return new Set(meus.concat(extra));
 }
 
 function exigir(db, u, contratoId) {

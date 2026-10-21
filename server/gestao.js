@@ -132,6 +132,7 @@ function producao(db, filtro) {
       achados: { encaminhados, respondidos, descartados, fixados },
       minutas: { criadas: minutasCriadas, congeladas: minutasCongeladas },
       tempo_medio: tempoMedio,
+      caixa: require('./caixa').tempos(db, u.usuario_id, p.ini, p.fim, contrato),
       carga: { unidades: carteira.length, divergencias_abertas: cargaUn.divergencias, achados_abertos: cargaUn.achados, minutas_abertas: minutasAbertas, conferencias_pendentes: conferenciasPendentes },
       acoes_registradas: acoes,
     };
