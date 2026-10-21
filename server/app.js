@@ -51,7 +51,21 @@ function criarApp(db) {
     res.json({ versao: regras.versao, soma_maxima: regras.soma_maxima, indicadores: regras.indicadores.map((i) => ({ id: i.id, nome: i.nome, max: i.max, unidade: i.unidade || null, faixas: R.descricaoFaixas(i), pendente: i.pendente || null })), faixas_pagamento: regras.faixas_pagamento, pendencias: R.pendencias(regras) });
   });
 
-  app.get('/api/saude', (req, res) => res.json({ ok: true }));
+  app.get(['/api/saude', '/saude'], (req, res) => res.json({ ok: true }));
+
+  // Diagnóstico de origem: mostra a quem pergunta o IP que o servidor enxerga e como foi classificado (serve para calibrar o proxy).
+  // Só devolve dados da própria requisição; não exige login.
+  app.get('/api/origem', (req, res) => {
+    const EX = require('./exposicao');
+    const o = EX.origemDe(req), c = EX.clienteIp(req);
+    const pega = (n) => (req.headers[n] === undefined ? null : String(req.headers[n]).slice(0, 300));
+    res.json({
+      classe: o.tipo, motivo: o.motivo, seuIp: c.ip, comoFoiObtido: c.fonte, listaDeIpsInternosDefinida: EX.listaInternaDefinida(), modo: EX.modo(),
+      cabecalhos: { 'x-forwarded-for': pega('x-forwarded-for'), 'cf-connecting-ip': pega('cf-connecting-ip'), 'true-client-ip': pega('true-client-ip'), 'x-real-ip': pega('x-real-ip'), forwarded: pega('forwarded'), 'x-forwarded-host': pega('x-forwarded-host'), host: pega('host') },
+      conexao: String((req.socket && req.socket.remoteAddress) || ''),
+      orientacao: 'Se "seuIp" não for o seu IP público, ajuste CTAI_PROXY_SALTOS (quantos proxies da plataforma acrescentam endereço) ou CTAI_IP_CABECALHO. Veja docs/EXPOSICAO.md.',
+    });
+  });
 
   app.use('/api', (req, res) => res.status(404).json({ erro: 'Rota não encontrada.' }));
 
