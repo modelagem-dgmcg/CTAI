@@ -118,7 +118,7 @@ module.exports = (db) => {
   };
   r.get('/carteira/importar/modelo.csv', (req, res) => { res.setHeader('Content-Type', 'text/csv; charset=utf-8'); res.setHeader('Content-Disposition', 'attachment; filename="modelo-importacao-carteira.csv"'); res.send(IMP.modeloCsv()); });
   r.post('/carteira/importar/previa', (req, res) => res.json(IMP.previa(db, entradaImp(req))));
-  r.post('/carteira/importar/gravar', (req, res) => res.json(IMP.gravar(db, req.usuario.login, entradaImp(req))));
+  r.post('/carteira/importar/gravar', (req, res) => { const o = IMP.gravar(db, req.usuario.login, entradaImp(req)); try { require('../contrato-regras').aplicarSementes(db); } catch (_) { /* a carteira já foi gravada */ } res.json(o); });
   r.get('/carteira/importar/historico', (req, res) => res.json({ importacoes: IMP.historico(db) }));
 
   // ---------- IA ----------

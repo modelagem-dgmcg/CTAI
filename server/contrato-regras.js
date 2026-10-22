@@ -72,4 +72,28 @@ function marcarConferida(db, usuario, contratoId) {
   return ler(db, contratoId);
 }
 
-module.exports = { ler, importar, importarLote, marcarConferida, normalizar, semAcento };
+// Regras dos contratos que acompanham o sistema (regras/contratos/*.json; contratos públicos, LAI). Aplica nas unidades que ainda não
+// têm regra, sem sobrescrever o que alguém já importou ou conferiu. Roda na partida e depois de importar a carteira.
+function aplicarSementes(db) {
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(__dirname, '..', 'regras', 'contratos');
+  if (!fs.existsSync(dir)) return { aplicadas: 0 };
+  const contratos = db.all('SELECT contrato_id, unidade FROM contratos WHERE demo = 0').map((c) => ({ id: c.contrato_id, nome: semAcento(c.unidade) }));
+  if (!contratos.length) return { aplicadas: 0 };
+  const sistema = { login: 'sistema' };
+  let aplicadas = 0;
+  for (const arq of fs.readdirSync(dir).filter((f) => f.endsWith('.json'))) {
+    let lista; try { const j = JSON.parse(fs.readFileSync(path.join(dir, arq), 'utf8')); lista = Array.isArray(j) ? j : j.unidades; } catch (_) { continue; }
+    for (const it of lista || []) {
+      const chaves = (Array.isArray(it.chaves) && it.chaves.length ? it.chaves : [it.unidade]).map(semAcento).filter(Boolean);
+      const par = contratos.filter((c) => chaves.some((k) => c.nome.includes(k)));
+      if (par.length !== 1) continue;
+      const id = par[0].id;
+      if (db.get('SELECT 1 FROM contrato_regras WHERE contrato_id = ?', id) || db.get('SELECT 1 FROM regras WHERE contrato_id = ?', id)) continue;
+      try { gravar(db, sistema, id, it, 'regras do repositório (' + arq + ')'); aplicadas++; } catch (_) { /* segue */ }
+    }
+  }
+  return { aplicadas };
+}
+
+module.exports = { aplicarSementes, ler, importar, importarLote, marcarConferida, normalizar, semAcento };

@@ -13,6 +13,7 @@ if (semeou === 'equipe') {
   console.log('Carga inicial feita. Usuários de teste: admin, nathalia, cleuton, colega1, colega2, gestor.olinda, gestor.demo.');
   console.log('Senha temporária (trocar no primeiro acesso): ' + config.senhaTemporaria);
 }
+try { const a = require('./contrato-regras').aplicarSementes(db); if (a.aplicadas) console.log('Regras de contratos aplicadas: ' + a.aplicadas + ' unidade(s).'); } catch (e) { console.error('[regras] ' + e.message); }
 // Recuperação de acesso: CTAI_REDEFINIR_SENHA_DE=admin,acleutonev devolve a esses usuários a senha temporária a cada partida.
 // Depois de entrar e trocar a senha, APAGUE a variável no Render (senão a troca é desfeita a cada reinício).
 const redefinir = config.env('CTAI_REDEFINIR_SENHA_DE', '').split(',').map((x) => x.trim()).filter(Boolean);

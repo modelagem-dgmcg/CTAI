@@ -1,0 +1,2137 @@
+{
+ "gerado_em": "2026-10-22",
+ "aviso": "Leitura automática dos contratos; tudo a conferir.",
+ "unidades": [
+  {
+   "unidade": "Hospital Mestre Vitalino dos Santos",
+   "chaves": [
+    "mestre vitalino"
+   ],
+   "contrato_numero": "001/2015",
+   "oss": "",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Número de consultas médicas ambulatoriais",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de consultas realizadas por profissionais de saúde não médicos",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de sessões de quimioterapia",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de sessões de hemodiálise",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de atendimentos de urgência e emergência",
+     "peso_pct_total": 3
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de saídas hospitalares",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de cirurgias genéricas realizadas",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de cirurgias específicas realizadas – Cirurgia Cardíaca",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de cirurgias específicas realizadas – Colangiopancreatografia",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de cirurgias específicas realizadas – Implante de Marcapasso",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de cirurgias específicas realizadas – Cirurgia Vascular",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de procedimentos de hemodinâmica cardíaca",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com classificação de risco",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Índice de satisfação do usuário",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de aprovação de resolução de queixas",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Percentual de glosas referentes a falta de profissional cadastrado no CNES",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Percentual de glosas no SIA/SUS",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Percentual de glosas no SIH/SUS",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do relatório de prestação de contas mensal",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Encaminhamento de relatório de apuração de custos do APURASUS",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Qualidade da publicação das informações de transparência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de revisão de óbitos institucionais",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de infecção hospitalar",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Execução da escala médica do serviço de urgência/emergência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Número de plantões dos serviços de urgência e emergência restritos/fechados por falta de recursos humanos sem justificativa acolhida.",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação na saúde",
+     "peso_pct_total": 0.5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 26; com meta e fonte lidas: 0. Valor mensal não identificado.",
+   "fonte_arquivo": "001_2015_-_HOSP._MESTRE_VITALINO_DOS_SANTOS.docx",
+   "tas_no_arquivo": 332
+  },
+  {
+   "unidade": "Hospital Regional Fernando Bezerra",
+   "chaves": [
+    "fernando bezerra"
+   ],
+   "contrato_numero": "001/2019",
+   "oss": "INSTITUTO SOCIAL DAS MEDIANEIRAS DA PAZ - ISMEP",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "qualidade",
+     "nome": "Atingir o grau desejável",
+     "peso_pct_variavel": 75,
+     "meta": "6",
+     "especificacao": "6",
+     "fonte": "Atingir o grau moderado (50% - 75%) de qualidade da publicação das informações de transparência."
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Atingir o grau insuficiente",
+     "peso_pct_variavel": 25,
+     "meta": "Atingir o grau crítico (0% - 25%) de qualidade da publicação das informações de transparência.",
+     "especificacao": "2",
+     "fonte": "1"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Atingir o grau inexistente",
+     "peso_pct_variavel": 0,
+     "meta": "Educação Permanente",
+     "especificacao": "0",
+     "fonte": "Taxa de execução do Plano de Educação Permanente."
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 3; com meta e fonte lidas: 3. Pesos não lidos (contrato sem quadro geral). Valor mensal não identificado.",
+   "fonte_arquivo": "001_2019_-_HOSP._REGIONAL_FERNANDO_BEZERRA.docx",
+   "tas_no_arquivo": 293
+  },
+  {
+   "unidade": "Hospital Mat. Brites de Albuquerque",
+   "chaves": [
+    "brites"
+   ],
+   "contrato_numero": "001/2023",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Procedimento Operacional Padrão",
+     "peso_pct_total": 0.5,
+     "meta": "das normas e rotinas",
+     "especificacao": "tentativa de manter os processos livres de falhas através da padronização",
+     "fonte": "Apresentação dos POPs, mantendo-os atualizados.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 0.5,
+     "meta": "acompanhantes.",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus",
+     "fonte": "Atingir valor ≥90% de satisfação (n° pesquisas com respostas positivas x 100/ total",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIA/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "regulação/SES.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela",
+     "fonte": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIH/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "regulação/SES.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIH/SUS no prazo preconizado pela",
+     "fonte": "Registro de 100% no sistema SIH/SUS, dos atendimentos realizados na unidade, podendo apresentar no",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1,
+     "meta": "Envio de relatório de Prestação de Contas Mensal até o dia 20 do mês subsequente à prestação do",
+     "especificacao": "Apresentar relatório de prestação de contas mensal no prazo estabelecido pela SES/PE",
+     "fonte": "serviço.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Revisão dos prontuários",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% dos prontuários revisados",
+     "especificacao": "Revisão dos prontuários",
+     "fonte": "Relatório mensal, enviado à SES.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 1,
+     "meta": "prontuários dos pacientes que vieram a óbitos foram revisados pela comissão de prontuários e análise de óbitos.",
+     "especificacao": "Certificar que os",
+     "fonte": "Atingir valor ≥90% revisão dos prontuários de óbitos. (total de prontuários revisados pela comissão de prontuários e análise de óbitos x 100 / Nº Total Óbitos).",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≤7,5% de casos de infecções hospitalares de qualquer tipo ocorridos no período. (Nº Casos de infecções Hospitalares de qualquer tipo no período x 100",
+     "especificacao": "Medir e avaliar a Taxa de Infecção Hospitalar do Hospital.",
+     "fonte": "/ N° de Saída Hospitalares",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Média de Permanência Hospitalar",
+     "peso_pct_total": 0.5,
+     "meta": "Procedimento realizado x média permanência na Tabela SUS/SIGTAP.",
+     "especificacao": "Representa o tempo médio de internações dos pacientes nos leitos hospitalares.",
+     "fonte": "SIGTAP, SIH/SUS, Relatório Mensal enviado à SES",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Ambulatório de Egresso (1º Consulta)",
+     "peso_pct_total": 0.5,
+     "meta": "100% de",
+     "especificacao": "Agendamento da primeira consulta de egresso na alta hospitalar",
+     "fonte": "agendamento da 1º consulta de egresso no momento da alta hospitalar.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% das atividades previstas para o plano de educação permanente (n° total de atividades realizadas x 100/ n° de atividades previstas no plano de educação",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "permanente para o período)",
+     "peso_pct_variavel": 5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 16; com meta e fonte lidas: 11. Valor mensal não identificado.",
+   "fonte_arquivo": "001_2023_-_HOSP._MAT._BRITES_DE_ALBUQUERQUE.docx",
+   "tas_no_arquivo": 69
+  },
+  {
+   "unidade": "Hospital da Mulher do Agreste",
+   "chaves": [
+    "mulher do agreste"
+   ],
+   "contrato_numero": "001/2025",
+   "oss": "SOCIEDADE PERNAMBUCANA DE COMBATE AO CÂNCER",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Estrutura do contrato diferente do padrão: o quadro de indicadores não foi lido automaticamente; leitura manual necessária.",
+   "fonte_arquivo": "001_2025_-_HOSP._DA_MULHER_DO_AGRESTE.docx",
+   "tas_no_arquivo": 37
+  },
+  {
+   "unidade": "Hospital Ruy de Barros Correia",
+   "chaves": [
+    "rui de barros",
+    "ruy de barros",
+    "barros correia"
+   ],
+   "contrato_numero": "001/2016",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Estrutura do contrato diferente do padrão: o quadro de indicadores não foi lido automaticamente; leitura manual necessária.",
+   "fonte_arquivo": "001__2016_-__HOSP._RUY_DE_BARROS_CORREIA_.docx",
+   "tas_no_arquivo": 226
+  },
+  {
+   "unidade": "Hospital Emília Câmara",
+   "chaves": [
+    "emilia camara"
+   ],
+   "contrato_numero": "002/2017",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 3.2
+    },
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Não Médicas",
+     "peso_pct_total": 1.8
+    },
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Atendimentos de Urgência e Emergência",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Cirurgias Realizadas",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "SADT",
+     "peso_pct_total": 0
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com classificação de risco",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Percentual de glosas referentes a profissional não cadastrado no CNES",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Percentual de glosas no SIA/SUS",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Percentual de glosas no SIH/SUS",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Cesariana",
+     "peso_pct_total": 0
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Cesariana em Primípara",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Proporção de Recém Nascidos com 1ª dose de Vacina Hepatite B nas primeiras 12 horas",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Proporção de Recém Nascidos com Peso Adequado com Vacina BCG até a Alta Hospitalar",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Óbitos Fetais Investigados",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Óbitos Maternos Investigados",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e amarelo",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Mortalidade Cirúrgica e estratificação por ASA",
+     "peso_pct_total": 0
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Ocupação Operacional geral, por clínica e UTI",
+     "peso_pct_total": 0
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 27; com meta e fonte lidas: 0. Valor mensal não identificado.",
+   "fonte_arquivo": "002_2017_-__HOSP._EM_LIA_C_MARA_.docx",
+   "tas_no_arquivo": 285
+  },
+  {
+   "unidade": "Hospital São Sebastião",
+   "chaves": [
+    "sao sebastiao"
+   ],
+   "contrato_numero": "002/2018",
+   "oss": "SOCIEDADE PERNAMBUCANA DE COMBATE AO CÂNCER - SPCC",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Estrutura do contrato diferente do padrão: o quadro de indicadores não foi lido automaticamente; leitura manual necessária.",
+   "fonte_arquivo": "002_2018_-_HOSP._S_O_SEBASTI_O.docx",
+   "tas_no_arquivo": 121
+  },
+  {
+   "unidade": "Hospital Central de Paulista",
+   "chaves": [
+    "central de paulista"
+   ],
+   "contrato_numero": "003/2026",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "qualidade",
+     "nome": "Atingir o grau desejado",
+     "peso_pct_variavel": 100,
+     "meta": "6",
+     "especificacao": "Informação prestada pela Coordenação de Integridade e Transparência da DGMCG/SECI/SES/PE",
+     "fonte": "6"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Atingir o grau moderado",
+     "peso_pct_variavel": 75.01,
+     "meta": "Atingir o grau intermediário (50,01% - 75,00%) de qualidade da publicação das informações de transparência.",
+     "especificacao": "4",
+     "fonte": "2"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Atingir o grau insuficiente",
+     "peso_pct_variavel": 25.01,
+     "meta": "Atingir o grau crítico (0,00% - 25,00%) de qualidade da publicação das informações de transparência.",
+     "especificacao": "1",
+     "fonte": "0"
+    }
+   ],
+   "observacoes": [
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 3; com meta e fonte lidas: 3. Pesos não lidos (contrato sem quadro geral). Valor mensal não identificado.",
+   "fonte_arquivo": "003_2026_-_HOSP._CENTRAL_DE_PAULISTA.docx",
+   "tas_no_arquivo": 2
+  },
+  {
+   "unidade": "Hospital ERM Rio Coutinho (Ermírio Coutinho)",
+   "chaves": [
+    "ermirio coutinho"
+   ],
+   "contrato_numero": "014/2022",
+   "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA - HOSPITAL MARIA LUCINDA",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 7,
+     "meta": "Realização de 700 consultas médicas.",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS ou SIH/SUS",
+     "peso_pct_variavel": 35
+    },
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 7,
+     "meta": "Atingir o quantitativo de 350 saídas hospitalares/mês.",
+     "especificacao": "Total de saídas/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS ou SIH/SUS",
+     "peso_pct_variavel": 35
+    },
+    {
+     "tipo": "producao",
+     "nome": "Atendimentos de Urgência e Emergência",
+     "peso_pct_total": 6,
+     "meta": "Realização de 9.200 atendimentos/mês.",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS ou SIH/SUS",
+     "peso_pct_variavel": 30
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com classificação de risco",
+     "peso_pct_total": 0.5,
+     "meta": "Indicador de satisfação do usuário (2,5% da parte variável - qualidade)",
+     "especificacao": "Envio de relatório de resultados do ACCR até o dia 20 do mês subsequente.",
+     "fonte": "Atingir valor ≥90% de satisfação (n° pesquisas com respostas positivas x 100/ total de pesquisas aplicadas).",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.25,
+     "meta": "QUALIDADE DA INFORMAÇÃO",
+     "especificacao": "Atingir valor ≥80% de resolução das queixas prestadas (n° de queixas resolvidas no período x 100/total do número de queixas recebidas).",
+     "fonte": "Taxa de profissionais médicos cadastrados no CNES (5% da parte variável - qualidade)",
+     "peso_pct_variavel": 2.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIA/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "Apresentação do relatório SIH/SUS (5% da parte variável - qualidade)",
+     "especificacao": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "fonte": "Registro de 100% no sistema SIH/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIH/SUS",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1,
+     "meta": "Informação e Transparência (10% da parte variável - qualidade)",
+     "especificacao": "Envio de relatório de Prestação de Contas Mensal até o dia 20 do mês subsequente.",
+     "fonte": "Publicar as informações no portal da transparência da entidade de forma individualizada para a unidade hospitalar bem como entregar relatório das respectivas inserções até o 20º dia do mês subsequente à prestação do serviço.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e amarelo",
+     "peso_pct_total": 0.5,
+     "meta": "Taxa de Revisão de Óbitos (5% da parte variável - qualidade). Excetua-se deste indicador óbitos fetais e maternos.",
+     "especificacao": "Atingir valor ≥90% revisão dos prontuários classificados como vermelho e amarelo. (total de prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo / total de prontuários com classificação de risco vermelho e amarelo) x100.",
+     "fonte": "Atingir valor ≥90% revisão dos prontuários de óbitos), Exceto óbitos fetais e materno. (total de prontuários revisados pela comissão de prontuários e análise de óbitos / Nº Total Óbitos) x 100",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Cesariana em Primíparas",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Óbitos Maternos Investigados",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Óbitos Fetais Analisados",
+     "peso_pct_total": 0.25,
+     "meta": "Proporção de Recém Nascidos com 1ª dose de Vacina Hepatite B e Recém Nascido com Vacina BCG (5 % da parte variável – qualidade)",
+     "especificacao": "Atingir 100 % do Óbitos Fetais Analisados. (N° de óbitos fetais com peso igual ou menor 2500 g analisados / número de óbitos fetais com peso igual ou menor 2500 g) x 100.",
+     "fonte": "Atingir 100 % dos nascidos vivos com a 1ª dose de vacina contra hepatite B a ser realizada nas 12 primeiras horas de vida.",
+     "peso_pct_variavel": 2.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Proporção de Recém Nascidos com 1ª dose de vacina hepatite B e Recém nascido com vacina BCG",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1,
+     "meta": "Atividade cirúrgica (5% da parte variável - qualidade)",
+     "especificacao": "Apresentar no mínimo ≤7,5% de casos de infecções hospitalares de qualquer tipo ocorridos no período. (Nº Casos de infecções Hospitalares de qualquer tipo no período x 100 / N° de Saída Hospitalares ocorridas no período) com envio do relatório elaborado pela comissão de controle de infecção hospitalar.",
+     "fonte": "Enviar relatório para monitorar desempenho assistencial na área de cirurgia , contendo os subitens 1.e 2. ( conforme disposto abaixo)",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Atividade Cirúrgica",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica (Urgência/Emergência)",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 21; com meta e fonte lidas: 10. Valor mensal não identificado.",
+   "fonte_arquivo": "014_2022_-_HOSP._ERM_RIO_COUTINHO.docx",
+   "tas_no_arquivo": 112
+  },
+  {
+   "unidade": "Hospital Metropolitano Oeste Pelópidas Silveira",
+   "chaves": [
+    "pelopidas"
+   ],
+   "contrato_numero": "017/2022",
+   "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": null,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 5,
+     "meta": "ASSISTÊNCIA HOSPITALAR",
+     "especificacao": "Realização da meta 1.400 Ambulatoriais por mês",
+     "fonte": "Saídas Hospitalares (25% da parte variável Quantidade)",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Atendimentos de urgência e emergência",
+     "peso_pct_total": 5,
+     "meta": "CIRURGIAS ELETIVAS E CIRURGIAS DE URGÊNCIA / EMERGÊNCIA",
+     "especificacao": "Realização de 1.400 atendimentos por mês.",
+     "fonte": "Cirurgias Realizadas (25% da parte variável Quantidade)",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Cirurgias Realizadas",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Acolhimento com classificação de risco",
+     "peso_pct_total": 5,
+     "meta": "Envio de relatório de resultados do ACCR até o dia 20 do mês subsequente à prestação do serviço.",
+     "especificacao": "Acolhimento ao paciente classificação do atendimento em conformidade com os protocolos vigentes.",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 5,
+     "meta": "Atingir valor 290% de satisfação (n° pesquisas com respostas positivas x 100/ total de pesquisas aplicadas)",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 5,
+     "meta": "Atingir valor 280% de resolução das queixas prestadas (nº de queixas resolvidas no período x 100/total do número de queixas recebidas)",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 5,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam cadastrados no CNES. devidamente",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Atendimento às normas das Portarias de Habilitações da Unidade em Alta Complexidade",
+     "peso_pct_total": 1,
+     "meta": "Apresentação de 100% no sistema SIA/SUS e SIH/SUS dos procedimentos realizados de alta complexidade na unidade, conforme habilitações no CNES.",
+     "especificacao": "Apresentar de 100% no sistema SIA/SUS e SIH/SUS dos procedimentos realizados de complexidade na unidade, conforme habilitações no CNES. alta",
+     "fonte": "Produção SIA e SIH disponíveis no Sistema DATASUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "producao",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1,
+     "meta": "Envio de relatório de Prestação de Contas Mensal até o dia 20 do mês subsequente à prestação do serviço.",
+     "especificacao": "Apresentar relatório de prestação de contas mensal no prazo estabelecido pela SES/PE",
+     "fonte": "Relatório mensal, enviado à SES, relativo a prestação de contas mensais do Hospital.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "producao",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1,
+     "meta": "Publicar as informações no portal da transparência da entidade de forma individualizada para a unidade hospitalar bem como entregar relatório das respectivas inserções até o 20º dia do mês subsequente à prestação do serviço.",
+     "especificacao": "Divulgar as informações preconizadas em lei no portal da transparência da entidade",
+     "fonte": "Portal da transparência da entidade e relatório mensal enviado a SES com as inserções realizadas no Portal da entidade.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "producao",
+     "nome": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e amarelo",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor 290% revisão dos prontuários classificados como vermelho e amarelo. (total de prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo x 100 / total de prontuários com classificação de risco vermelho e amarelo).",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "producao",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor 290% revisão dos prontuários de óbitos. (total de prontuários revisados pela comissão de prontuários e análise de óbitos x 100 / № Total Óbitos).",
+     "especificacao": "Certificar que os prontuários dos pacientes que vieram a óbitos foram revisados pela comissão de prontuários e análise de óbitos.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários e análises de óbitos.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "producao",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≤7,5% de casos de infecções hospitalares de qualquer tipo ocorridos no período. (N Casos de infecções Hospitalares de qualquer tipo no período x 100 /N° de Saída Hospitalares ocorridas no período)",
+     "especificacao": "Medir e avaliar a Taxa de Infecção Hospitalar do Hospital.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações do quantitativo de casos de Infecções Hospitalares, de qualquer natureza, ocorridas no mês e cadastradas nos Sistemas do SUS",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "producao",
+     "nome": "Escala médica",
+     "peso_pct_total": 0.5,
+     "meta": "Execução da escala médica mensal completa",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 15
+    },
+    {
+     "tipo": "producao",
+     "nome": "Média de Permanência Hospitalar",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Ambulatório de Egresso (1º Consulta)",
+     "peso_pct_total": 0.5,
+     "meta": "100 % agendamento da 1º consulta de egresso no momento da alta hospitalar para o paciente que necessite de retorno à unidade.",
+     "especificacao": "Agendamento da 1º consulta de egresso no momento da alta hospitalar para o paciente que necessite de retorno à unidade.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor 290% das atividades previstas para o plano de educação permanente (n° total de atividades realizadas x 100/ nº de atividades previstas no plano de educação permanente para o período)",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 18; com meta e fonte lidas: 15. Valor mensal não identificado.",
+   "fonte_arquivo": "017_2022_-_HOSP._METROPOLITANO_OESTE_PEL_PIDAS_SILVEIRA_.docx",
+   "tas_no_arquivo": 80
+  },
+  {
+   "unidade": "Hospital Dom Helder Câmara",
+   "chaves": [
+    "dom helder"
+   ],
+   "contrato_numero": "018/2022",
+   "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": null,
+   "indicadores": [
+    {
+     "tipo": "qualidade",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 5,
+     "meta": "Realização de 4.286 Consultas Médicas/mês.",
+     "especificacao": "Total de Atendimento/Mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Atendimentos de Urgência e Emergência",
+     "peso_pct_total": 5,
+     "meta": "realização de 2.826 atendimentos/mês.",
+     "especificacao": "Total de Atendimento/Mês",
+     "fonte": "Relatório do Sistema de Gestão/SIA/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Cirurgias Realizadas",
+     "peso_pct_total": 5,
+     "meta": "Atingir o quantitativo de 688 cirurgias/mês, sendo pelo menos 20 cirurgias do tipo Artroplastia do joelho.",
+     "especificacao": "Total de cirurgias/mês",
+     "fonte": "elatório do Sistema de Gestão SIH/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com classıncaçao de risco",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 5,
+     "meta": "tingir valor 290% de satisfação (n° pesquisas com respostas positivas x 100/ total de pesquisas aplicadas)",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 5,
+     "meta": "tingir valor 280% de resolução das queixas prestadas (n° de queixas resolvidas no período x 100/total do número de queixas recebidas)",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas no tempo de resolução no período.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 5,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Atendimento às normas das Portarias de Habilitações da Unidade em Alta Complexidade",
+     "peso_pct_total": 1,
+     "meta": "Apresentação de 100% no sistema SIA/SUS e SIH/SUS dos procedimentos realizados de alta complexidade na unidade, conforme habilitações no CNES.",
+     "especificacao": "Apresentar de 100% no sistema SIA/SUS realizados de complexidade unidade, conforme SIH/SUS dos procedimentos habilitações no CNES. alta na",
+     "fonte": "Produção SIA e SIH disponíveis no Sistema DATASUS e Portarias do MS correspondente.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1,
+     "meta": "Envio de relatório de Prestação de Contas Mensal até o dia 20 do mês subsequente à prestação do serviço.",
+     "especificacao": "Apresentar relatório de prestação de contas mensal no prazo estabelecido pela SES/PE",
+     "fonte": "Relatório mensal, enviado à SES, relativo à prestação de contas mensais do Hospital.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1,
+     "meta": "Publicar as informações no portal da transparência da entidade de forma individualizada para a unidade hospitalar bem como entregar relatório das respectivas inserções até o 20° dia do mês subsequente à prestação do serviço.",
+     "especificacao": "Divulgar as informações preconizadas em lei no portal da transparência da entidade.",
+     "fonte": "Portal da transparência da entidade e relatório mensal enviado à SES com as inserções realizadas no Portal da entidade.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e amarelo",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% revisão dos prontuários classificados como vermelho e amarelo. (total de prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo x 100 / total de prontuários com classificação de risco vermelho е amarelo).",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor 290% revisão dos prontuários de óbitos. (total de prontuários revisados pela comissão de prontuários e análise de óbitos x 100/ № Total Óbitos).",
+     "especificacao": "Certificar que os prontuários dos pacientes que vieram a óbito foram revisados pela comissão de prontuários e análise de óbitos.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários e análises de óbitos.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica de Plantão",
+     "peso_pct_total": 0.5,
+     "meta": "Apresentar total ≤7,5% de casos de infecções ocorridos no período. (N Casos de infecções Hospitalares de qualquer tipo no período x 100 / N° de Saída Hospitalares ocorridas no período) contendo os itens: (Densidade de Infecção Hospitalar relacionada à assistência à Saúde nas UTI/Adulto/ Coronariana; Densidade de Incidência de Infecção Hospitalar em Corrente Sanguínea associada a cateter venoso central/umbilical em UTI/ Adulto/ Coronariana; Densidade de Incidência de Pneumonia associada à ventila",
+     "especificacao": "edir e avaliar a Taxa de Infecção Hospitalar do Hospital.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações do quantitativo de casos de Infecções Hospitalares, ocorridas no mês e cadastradas nos Sistema",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Média de Permanência Hospitalar",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Ambulatório de Egresso (1º Consulta)",
+     "peso_pct_total": 0.5,
+     "meta": "100 % agendamento da 1º consulta de egresso no momento da alta hospitalar para o paciente que necessite de retorno à unidade.",
+     "especificacao": "Agendamento da 1º consulta de egresso no momento da alta hospitalar para o paciente que necessite de retorno à unidade, preferencialmente para os de alta complexidade.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% das atividades previstas para o plano de educação permanente (n° total de atividades realizadas x 100/ n de atividades previstas no plano de educação permanente para o período)",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 18; com meta e fonte lidas: 14. Valor mensal não identificado.",
+   "fonte_arquivo": "018_2022_-_HOSP._DOM_HELDER_C_MERA_.docx",
+   "tas_no_arquivo": 131
+  },
+  {
+   "unidade": "Hospital Regional de Palmares Dr. Sílvio Magalhães",
+   "chaves": [
+    "silvio magalhaes"
+   ],
+   "contrato_numero": "019/2022",
+   "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA - HOSPITAL MARIA LUCINDA",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": null,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 3.2,
+     "meta": "Realização de 1.200 Consultas Médicas Ambulatoriais por mês.",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 5,
+     "meta": "Atingir o quantitativo de",
+     "especificacao": "Total de saídas/mês",
+     "fonte": "750 saídas hospitalares",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Atendimentos de Urgência e Emergência",
+     "peso_pct_total": 5,
+     "meta": "Realização de 10.000",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "atendimentos por mês.",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Cirurgias Realizadas",
+     "peso_pct_total": 5,
+     "meta": "Atingir o quantitativo de",
+     "especificacao": "Total de cirurgias/mês",
+     "fonte": "260 meta cirurgias por mês",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Atendimento Odontológico",
+     "peso_pct_total": 1.8
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com classificação de risco",
+     "peso_pct_total": 0.5,
+     "meta": "protocolos vigentes.",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os",
+     "fonte": "Envio de relatório de resultados do ACCR até o dia 20 do mês subsequente à prestação do serviço.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% de satisfação (n° pesquisas com respostas positivas x 100/ total de pesquisas aplicadas)",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥80% de resolução das queixas prestadas (n° de queixas resolvidas no período x 100/total do número de",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes.",
+     "fonte": "queixas recebidas)",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.5,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIA/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "regulação/SES.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela",
+     "fonte": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIH/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "regulação/SES.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIH/SUS no prazo preconizado pela",
+     "fonte": "Registro de 100% no sistema SIH/SUS, dos atendimentos realizados na unidade, podendo apresentar no",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1,
+     "meta": "Envio de relatório de Prestação de Contas Mensal até o dia 20 do mês subsequente à prestação do",
+     "especificacao": "Apresentar relatório de prestação de contas mensal no prazo estabelecido pela SES/PE",
+     "fonte": "serviço.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1,
+     "meta": "Publicar as informações no portal da transparência da entidade de forma individualizada para a unidade hospitalar bem como entregar relatório das respectivas inserções até o 20º dia do mês subsequente à prestação do serviço.",
+     "especificacao": "Divulgar as informações preconizadas em lei no portal da transparência da entidade.",
+     "fonte": "Portal da transparência da entidade e relatório mensal enviado a SES com as inserções realizadas no Portal",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e amarelo",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% revisão dos prontuários classificados como vermelho e amarelo. (Total de prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo x 100 / total de prontuários com classificação",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "de risco vermelho e amarelo).",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% revisão dos prontuários de óbitos. (Total de prontuários revisados pela comissão de prontuários e análise de óbitos x 100 / Nº Total Óbitos).",
+     "especificacao": "Certificar que os prontuários dos pacientes que vieram a óbitos foram revisados pela comissão de prontuários e análise de óbitos.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários e análises de óbitos.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≤7,5% de casos de infecções hospitalares de qualquer tipo ocorridos no período. (Nº Casos de infecções Hospitalares de qualquer tipo no período x 100",
+     "especificacao": "Medir e avaliar a Taxa de Infecção Hospitalar do Hospital.",
+     "fonte": "/ N° de Saída Hospitalares",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica",
+     "peso_pct_total": 1.5,
+     "meta": "Execução da escala médica mensal completa",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 15
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% das atividades previstas para o plano de educação permanente (n° total de atividades realizadas x 100/ n° de atividades previstas no plano de educação",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "permanente para o período)",
+     "peso_pct_variavel": 5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 18; com meta e fonte lidas: 17. Valor mensal não identificado.",
+   "fonte_arquivo": "019_2022_-_HOSP._REGIONAL_DE_PALMARES_DR._S_LVIO_MAGALH_ES_.docx",
+   "tas_no_arquivo": 118
+  },
+  {
+   "unidade": "Hospital Nossa Senhora das Graças (antigo Hospital Alfa)",
+   "chaves": [
+    "alfa",
+    "nossa senhora das gracas"
+   ],
+   "contrato_numero": "024/2022",
+   "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES – FGH",
+   "valor_mensal": "13.709.827,45",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 5,
+     "meta": "Realização de 1.680 Consultas médicas/mês.",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 10,
+     "meta": "Atingir o quantitativo de 1.042 saídas hospitalares/mês.",
+     "especificacao": "Total de saídas/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIH/SUS",
+     "peso_pct_variavel": 50
+    },
+    {
+     "tipo": "producao",
+     "nome": "Cirurgias Realizadas",
+     "peso_pct_total": 5,
+     "meta": "Atingir o quantitativo de 525 cirurgias/mês, sendo 156 de AC",
+     "especificacao": "Total de cirurgias/mês",
+     "fonte": "Relatório do Sistema de Gestão SIH/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Procedimento Operacional Padrão",
+     "peso_pct_total": 0.5,
+     "meta": "Apresentação dos POPs, mantendo-os atualizados.",
+     "especificacao": "Garantir a qualidade na tentativa de manter os processos livres de falhas através da padronização das normas e rotinas assistenciais.",
+     "fonte": "Documentos POPs elaborados",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% de satisfação (n° pesquisas com respostas positivas x 100/ total de pesquisas aplicadas)",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥80% de resolução das queixas prestadas (n° de queixas resolvidas no período x 100/total do número de queixas recebidas)",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.5,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES.",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIA/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES.",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIH/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "Registro de 100% no sistema SIH/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIH/SUS no prazo preconizado pela regulação/SES.",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIH/SUS.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1,
+     "meta": "Envio de relatório de Prestação de Contas Mensal até o dia 20 do mês subsequente à prestação do serviço.",
+     "especificacao": "Apresentar relatório de prestação de contas mensal no prazo estabelecido pela SES/PE",
+     "fonte": "Relatório mensal, enviado à SES, relativo a prestação de contas mensais do Hospital.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1,
+     "meta": "Publicar as informações no portal da transparência da entidade de forma individualizada para a unidade hospitalar bem como entregar relatório das respectivas inserções até o 20º dia do mês subsequente à prestação do serviço.",
+     "especificacao": "Divulgar as informações preconizadas em lei no portal da transparência da entidade.",
+     "fonte": "Portal da transparência da entidade e relatório mensal enviado a SES com as inserções realizadas no Portal da entidade.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Atendimento às normas da Portaria de Habilitação em Alta Complexidade em Neurocirurgia",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% de atendimento às normas da Portaria de Habilitação",
+     "especificacao": "Oferta dos procedimentos de alta complexidade na Unidade, conforme Portaria de habilitação no CNES.",
+     "fonte": "Relatório mensal, enviado à SES.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% revisão dos prontuários de óbitos. (total de prontuários revisados pela comissão de prontuários e análise de óbitos x 100 / Nº Total Óbitos).",
+     "especificacao": "Certificar que os prontuários dos pacientes que vieram a óbitos foram revisados pela comissão de prontuários e análise de óbitos.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários e análises de óbitos.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≤7,5% de casos de infecções hospitalares de qualquer tipo ocorridos no período. (Nº Casos de infecções Hospitalares de qualquer tipo no período x 100 / N° de Saída Hospitalares ocorridas no período)",
+     "especificacao": "Medir e avaliar a Taxa de Infecção Hospitalar do Hospital.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações do quantitativo de casos de Infecções Hospitalares, de qualquer natureza, ocorridas no mês e cadastradas nos Sistemas do SUS",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica",
+     "peso_pct_total": 0.5,
+     "meta": "Execução da escala médica mensal completa",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Média de Permanência Hospitalar",
+     "peso_pct_total": 0.5,
+     "meta": "Procedimento realizado x média permanência na Tabela SUS/SIGTAP.",
+     "especificacao": "Representa o tempo médio de internações dos pacientes nos leitos hospitalares.",
+     "fonte": "SIGTAP, SIH/SUS, Relatório Mensal enviado à SES",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Ambulatório de Egresso (1º Consulta)-",
+     "peso_pct_total": 0.5,
+     "meta": "100% de agendamento da 1º consulta de egresso no momento da alta hospitalar.",
+     "especificacao": "Agendamento da primeira consulta de egresso na alta hospitalar",
+     "fonte": "Relatório Mensal enviado à SES",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% das atividades previstas para o plano de educação permanente (n° total de atividades realizadas x 100/ n° de atividades previstas no plano de educação permanente para o período)",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 18; com meta e fonte lidas: 18.",
+   "fonte_arquivo": "024_2022_-HOSP.NOSSA_SENHORA_DAS_GRA_AS.docx",
+   "tas_no_arquivo": 41
+  },
+  {
+   "unidade": "Hospital Governador Eduardo Campos",
+   "chaves": [
+    "eduardo campos"
+   ],
+   "contrato_numero": "025/2022",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "6.943.722,39",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Urgências e emergências",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Cirurgias eletivas e de urgência",
+     "peso_pct_total": 5
+    },
+    {
+     "tipo": "producao",
+     "nome": "Acolhimento com classificação de risco (5% da parte variável - qualidade)",
+     "peso_pct_total": 0.5,
+     "meta": "protocolos vigentes.",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os",
+     "fonte": "Envio de relatório de resultados do ACCR até o dia 20 do mês subsequente à prestação do",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.5,
+     "meta": "acompanhantes.",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus",
+     "fonte": "Atingir valor ≥80% de resolução das queixas prestadas (n° de queixas resolvidas no período x 100/total do número de queixas",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.5,
+     "meta": "cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente",
+     "fonte": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIA/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "regulação/SES.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela",
+     "fonte": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIH/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "regulação/SES.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIH/SUS no prazo preconizado pela",
+     "fonte": "Registro de 100% no sistema SIH/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1,
+     "meta": "Publicar as informações no portal da transparência da entidade de forma individualizada para a unidade hospitalar bem como entregar relatório das respectivas inserções até o 20º dia do mês subsequente à prestação do",
+     "especificacao": "Divulgar as informações preconizadas em lei no portal da transparência da entidade.",
+     "fonte": "serviço.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e",
+     "peso_pct_total": null,
+     "meta": "Atingir valor ≥90% revisão dos prontuários classificados como vermelho e amarelo. (total de prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo x 100 / total de prontuários com classificação de risco",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "vermelho e amarelo).",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% revisão dos prontuários de óbitos. (total de prontuários revisados pela comissão de prontuários e análise de óbitos x 100 / Nº Total Óbitos).",
+     "especificacao": "Certificar que os prontuários dos pacientes que vieram a óbitos foram revisados pela comissão de prontuários e análise de óbitos.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários e análises de óbitos.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≤7,5% de casos de infecções hospitalares de qualquer tipo ocorridos no período. (Nº Casos de infecções Hospitalares de qualquer tipo no período x 100 / N° de Saída Hospitalares ocorridas",
+     "especificacao": "Medir e avaliar a Taxa de Infecção Hospitalar do Hospital.",
+     "fonte": "no período)",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica",
+     "peso_pct_total": 1.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% das atividades previstas para o plano de educação permanente (n° total de atividades realizadas x 100/ n° de atividades previstas no plano de educação permanente para o",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "período)",
+     "peso_pct_variavel": 5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 17; com meta e fonte lidas: 10.",
+   "fonte_arquivo": "025_2022_-_HOSP._GOVERNADOR_EDUARDO_CAMPOS.docx",
+   "tas_no_arquivo": 151
+  },
+  {
+   "unidade": "Hospital João Murilo de Oliveira",
+   "chaves": [
+    "joao murilo"
+   ],
+   "contrato_numero": "026/2022",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "4.409.242,91",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 5,
+     "meta": "Realização de 750 Consultas /mês.",
+     "especificacao": "Total de consultas médicas/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 5,
+     "meta": "Atingir o quantitativo de 500 saídas hospitalares/mês.",
+     "especificacao": "Total de saídas/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIH/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Atendimentos de Urgência e Emergência",
+     "peso_pct_total": 5,
+     "meta": "Realização de 11.000 atendimentos/mês.",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Cirurgias Realizadas",
+     "peso_pct_total": 5,
+     "meta": "Atingir o quantitativo de 110 cirurgias/mês.",
+     "especificacao": "Total de cirurgias/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIH/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com classificação de risco",
+     "peso_pct_total": 0.5,
+     "meta": "Envio de relatório de resultados do ACCR até o dia 20 do mês subsequente à prestação do serviço.",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes.",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% de satisfação (n° pesquisas com respostas positivas x 100/ total de pesquisas aplicadas)",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥80% de resolução das queixas prestadas (n° de queixas resolvidas no período x 100/total do número de queixas recebidas)",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.5,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES.",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIA/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES.",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIH/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "Registro de 100% no sistema SIH/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIH/SUS no prazo preconizado pela regulação/SES.",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIH/SUS.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1,
+     "meta": "Envio de relatório de Prestação de Contas Mensal até o dia 20 do mês subsequente à prestação do serviço.",
+     "especificacao": "Apresentar relatório de prestação de contas mensal no prazo estabelecido pela SES/PE",
+     "fonte": "Relatório mensal, enviado à SES, relativo à prestação de contas mensais do Hospital.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1,
+     "meta": "Publicar as informações no portal da transparência da entidade de forma individualizada para a unidade hospitalar bem como entregar relatório das respectivas inserções até o 20º dia do mês subsequente à prestação do serviço.",
+     "especificacao": "Divulgar as informações preconizadas em lei no portal da transparência da entidade.",
+     "fonte": "Portal da transparência da entidade e relatório mensal enviado a SES com as inserções realizadas no Portal da entidade.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e amarelo",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% revisão dos prontuários classificados como vermelho e amarelo. (total de prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo x 100 / total de prontuários com classificação de risco vermelho e amarelo).",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% revisão dos prontuários de óbitos. (total de prontuários revisados pela comissão de prontuários e análise de óbitos x 100 / Nº Total Óbitos).",
+     "especificacao": "Certificar que os prontuários dos pacientes que vieram a óbitos foram revisados pela comissão de prontuários e análise de óbitos.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários e análises de óbitos.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≤7,5% de casos de infecções hospitalares de qualquer tipo ocorridos no período. (Nº Casos de infecções Hospitalares de qualquer tipo no período x 100 / N° de Saída Hospitalares ocorridas no período)",
+     "especificacao": "Medir e avaliar a Taxa de Infecção Hospitalar do Hospital.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações do quantitativo de casos de Infecções Hospitalares, de qualquer natureza, ocorridas no mês e cadastradas nos Sistemas do SUS",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica",
+     "peso_pct_total": 1.5,
+     "meta": "Execução da escala médica mensal completa",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 15
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% das atividades previstas para o plano de educação permanente (n° total de atividades realizadas x 100/ n° de atividades previstas no plano de educação permanente para o período)",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 17; com meta e fonte lidas: 17.",
+   "fonte_arquivo": "026_2022_-_HOSP._JO_O_MURILO_DE_OLIVEIRA_.docx",
+   "tas_no_arquivo": 118
+  },
+  {
+   "unidade": "Hospital Dom Malan",
+   "chaves": [
+    "dom malan"
+   ],
+   "contrato_numero": "027/2022",
+   "oss": "INSTITUTO SOCIAL DAS MEDIANEIRAS DA PAZ - ISMEP",
+   "valor_mensal": "8.108.123,10",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 4,
+     "meta": "Realização de 6.800 Consultas e/ou Atendimentos Ambulatoriais/mês.",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS ou SIH/SUS",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 4,
+     "meta": "Atingir o quantitativo de 1.260 saídas hospitalares/mês.",
+     "especificacao": "Total de saídas/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS ou SIH/SUS",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "producao",
+     "nome": "Atendimentos de Urgência e Emergência",
+     "peso_pct_total": 4,
+     "meta": "Realização de 9.500 atendimentos/mês.",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS ou SIH/SUS",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "producao",
+     "nome": "Cirurgias Realizadas",
+     "peso_pct_total": 4,
+     "meta": "Atingir o quantitativo de 510 cirurgias/mês.",
+     "especificacao": "Total de cirurgias/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS ou SIH/SUS",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "producao",
+     "nome": "Partos realizados",
+     "peso_pct_total": 4,
+     "meta": "Atingir o quantitativo de 600 partos/mês",
+     "especificacao": "Total de partos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS ou SIH/SUS",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com classificação de risco",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.25,
+     "meta": "QUALIDADE DA INFORMAÇÃO (40%)",
+     "especificacao": "Atingir valor ≥80% de resolução das queixas prestadas (n° de queixas resolvidas no período x 100/total do número de queixas recebidas).",
+     "fonte": "Taxa de profissionais médicos cadastrados no CNES (10% da parte variável - qualidade)",
+     "peso_pct_variavel": 2.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIA/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "Apresentação do relatório SIH/SUS (5% da parte variável - qualidade)",
+     "especificacao": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "fonte": "Registro de 100% no sistema SIH/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIH/SUS",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1,
+     "meta": "Informação e Transparência (10% da parte variável - qualidade)",
+     "especificacao": "Envio de relatório de Prestação de Contas mensal até o dia 20 do mês subsequente.",
+     "fonte": "Publicar as informações no portal da transparência da entidade de forma individualizada para a unidade hospitalar bem como entregar relatório das respectivas inserções até o 20º dia do mês subsequente à prestação do serviço.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e amarelo",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Cesariana em Primíparas",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Óbitos Maternos Investigados",
+     "peso_pct_total": 0.25,
+     "meta": "Proporção de Óbitos Fetais Analisados (2,5 % da parte variável – qualidade)",
+     "especificacao": "Apresentar 100% dos Óbitos Maternos Investigados. (N° de óbitos Maternos investigados / total de óbitos maternos) x 100",
+     "fonte": "Apresentar 100 % de Óbitos Fetais Analisados. (N° de óbitos fetais com peso igual ou menor 2500 g analisados / número de óbitos fetais com peso igual ou menor 2500 g) x 100.",
+     "peso_pct_variavel": 2.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Óbitos Fetais Analisados",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Proporção de Recém-nascidos com 1ª dose de vacina hepatite B e Recém-nascido com vacina BCG",
+     "peso_pct_total": 0.25,
+     "meta": "Atingir 100 % dos nascidos vivos com peso > 2000g com vacina",
+     "especificacao": "Atingir 100 % dos nascidos vivos com a 1ª dose de vacina contra hepatite B a ser realizada nas 12 primeiras horas de vida.",
+     "fonte": "BCG realizada antes da alta.",
+     "peso_pct_variavel": 2.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1,
+     "meta": "Atividade cirúrgica (5% da parte variável - qualidade):",
+     "especificacao": "Apresentar ≤7,5% de casos de infecções hospitalares de qualquer tipo ocorridos no período. (Nº Casos de infecções hospitalares de qualquer tipo no período x 100 / N° de Saída Hospitalares ocorridas no período).",
+     "fonte": "Enviar relatório para monitorar desempenho assistencial na área de cirurgia, contendo os subitens 1.; 2. e 3. (conforme disposto abaixo)",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Atividade Cirúrgica 0,5%: (Taxa de Mortalidade Operatória (0,15%; Taxa de Cirurgia de Urgência (0,1%); Taxa de cirurgia Suspensa (0,25%)",
+     "peso_pct_total": 0.5,
+     "meta": "2. Taxa de Cirurgia de Urgência (1%)",
+     "especificacao": "Enviar relatório para monitorar desempenho assistencial na área de cirurgia (Nº de óbitos ocorridos até sete dias após o procedimento cirúrgico, classificados por ASA no mês x 100/ Nº total de cirurgia realizadas no mês)",
+     "fonte": "Enviar relatório para monitorar desempenho assistencial na área de cirurgia (Nº de cirurgia de urgência realizadas no mês x 100/ Nº total de cirurgia realizadas no mês.",
+     "peso_pct_variavel": 1.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica (Urgência/Emergência)",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 23; com meta e fonte lidas: 12.",
+   "fonte_arquivo": "027_2022_-_HOSP._DOM_MALAN_.docx",
+   "tas_no_arquivo": 245
+  },
+  {
+   "unidade": "Hospital Miguel Arraes",
+   "chaves": [
+    "miguel arraes"
+   ],
+   "contrato_numero": "023/2022",
+   "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES – FGH",
+   "valor_mensal": "8.485.577,12",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Realização de Consultas Médicas",
+     "peso_pct_total": 5,
+     "meta": "Realização de 2.198 Consultas e/ou Atendimentos Ambulatoriais/mês.",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Saídas Hospitalares",
+     "peso_pct_total": 5,
+     "meta": "Atingir o quantitativo de 840 saídas hospitalares/mês.",
+     "especificacao": "Total de saídas/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIH/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Atendimentos de Urgência e Emergência",
+     "peso_pct_total": 5,
+     "meta": "Realização de 2.100 atendimentos/mês.",
+     "especificacao": "Total de atendimentos/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIA/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "producao",
+     "nome": "Cirurgias Realizadas",
+     "peso_pct_total": 5,
+     "meta": "Atingir o quantitativo de 630 cirurgias/mês, destas 63 de alta complexidade em traumato-ortopedia.",
+     "especificacao": "Total de cirurgias/mês",
+     "fonte": "Relatório do Sistema de Gestão / SIH/SUS",
+     "peso_pct_variavel": 25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com classificação de risco",
+     "peso_pct_total": 0.5,
+     "meta": "Envio de relatório de resultados do ACCR até o dia 20 do mês subsequente à prestação do serviço.",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes.",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Indicador de satisfação do usuário",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% de satisfação (n° pesquisas com respostas positivas x 100/ total de pesquisas aplicadas)",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥80% de resolução das queixas prestadas (n° de queixas resolvidas no período x 100/total do número de queixas recebidas)",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.5,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES.",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIA/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES.",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Apresentação do relatório SIH/SUS",
+     "peso_pct_total": 0.5,
+     "meta": "Registro de 100% no sistema SIH/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIH/SUS no prazo preconizado pela regulação/SES.",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIH/SUS.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1,
+     "meta": "Envio de relatório de Prestação de Contas Mensal até o dia 20 do mês subsequente à prestação do serviço.",
+     "especificacao": "Apresentar relatório de prestação de contas mensal no prazo estabelecido pela SES/PE",
+     "fonte": "Relatório mensal, enviado à SES, relativo a prestação de contas mensais do Hospital.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1,
+     "meta": "Publicar as informações no portal da transparência da entidade de forma individualizada para a unidade hospitalar bem como entregar relatório das respectivas inserções até o 20º dia do mês subsequente à prestação do serviço.",
+     "especificacao": "Divulgar as informações preconizadas em lei no portal da transparência da entidade.",
+     "fonte": "Portal da transparência da entidade e relatório mensal enviado a SES com as inserções realizadas no Portal da entidade.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e amarelo",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% revisão dos prontuários classificados como vermelho e amarelo. (total de prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo x 100 / total de prontuários com classificação de risco vermelho e amarelo).",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Óbitos",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥90% revisão dos prontuários de óbitos. (total de prontuários revisados pela comissão de prontuários e análise de óbitos x 100 / Nº Total Óbitos).",
+     "especificacao": "Certificar que os prontuários dos pacientes que vieram a óbitos foram revisados pela comissão de prontuários e análise de óbitos.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários e análises de óbitos.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Infecção Hospitalar",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≤7,5% de casos de infecções hospitalares de qualquer tipo ocorridos no período. (Nº Casos de infecções Hospitalares de qualquer tipo no período x 100 / N° de Saída Hospitalares ocorridas no período)",
+     "especificacao": "Medir e avaliar a Taxa de Infecção Hospitalar do Hospital.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações do quantitativo de casos de Infecções Hospitalares, de qualquer natureza, ocorridas no mês e cadastradas nos Sistemas do SUS",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala médica",
+     "peso_pct_total": 1.5,
+     "meta": "Execução da escala médica mensal completa",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato.",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 15
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 0.5,
+     "meta": "Atingir valor ≥90% das atividades previstas para o plano de educação permanente (n° total de atividades realizadas x 100/ n° de atividades previstas no plano de educação permanente para o período)",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 5
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Quadro de indicadores: 17; com meta e fonte lidas: 17.",
+   "fonte_arquivo": "_023_2022_-_HOSP._MIGUEL_ARRAES.docx",
+   "tas_no_arquivo": 111
+  }
+ ]
+}

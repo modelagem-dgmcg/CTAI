@@ -38,3 +38,17 @@ test('importação por unidade e permissão do lote', async () => {
   const jr = cliente(S.base); await jr.post('/api/auth/login', { login: 'juliana.rocha', senha: '123' });
   assert.equal((await jr.post('/api/ctai/regras/importar-lote', { lista: [item('X', ['x'], 1)] })).status, 403);
 });
+
+test('regras que acompanham o sistema entram sozinhas ao importar a carteira, sem sobrescrever', async () => {
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(__dirname, '..', 'regras', 'contratos');
+  const arq = path.join(dir, 'zz-teste.json');
+  fs.writeFileSync(arq, JSON.stringify({ unidades: [item('Hospital Teste Sigma', ['sigma teste'], 2)] }));
+  try {
+    const csv = ['tipo;unidade;municipio;analista', 'Hospital;Sigma Teste;Cidade S;cecilia'].join('\n');
+    assert.equal((await adm.post('/api/gestao/carteira/importar/gravar', { csv, modo: 'acrescentar' })).status, 200);
+    const c = (await adm.get('/api/ctai/contratos')).json.contratos.find((x) => /Sigma/.test(x.unidade));
+    assert.ok(c, 'unidade criada');
+    assert.equal(c.regra.tem, true); assert.equal(c.regra.descritiva, true);
+  } finally { fs.unlinkSync(arq); }
+});
