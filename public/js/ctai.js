@@ -308,11 +308,12 @@
     const gravar = async () => { try { await api('PUT', base + '/modelo', lerTudo()); toast('Parecer salvo.'); recarregar(); } catch (e) { toast(e.message, true); } };
     const quadro = (q) => {
       const corpo = h('div');
-      const pintar = () => corpo.replaceChildren(h('table', { class: 'tabela peq' }, h('thead', null, h('tr', null, q.colunas.map((x) => h('th', null, x)), editavel ? h('th') : null)),
+      const av = q.id !== 'q3' ? h('div', { class: 'aviso-conexao', id: 'md-conectar-' + q.id }, aviso('atencao', 'Dados de produção não conectados. Este quadro será preenchido automaticamente quando a produção da unidade for conectada ou enviada; até lá, preencha à mão (opcional).')) : null;
+      const pintar = () => { if (av) av.style.display = quadros[q.id].length ? 'none' : ''; corpo.replaceChildren(h('table', { class: 'tabela peq' }, h('thead', null, h('tr', null, q.colunas.map((x) => h('th', null, x)), editavel ? h('th') : null)),
         h('tbody', null, quadros[q.id].map((lin, i) => h('tr', null, q.colunas.map((_, j) => h('td', null, editavel ? h('input', { type: 'text', value: lin[j] || '', style: 'width:100%', oninput: (ev) => { lin[j] = ev.target.value; } }) : (lin[j] || ''))), editavel ? h('td', null, h('button', { class: 'leve', onclick: () => { quadros[q.id].splice(i, 1); pintar(); } }, 'Remover')) : null)))),
-        editavel ? h('button', { class: 'sec', onclick: () => { quadros[q.id].push(q.colunas.map(() => '')); pintar(); } }, 'Adicionar linha') : null);
+        editavel ? h('button', { class: 'sec', onclick: () => { quadros[q.id].push(q.colunas.map(() => '')); pintar(); } }, 'Adicionar linha') : null); };
       pintar();
-      return h('div', { style: 'margin:12px 0' }, h('h4', null, q.titulo), corpo);
+      return h('div', { style: 'margin:12px 0' }, h('h4', null, q.titulo), av, corpo);
     };
     const revisar = async () => {
       troca(caixaRev, h('p', { class: 'mudo' }, 'Revisando: conferências locais, Analista, normas da unidade e busca externa… pode levar alguns segundos.'));
@@ -607,13 +608,13 @@
     const meta0 = await api('GET', '/api/meta').catch(() => null);
     window.__semPainel = !!(me0 && ['criador', 'colega'].includes(me0.usuario.perfil) && meta0 && !meta0.painelAnalista);
     window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão CTAI' }] : [];
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
+    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/mensageiro', rotulo: 'Mensageiro' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
     if (!EU) return;
     window.__eu = EU;
-    window.CTAI_CAIXA.atualizarContador(); setInterval(() => window.CTAI_CAIXA.atualizarContador(), 60000);
+    window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); }, 60000);
     if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), nav); }
     META = await api('GET', '/api/meta');
-    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_CAIXA.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();

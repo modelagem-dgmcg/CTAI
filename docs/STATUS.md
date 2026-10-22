@@ -84,3 +84,9 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 - Aba Pareceres: novo parecer já nasce com o **modelo padrão** (texto-padrão com unidade, OSS, contrato, período, prazos, IGQ e desconto do trimestre) ou **em branco**. Seções 1–10 e Quadros 01/02/03 do parecer real (templates/parecer-ctai-v1.json, só texto fictício). Quadro 03 vem preenchido pelos pontos do período; Quadros 01/02 (produção) são digitados.
 - **Revisão completa**: conferências locais (seção vazia, campo pendente, nome de outra unidade, mês fora do período, texto × desconto/quadro), Analista (regras + IA mascarada, com as normas da unidade) e busca externa (Gemini + Google Search, com fontes). Para a busca só saem as citações de lei/decreto e os nomes dos indicadores.
 - Congelar, conferência, autorização, PDF e número do SEI seguem como antes. Ofício e despacho ficam para depois.
+
+## Mensageiro e ajustes — 22/10/2026
+- Console CTAI: item **Mensageiro** (texto e anexos PDF/Word/Excel/CSV/TXT/PNG/JPG até 4 MB, conversa 1:1 entre a equipe, contador de não lidas). Só a equipe CTAI; a unidade não acessa.
+- **Ligação com os usuários do Analista da diretoria: pendente.** O servidor daquele app (Apps Script) não está no repositório; precisa da URL da API e de uma credencial de serviço, ou de uma lista de usuários.
+- Quadros 01/02 mostram "Dados de produção não conectados" enquanto vazios; o aviso some quando entram linhas.
+- Título "Sistema CTAI" centralizado na entrada.
