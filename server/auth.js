@@ -93,8 +93,8 @@ function criarUsuario(db, dados, quem) {
   if (db.get('SELECT 1 FROM usuarios WHERE login = ?', login)) throw erro(409, 'Já existe usuário com esse login.');
   const senha = dados.senha || config.senhaTemporaria;
   const setores = Array.isArray(dados.setores) ? dados.setores : (dados.setor ? [dados.setor] : []);
-  const r = db.run('INSERT INTO usuarios (login, nome, perfil, contrato_id, setor, setores, senha_hash, trocar_senha, ativo, criado_em) VALUES (?,?,?,?,?,?,?,1,1,?)',
-    login, dados.nome, dados.perfil, dados.contrato_id || null, setores[0] || null, setores.length ? JSON.stringify(setores) : null, gerarHash(senha), new Date().toISOString());
+  const r = db.run('INSERT INTO usuarios (login, nome, perfil, contrato_id, setor, setores, senha_hash, trocar_senha, ativo, criado_em) VALUES (?,?,?,?,?,?,?,?,1,?)',
+    login, dados.nome, dados.perfil, dados.contrato_id || null, setores[0] || null, setores.length ? JSON.stringify(setores) : null, gerarHash(senha), config.trocaSenhaObrigatoria ? 1 : 0, new Date().toISOString());
   trilha.registrar(db, { usuario: quem || 'sistema', tabela: 'usuarios', registro: login, campo: 'perfil', valor_novo: dados.perfil, motivo: 'Usuário criado' });
   return Number(r.lastInsertRowid);
 }

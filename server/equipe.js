@@ -77,7 +77,7 @@ function senhaTemporaria(db, req, gestor, id, senha) {
   const u = doGestor(db, gestor, id);
   const nova = senha || config.senhaTemporaria;
   if (senha) { const e = A.validarForcaSenha(senha); if (e) throw erro(400, e); }
-  db.run('UPDATE usuarios SET senha_hash = ?, trocar_senha = 1, tentativas = 0, bloqueado_ate = NULL WHERE usuario_id = ?', A.gerarHash(nova), u.usuario_id);
+  db.run('UPDATE usuarios SET senha_hash = ?, trocar_senha = ?, tentativas = 0, bloqueado_ate = NULL WHERE usuario_id = ?', A.gerarHash(nova), config.trocaSenhaObrigatoria ? 1 : 0, u.usuario_id);
   db.run('DELETE FROM sessoes WHERE usuario_id = ?', u.usuario_id);
   trilhar(db, req, gestor, u.login, 'senha', null, 'redefinida', 'Senha temporária definida pelo gestor da unidade');
   return { senhaTemporaria: senha ? undefined : config.senhaTemporaria };

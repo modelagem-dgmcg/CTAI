@@ -43,6 +43,8 @@ module.exports = {
   // CTAI_PAINEL_ANALISTA=sim devolve o item "Painel" (e a tela inicial) a criadores e colegas. Padrão: não (começam na Caixa de entrada).
   painelAnalista: env('CTAI_PAINEL_ANALISTA', 'nao').toLowerCase() === 'sim',
   senhaTemporaria: env('CTAI_SENHA_TEMPORARIA', 'Trocar@123'),
+  // CTAI_TROCA_SENHA_OBRIGATORIA=nao: a senha temporária vale como senha, sem pedir troca no primeiro acesso (a gestão redefine quando precisar). Padrão: sim.
+  trocaSenhaObrigatoria: env('CTAI_TROCA_SENHA_OBRIGATORIA', 'sim').toLowerCase() !== 'nao',
   cookieSeguro: env('CTAI_COOKIE_SEGURO', 'nao') === 'sim',
   chavePseudonimo: env('CTAI_CHAVE_PSEUDONIMO', '') || chaveLocal(),
   semear: env('CTAI_SEMEAR', 'sim') !== 'nao',

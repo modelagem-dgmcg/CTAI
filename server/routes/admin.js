@@ -23,7 +23,7 @@ module.exports = (db) => {
     const u = db.get('SELECT * FROM usuarios WHERE usuario_id = ?', Number(req.params.id));
     if (!u) throw erro(404, 'Usuário não encontrado.');
     const nova = (req.body && req.body.senha) || config.senhaTemporaria;
-    db.run('UPDATE usuarios SET senha_hash = ?, trocar_senha = 1, tentativas = 0, bloqueado_ate = NULL WHERE usuario_id = ?', A.gerarHash(nova), u.usuario_id);
+    db.run('UPDATE usuarios SET senha_hash = ?, trocar_senha = ?, tentativas = 0, bloqueado_ate = NULL WHERE usuario_id = ?', A.gerarHash(nova), config.trocaSenhaObrigatoria ? 1 : 0, u.usuario_id);
     db.run('DELETE FROM sessoes WHERE usuario_id = ?', u.usuario_id);
     trilha.registrar(db, { usuario: req.usuario.login, tabela: 'usuarios', registro: u.login, campo: 'senha', valor_novo: 'redefinida' });
     res.json({ ok: true });

@@ -18,7 +18,7 @@ if (redefinir.length) {
   for (const login of redefinir) {
     const u = db.get('SELECT usuario_id, login FROM usuarios WHERE login = ?', login);
     if (!u) { console.log('Redefinição: usuário não encontrado: ' + login); continue; }
-    db.run('UPDATE usuarios SET senha_hash = ?, trocar_senha = 1, tentativas = 0, bloqueado_ate = NULL, ativo = 1 WHERE usuario_id = ?', auth.gerarHash(config.senhaTemporaria), u.usuario_id);
+    db.run('UPDATE usuarios SET senha_hash = ?, trocar_senha = ?, tentativas = 0, bloqueado_ate = NULL, ativo = 1 WHERE usuario_id = ?', auth.gerarHash(config.senhaTemporaria), config.trocaSenhaObrigatoria ? 1 : 0, u.usuario_id);
     trilha.registrar(db, { usuario: 'sistema', tabela: 'usuarios', registro: u.login, campo: 'senha', valor_novo: 'redefinida na partida (CTAI_REDEFINIR_SENHA_DE)' });
     console.log('Redefinição: senha de ' + login + ' voltou à temporária (troca obrigatória no próximo acesso).');
   }

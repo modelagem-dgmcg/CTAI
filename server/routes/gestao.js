@@ -80,7 +80,7 @@ module.exports = (db) => {
     const u = alvo(req);
     const nova = (req.body && req.body.senha) || config.senhaTemporaria;
     if (req.body && req.body.senha) { const e = A.validarForcaSenha(nova); if (e) throw erro(400, e); }
-    db.run('UPDATE usuarios SET senha_hash = ?, trocar_senha = 1, tentativas = 0, bloqueado_ate = NULL WHERE usuario_id = ?', A.gerarHash(nova), u.usuario_id);
+    db.run('UPDATE usuarios SET senha_hash = ?, trocar_senha = ?, tentativas = 0, bloqueado_ate = NULL WHERE usuario_id = ?', A.gerarHash(nova), config.trocaSenhaObrigatoria ? 1 : 0, u.usuario_id);
     db.run('DELETE FROM sessoes WHERE usuario_id = ?', u.usuario_id);
     trilha.registrar(db, { usuario: req.usuario.login, tabela: 'usuarios', registro: u.login, campo: 'senha', valor_novo: 'redefinida', motivo: 'Senha temporária definida pela Gestão CTAI' });
     res.json({ ok: true, senhaTemporaria: req.body && req.body.senha ? undefined : config.senhaTemporaria });
