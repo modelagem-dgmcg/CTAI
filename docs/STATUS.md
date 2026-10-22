@@ -90,3 +90,10 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 - **Ligação com o Analista da diretoria:** o Mensageiro lista as pessoas do Analista e troca texto com elas (adaptador adapters/analista, chave de serviço; veja docs/INTEGRACAO-ANALISTA.md). Ligada por ANALISTA_API_URL e ANALISTA_SERVICO_CHAVE (a chave só no painel da Render). Testada com servidor simulado; falta teste com o Analista real.
 - Quadros 01/02 mostram "Dados de produção não conectados" enquanto vazios; o aviso some quando entram linhas.
 - Título "Sistema CTAI" centralizado na entrada.
+
+## GAOCG — leitura (22/10/2026)
+- Adaptador adapters/gaocg (só leitura; consultas permitidas: api_unidades, api_sof, api_notasEmpenho, api_recibos), cópia local de 6 h e estado da conexão. Ligado por GAOCG_API_URL e GAOCG_API_CHAVE (só no painel da hospedagem).
+- Status em Integrações (conectado / não configurado / falhou, último teste e última leitura) e, de forma discreta, no parecer: o botão "Preencher identificação pelo GAOCG" e a revisão completa mostram "conectado, lido às HH:MM" só quando usam.
+- No parecer: preenche a seção 3 (OSS, contrato, vigência, repasse, endereço) e a revisão completa confere número do contrato, OSS e vigência contra o GAOCG.
+- Os nomes dos campos do GAOCG foram assumidos por semelhança; use "Ver campos recebidos" (administração) para confirmar e ajustar server/gaocg.js (dadosDaUnidade) se preciso.
+- Ainda não usado: SOF, empenhos e recibos (próximos passos: conferir desconto × pago, alerta de SOF parado).

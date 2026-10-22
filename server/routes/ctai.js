@@ -154,6 +154,7 @@ module.exports = (db) => {
     res.json({ sugestao });
   });
   r.post('/pareceres/:id/modelo', (req, res) => res.json({ modelo: require('../parecer-modelo').definir(db, req.params.id, req.usuario, req.body && req.body.modo) }));
+  r.post('/pareceres/:id/modelo/gaocg', async (req, res) => res.json(await require('../parecer-modelo').preencherPeloGaocg(db, req.params.id, req.usuario)));
   r.put('/pareceres/:id/modelo', (req, res) => { require('../parecer-modelo').salvar(db, req.params.id, req.usuario, req.body || {}); res.json({ ok: true }); });
   r.get('/pareceres-modelo', (req, res) => { const m = require('../parecer-modelo').MODELO; res.json({ secoes: m.secoes.map((s) => ({ id: s.id, titulo: s.titulo })), quadros: m.quadros, titulo: m.titulo }); });
   r.post('/pareceres/:id/adotar', (req, res) => {

@@ -176,6 +176,12 @@ CREATE TABLE IF NOT EXISTS ia_chaves (
 CREATE TABLE IF NOT EXISTS ia_chave_uso (
   chave_id INTEGER NOT NULL, mes TEXT NOT NULL, chamadas INTEGER NOT NULL DEFAULT 0, falhas INTEGER NOT NULL DEFAULT 0, ultimo_uso TEXT, PRIMARY KEY (chave_id, mes)
 );
+CREATE TABLE IF NOT EXISTS gaocg_cache (
+  chave TEXT PRIMARY KEY, endpoint TEXT NOT NULL, filtros TEXT, linhas TEXT NOT NULL, total INTEGER NOT NULL, ms INTEGER, lido_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS gaocg_estado (
+  id INTEGER PRIMARY KEY CHECK (id = 1), teste_em TEXT, teste_ok INTEGER, teste_ms INTEGER, teste_msg TEXT, ultimo_uso_em TEXT, ultimo_uso_por TEXT
+);
 CREATE TABLE IF NOT EXISTS msg_anexos (
   anexo_id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, mime TEXT NOT NULL, tamanho INTEGER NOT NULL, dados BLOB NOT NULL, criado_em TEXT NOT NULL
 );

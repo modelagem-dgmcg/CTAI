@@ -85,4 +85,29 @@ function textoCompleto(m, numero) {
   return partes.join('\n\n');
 }
 
-module.exports = { MODELO, montar, definir, salvar, textoCompleto, campos, periodoPorExtenso };
+// Preenche as linhas da seção 3 (OSS, contrato, vigência, repasse, endereço) com o cadastro do GAOCG. Só troca o que o GAOCG trouxe.
+async function preencherPeloGaocg(db, parecerId, usuario) {
+  const G = require('./gaocg');
+  const p = M.obter(db, parecerId);
+  M.exigirCriador(p, usuario);
+  const u = await G.unidadeDoContrato(db, p.contrato_id, usuario.login);
+  if (!u.encontrada) return { encontrada: false };
+  const m = p.blocos.modelo || vazio();
+  const d = u.dados;
+  const br = (s) => { const t = String(s); const x = /^(\d{4})-(\d{2})-(\d{2})/.exec(t); return x ? x[3] + '/' + x[2] + '/' + x[1] : t; };
+  const dinheiro = (v) => { const t = String(v).trim(); const n = typeof v === 'number' ? v : (/^[\d.,\s]+$/.test(t) ? (t.includes(',') ? Number(t.replace(/\./g, '').replace(',', '.')) : Number(t)) : NaN); return Number.isFinite(n) ? 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : t; };
+  const troca = { 'OSS': d.oss, 'Contrato de Gestão': d.contrato ? 'n.º ' + d.contrato : null, 'Vigência / termos aditivos': d.vigencia_fim ? (d.vigencia_inicio ? br(d.vigencia_inicio) + ' a ' : 'até ') + br(d.vigencia_fim) : null, 'Endereço': d.endereco, 'Repasse mensal': d.repasse_mensal ? dinheiro(d.repasse_mensal) : null };
+  const feitos = [];
+  let txt = String(m.secoes.identificacao || '');
+  for (const [rot, val] of Object.entries(troca)) {
+    if (!val) continue;
+    const re = new RegExp('^(•\\s*' + rot.replace(/[/]/g, '\\/') + ':).*$', 'm');
+    if (re.test(txt)) { txt = txt.replace(re, (_, a) => a + ' ' + val); feitos.push(rot); }
+  }
+  m.secoes.identificacao = txt; m.atualizado_em = agora();
+  db.run('UPDATE pareceres SET blocos = ?, atualizado_em = ?, atualizado_por = ? WHERE parecer_id = ?', JSON.stringify(Object.assign(p.blocos, { modelo: m })), agora(), usuario.login, p.parecer_id);
+  trilha.registrar(db, { usuario: usuario.login, tabela: 'pareceres', registro: p.parecer_id, campo: 'modelo_gaocg', valor_novo: feitos.join(', ') || 'nada novo' });
+  return { encontrada: true, preenchidos: feitos, lido_em: u.lido_em, da_copia: u.da_copia };
+}
+
+module.exports = { preencherPeloGaocg, MODELO, montar, definir, salvar, textoCompleto, campos, periodoPorExtenso };

@@ -147,6 +147,7 @@ let base;
     await cri.fill('#md-financeiro', 'Informações financeiras acostadas ao processo (demonstração).'); await cri.click('#md-salvar'); await cri.waitForSelector('#md-salvar'); await cri.waitForTimeout(500);
     await cri.click('#md-revisar'); await cri.waitForSelector('text=Busca externa (normas e jurisprudência)');
     assert.ok(await cri.isVisible('#md-conectar-q1'), 'aviso de dados não conectados no Quadro 01');
+    assert.ok(await cri.isVisible('#md-gaocg'), 'botão do GAOCG no parecer');
     log('parecer: modelo padrão preenchido, editado e revisão completa rodada');
     const pid = Number(cri.url().split('#/p/')[1]);
     await cri.click('button:has-text("Ajustar") >> nth=0'); await cri.waitForSelector('dialog[open]');

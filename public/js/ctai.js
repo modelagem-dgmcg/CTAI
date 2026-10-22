@@ -315,13 +315,22 @@
       pintar();
       return h('div', { style: 'margin:12px 0' }, h('h4', null, q.titulo), av, corpo);
     };
+    const preencherGaocg = async () => {
+      troca(caixaRev, h('p', { class: 'mudo' }, 'Consultando o GAOCG…'));
+      try {
+        const o = await api('POST', base + '/modelo/gaocg', {});
+        if (!o.encontrada) { troca(caixaRev, aviso('atencao', 'GAOCG conectado, mas não achei esta unidade/contrato no cadastro de lá (conferi pelo número do contrato e pelo nome).')); return; }
+        troca(caixaRev, aviso('ok', 'GAOCG conectado · ' + (o.da_copia ? 'cópia de ' : 'lido agora, ') + new Date(o.lido_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '. ' + (o.preenchidos.length ? 'Preenchi na seção 3: ' + o.preenchidos.join(', ') + '.' : 'Nada a atualizar na seção 3.')));
+        if (o.preenchidos.length) setTimeout(recarregar, 1500);
+      } catch (e) { troca(caixaRev, aviso('erro', e.message)); }
+    };
     const revisar = async () => {
       troca(caixaRev, h('p', { class: 'mudo' }, 'Revisando: conferências locais, Analista, normas da unidade e busca externa… pode levar alguns segundos.'));
       try {
         await api('PUT', base + '/modelo', lerTudo());
         const o = await api('POST', '/api/analista/pareceres/' + P.parecer_id + '/revisao-completa', {});
         const ex = o.externa || {};
-        troca(caixaRev, h('p', { class: 'peq mudo' }, o.achados.length + ' achado(s) · ' + o.provedor + (o.normasDaUnidade ? ' · ' + o.normasDaUnidade + ' norma(s) da unidade consideradas' : '')),
+        troca(caixaRev, h('p', { class: 'peq mudo' }, o.achados.length + ' achado(s) · ' + o.provedor + (o.gaocg && o.gaocg.usado ? ' · conferido com o GAOCG (' + (o.gaocg.da_copia ? 'cópia de ' : 'lido às ') + new Date(o.gaocg.lido_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + (o.normasDaUnidade ? ' · ' + o.normasDaUnidade + ' norma(s) da unidade consideradas' : '')),
           o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'Nenhum achado nas conferências locais e no Analista.'),
           h('h4', null, 'Busca externa (normas e jurisprudência)'),
           ex.ok ? [ex.aviso ? h('p', { class: 'peq mudo' }, ex.aviso) : h('p', { class: 'peq', style: 'white-space:pre-wrap' }, ex.resposta || ''), ex.fontes && ex.fontes.length ? h('ul', { class: 'peq' }, ex.fontes.map((f) => h('li', null, h('a', { href: f.url, target: '_blank', rel: 'noopener noreferrer' }, f.titulo)))) : null]
@@ -333,7 +342,7 @@
         editavel ? h('div', { class: 'linha' }, h('button', { class: 'sec', onclick: async () => { if (!(await confirmar('Refazer o texto', 'Isto substitui as seções pelo texto-padrão atual (com os dados do período). Edições feitas serão perdidas.', 'Refazer'))) return; try { await api('POST', base + '/modelo', { modo: 'padrao' }); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Refazer com os dados'), h('button', { class: 'sec', onclick: async () => { if (!(await confirmar('Esvaziar o parecer', 'Todas as seções ficam em branco.', 'Esvaziar'))) return; try { await api('POST', base + '/modelo', { modo: 'branco' }); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Deixar em branco')) : null),
       h('p', { class: 'peq mudo' }, 'Título: ' + def.titulo.replace('{numero}', c.identificacao.numero_parecer || 'xxx') + '. Edite cada seção; os quadros entram no PDF depois da seção 5.'),
       SEC.map((sc) => { areas[sc.id] = h('textarea', { id: 'md-' + sc.id, rows: Math.min(14, Math.max(3, Math.ceil((M.secoes[sc.id] || '').length / 90))) }, M.secoes[sc.id] || ''); if (!editavel) areas[sc.id].setAttribute('disabled', ''); return h('div', { class: 'campo' }, h('label', { for: 'md-' + sc.id }, sc.titulo), areas[sc.id], sc.id === 'analise' ? def.quadros.map(quadro) : null); }),
-      editavel ? h('div', { class: 'linha' }, h('button', { id: 'md-salvar', onclick: gravar }, 'Salvar o parecer'), h('button', { class: 'sec', id: 'md-revisar', onclick: revisar }, 'Revisão completa')) : h('button', { class: 'sec', onclick: revisar }, 'Revisão completa'),
+      editavel ? h('div', { class: 'linha' }, h('button', { id: 'md-salvar', onclick: gravar }, 'Salvar o parecer'), h('button', { class: 'sec', id: 'md-gaocg', onclick: preencherGaocg }, 'Preencher identificação pelo GAOCG'), h('button', { class: 'sec', id: 'md-revisar', onclick: revisar }, 'Revisão completa')) : h('button', { class: 'sec', onclick: revisar }, 'Revisão completa'),
       caixaRev);
   }
 
@@ -556,9 +565,32 @@
     const cs = (await api('GET', '/api/ctai/contratos')).contratos;
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Integrações'), h('p', null, 'Rack para ligar o sistema da unidade (MV). Aguardando acesso e dicionário de campos.'))),
       aviso('info', h('strong', null, 'Como funciona: '), 'o sistema busca as linhas pela API, confere cada uma (dado pessoal é recusado), e guarda como lote pendente. O gestor da unidade confirma. Só então entram no cálculo. As credenciais ficam no .env do servidor, nunca no banco.'),
+      await cartaoGaocg(),
       r.tipos.map((t) => h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('strong', null, t.nome), selo(t.estado, t.estado === 'ativa' ? 'ok' : 'atencao')), h('p', { class: 'mudo peq', style: 'margin:4px 0 0' }, t.descricao))),
       r.integracoes.map((i) => cartaoIntegracao(i, cs)),
       r.mapeamento ? h('div', { class: 'cartao' }, h('h3', null, 'Mapeamento de campos (versão ' + r.mapeamento.versao + ')'), r.mapeamento.aviso ? aviso('atencao', r.mapeamento.aviso) : null, tabela([{ t: 'Fonte' }, { t: 'Endereço' }, { t: 'Campos', n: true }], r.mapeamento.fontes.map((f) => [f.fonte, f.endpoint, String(f.campos)])), h('p', { class: 'peq mudo' }, 'Arquivo: adapters/mv/mapeamento.json. Cada campo diz de qual campo da API vem e como converter (data, hora, segundos para minutos, sim/não, tabela de valores).')) : null);
+  }
+
+  // GAOCG: só leitura, só a CTAI. O estado aparece aqui e, de forma discreta, nas telas que usam o GAOCG.
+  async function cartaoGaocg() {
+    const est = await api('GET', '/api/gaocg/estado').catch(() => null);
+    if (!est) return null;
+    const saida = h('div', { id: 'gc-saida' });
+    const recarregar = () => integracoes();
+    const quando = (iso) => { try { return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; } };
+    const t = est.teste;
+    const situ = !est.configurada ? ['Não configurado', 'atencao'] : t ? (t.ok ? ['Conectado', 'ok'] : ['Falhou no último teste', 'alta']) : ['Configurado, ainda não testado', 'atencao'];
+    const agir = async (rotulo, fn) => { troca(saida, h('p', { class: 'mudo' }, rotulo + '…')); try { await fn(); } catch (e) { troca(saida, aviso('erro', e.message)); } };
+    return h('div', { class: 'cartao', id: 'gc-cartao' }, h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, 'GAOCG · leitura de unidades, SOF, empenhos e recibos'), selo(situ[0], situ[1])),
+      h('p', { class: 'mudo peq' }, 'Só leitura e só para a equipe CTAI: a unidade nunca acessa. A chave fica nas variáveis do servidor (GAOCG_API_URL e GAOCG_API_CHAVE) e não aparece em tela nem em log.'),
+      t ? h('p', { class: 'peq' }, 'Último teste: ' + quando(t.em) + (t.ok ? ' · ' + t.ms + ' ms' : '') + ' · ' + t.mensagem) : null,
+      est.ultimo_uso ? h('p', { class: 'peq mudo' }, 'Última leitura: ' + quando(est.ultimo_uso.em) + ' por ' + (est.ultimo_uso.por || '—')) : null,
+      est.copias.length ? h('p', { class: 'peq mudo' }, 'Cópia local: ' + est.copias.map((c) => c.endpoint.replace('api_', '') + ' (' + c.total + ' linhas, ' + quando(c.lido_em) + ')').join(' · ')) : null,
+      est.configurada ? h('div', { class: 'linha' },
+        h('button', { class: 'sec', id: 'gc-testar', onclick: () => agir('Testando', async () => { const o = await api('POST', '/api/gaocg/testar', {}); troca(saida, aviso(o.ok ? 'ok' : 'erro', o.mensagem)); setTimeout(recarregar, 1200); }) }, 'Testar a conexão'),
+        h('button', { class: 'sec', id: 'gc-atualizar', onclick: () => agir('Atualizando', async () => { const o = await api('POST', '/api/gaocg/atualizar', {}); troca(saida, aviso('ok', o.total + ' unidade(s) lidas do GAOCG.')); setTimeout(recarregar, 1200); }) }, 'Atualizar cadastro de unidades'),
+        ehAdmin() ? h('button', { class: 'sec', onclick: () => agir('Lendo os campos', async () => { const o = await api('GET', '/api/gaocg/campos/api_unidades'); troca(saida, h('p', { class: 'peq' }, 'Campos que o GAOCG devolve em unidades: ' + (o.campos.join(', ') || '(nenhum)'))); }) }, 'Ver campos recebidos') : null) : aviso('info', 'Para ligar: coloque GAOCG_API_URL e GAOCG_API_CHAVE nas variáveis da hospedagem e reinicie.'),
+      saida);
   }
   function cartaoIntegracao(i, cs) {
     const cfg = i.config, a = cfg.auth || {};
