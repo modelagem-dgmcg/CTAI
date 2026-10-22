@@ -404,16 +404,13 @@
   }
 
   async function anFila() {
-    const [pn, est] = await Promise.all([api('GET', '/api/analista/painel'), api('GET', '/api/analista/estado')]);
+    const pn = await api('GET', '/api/analista/painel');
     const c = pn.contagens;
     const recarregar = () => analista({ aba: '' });
     return [
       h('div', { class: 'kpis' }, kpi('Novos', String(c.novo), 'a decidir'), kpi('Aguardando a unidade', String(c.encaminhado), c.vencidos ? c.vencidos + ' com prazo vencido' : 'dentro do prazo'), kpi('Respondidos', String(c.respondido), 'a avaliar'), kpi('Fixados na mesa', String(c.fixado)), kpi('Normas vigentes', String(pn.normas))),
       h('div', { class: 'cartao' }, h('h3', null, 'O que pede ação'),
-        pn.fila.length ? pn.fila.map((a) => achadoCard(a, recarregar)) : h('p', { class: 'vazio' }, 'Nada pendente. Os achados aparecem aqui quando a unidade envia um relatório ou quando você lê um texto e o guarda numa competência.')),
-      h('div', { class: 'cartao' }, h('h3', null, 'Leitores'),
-        h('p', { class: 'peq' }, 'As verificações locais funcionam sempre, sem internet e sem chave. Leitores de IA ficam desligados sem chave no .env; à nuvem só vai texto mascarado e só com ', h('code', null, 'ANALISTA_ENVIAR_NUVEM=sim'), '. Envio à nuvem agora: ', selo(est.enviarNuvem ? 'ligado' : 'desligado', est.enviarNuvem ? 'atencao' : 'ok')),
-        tabela([{ t: 'Leitor' }, { t: 'Onde roda' }, { t: 'Chave' }, { t: 'Disponível' }], [['regras locais', 'neste servidor', 'não precisa', selo('sempre', 'ok')]].concat(est.provedores.map((x) => [x.nome, x.nuvem ? 'nuvem' : 'rede local', x.comChave ? 'sim' : 'não', selo(x.disponivel ? 'sim' : 'desligado', x.disponivel ? 'ok' : '')]))))];
+        pn.fila.length ? pn.fila.map((a) => achadoCard(a, recarregar)) : h('p', { class: 'vazio' }, 'Nada pendente. Os achados aparecem aqui quando a unidade envia um relatório ou quando você lê um texto e o guarda numa competência.'))];
   }
 
   async function anRelatorio() {
@@ -549,6 +546,7 @@
       h('div', { class: 'cartao' }, h('h3', null, 'Usuários'), tabela([{ t: 'Login' }, { t: 'Nome' }, { t: 'Perfil' }, { t: 'Contrato' }, { t: 'Setor' }, { t: 'Situação' }, { t: '' }], u.usuarios.map((x) => [x.login, x.nome, u.perfis[x.perfil], x.contrato_id || '—', x.setor || '—', x.ativo ? (x.trocar_senha ? 'senha temporária' : 'ativo') : 'desativado',
         h('div', { class: 'linha' }, h('button', { class: 'leve', onclick: async () => { if (await confirmar('Redefinir a senha de ' + x.login + '?', 'Volta para a senha temporária e a pessoa precisa trocar no próximo acesso.', 'Redefinir')) { await api('POST', '/api/admin/usuarios/' + x.usuario_id + '/redefinir-senha', {}); toast('Senha redefinida.'); } } }, 'Redefinir senha'), h('button', { class: 'leve', onclick: async () => { try { await api('POST', '/api/admin/usuarios/' + x.usuario_id + '/ativo', { ativo: !x.ativo }); admin(); } catch (e) { toast(e.message, true); } } }, x.ativo ? 'Desativar' : 'Ativar'))]))),
       window.CTAI_USUARIO_FORM({ perfis: u.perfis, contratos: u.contratos, setores: META.setores, endpoint: '/api/admin/usuarios', aoCriar: admin }),
+      window.CTAI_RACK_IA(),
       h('div', { class: 'cartao' }, h('h3', null, 'Backup do banco'), h('p', { class: 'peq mudo' }, 'Baixa uma cópia consistente do banco (usuários, envios, pareceres, trilha). Os PDFs gerados ficam no disco do servidor. Guarde o arquivo em local seguro.'), h('a', { class: 'btn sec', id: 'bk-baixar', href: '/api/admin/backup' }, 'Baixar backup do banco')),
       h('div', { class: 'cartao' }, h('h3', null, 'Dados de demonstração'), h('p', { class: 'peq mudo' }, 'O contrato "UPA Demonstração" tem dados fictícios (marcados na tela e no PDF). Você pode recriá-los ou apagá-los por completo; o contrato real não é tocado.'),
         h('div', { class: 'linha' }, h('button', { class: 'sec', onclick: async () => { if (await confirmar('Recriar os dados fictícios?', 'Apaga o que foi feito no contrato de demonstração e recria do zero.', 'Recriar', true)) { await api('POST', '/api/admin/demo/recarregar', {}); toast('Demonstração recriada.'); } } }, 'Recriar a demonstração'),

@@ -168,6 +168,14 @@ CREATE TABLE IF NOT EXISTS ia_config (
   provedor TEXT PRIMARY KEY, ativo INTEGER NOT NULL DEFAULT 0, modelo TEXT, url TEXT, chave_cifrada TEXT, chave_final TEXT,
   juridico_por TEXT, juridico_em TEXT, atualizado_por TEXT, atualizado_em TEXT
 );
+CREATE TABLE IF NOT EXISTS ia_chaves (
+  chave_id INTEGER PRIMARY KEY AUTOINCREMENT, provedor TEXT NOT NULL, rotulo TEXT, chave_cifrada TEXT, chave_final TEXT, modelo TEXT, url TEXT,
+  ordem INTEGER NOT NULL DEFAULT 1, ativa INTEGER NOT NULL DEFAULT 1, juridico_por TEXT, juridico_em TEXT, criado_por TEXT, criado_em TEXT, atualizado_por TEXT, atualizado_em TEXT,
+  teste_em TEXT, teste_ok INTEGER, teste_ms INTEGER
+);
+CREATE TABLE IF NOT EXISTS ia_chave_uso (
+  chave_id INTEGER NOT NULL, mes TEXT NOT NULL, chamadas INTEGER NOT NULL DEFAULT 0, falhas INTEGER NOT NULL DEFAULT 0, ultimo_uso TEXT, PRIMARY KEY (chave_id, mes)
+);
 CREATE TABLE IF NOT EXISTS ia_uso (
   provedor TEXT NOT NULL, mes TEXT NOT NULL, chamadas INTEGER NOT NULL DEFAULT 0, falhas INTEGER NOT NULL DEFAULT 0, ultimo_uso TEXT, PRIMARY KEY (provedor, mes)
 );

@@ -58,7 +58,7 @@ async function analisarComIA({ texto, tipo, contexto }, tentativas) {
       .replace('{{observacoes}}', ctx.observacoes || (ctx.mesImplantacao ? 'mês de implantação' : '—')).replace('{{texto}}', base);
     try {
       let bruto;
-      try { bruto = await p.chamar({ sistema: PROMPT_SISTEMA, usuario }); providers.contar(nome, true); } catch (e) { providers.contar(nome, false); throw e; }
+      bruto = await p.chamar({ sistema: PROMPT_SISTEMA, usuario });
       const achados = extrairJson(bruto).map((a) => limparAchado(a, base)).filter(Boolean);
       tentativas.push({ provedor: nome, ok: true, achados: achados.length });
       return { provedor: nome, achados };

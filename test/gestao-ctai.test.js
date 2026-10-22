@@ -14,7 +14,7 @@ test.before(async () => {
   nath = cliente(S.base); admin = cliente(S.base); cleuton = cliente(S.base); colega1 = cliente(S.base); colega2 = cliente(S.base); gestor = cliente(S.base);
   await nath.entrar('nathalia'); await admin.entrar('admin'); await cleuton.entrar('cleuton'); await colega1.entrar('colega1'); await colega2.entrar('colega2'); await gestor.entrar('gestor.demo');
   // Provedor falso (compatível com OpenAI) para testar a conexão sem internet.
-  falso = http.createServer((req, res) => { let b = ''; req.on('data', (d) => { b += d; }); req.on('end', () => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ choices: [{ message: { content: 'OK' } }] })); }); });
+  falso = http.createServer((req, res) => { let b = ''; req.on('data', (d) => { b += d; }); req.on('end', () => { res.setHeader('content-type', 'application/json'); if (String(req.headers.authorization || '').includes('RUIM')) { res.statusCode = 401; return res.end(JSON.stringify({ error: 'chave invalida' })); } res.end(JSON.stringify({ choices: [{ message: { content: 'OK' } }] })); }); });
   await new Promise((ok) => falso.listen(0, '127.0.0.1', ok));
   urlFalso = 'http://127.0.0.1:' + falso.address().port + '/v1/chat/completions';
 });
@@ -117,52 +117,66 @@ test('carteira: quem tem unidades vê só elas; superintendente e admin veem tud
   assert.ok(c2);
 });
 
-test('IA: chave cifrada, nunca devolvida; ligar nuvem exige aprovação do jurídico; testar e contar uso', async () => {
+test('IA: rack de chaves — cifrada e nunca devolvida; nuvem exige o jurídico; várias chaves em ordem; teste de conexão por chave', async () => {
   const e0 = (await nath.get('/api/gestao/ia')).json;
   assert.equal(e0.segredoConfigurado, true);
-  assert.ok(e0.provedores.every((p) => p.ativo === false), 'tudo desligado por padrão');
+  assert.deepEqual(e0.chaves, [], 'rack vazio por padrão');
+  assert.ok(e0.servicos.kimi && e0.servicos.ollama.semChave === true);
   assert.match(e0.avisoJuridico, /jurídico/);
   const CHAVE = 'sk-teste-ABCDEFGH-12345678';
-  assert.equal((await nath.put('/api/gestao/ia/kimi', { chave: 'curta' })).status, 400);
-  assert.equal((await nath.put('/api/gestao/ia/inexistente', { ativo: true })).status, 404);
-  assert.equal((await nath.put('/api/gestao/ia/kimi', { ativo: true })).status, 400, 'sem chave não liga');
-  assert.equal((await nath.put('/api/gestao/ia/kimi', { chave: CHAVE, modelo: 'modelo-x', url: urlFalso })).status, 200);
-  assert.equal((await nath.put('/api/gestao/ia/kimi', { ativo: true })).status, 400, 'nuvem sem aprovação do jurídico');
-  assert.equal((await nath.put('/api/gestao/ia/kimi', { url: 'ftp://errado' })).status, 400);
-  const r = await nath.put('/api/gestao/ia/kimi', { ativo: true, juridico: true });
+  const nova = (c) => nath.post('/api/gestao/ia/chaves', c);
+  assert.equal((await nova({ provedor: 'kimi', chave: 'curta', juridico: true })).status, 400, 'chave curta');
+  assert.equal((await nova({ provedor: 'inexistente', chave: CHAVE })).status, 400, 'serviço desconhecido');
+  assert.equal((await nova({ provedor: 'kimi', chave: CHAVE, url: urlFalso })).status, 400, 'nuvem ligada sem aprovação do jurídico');
+  assert.equal((await nova({ provedor: 'kimi', chave: CHAVE, url: 'ftp://errado', juridico: true })).status, 400, 'endereço inválido');
+  assert.equal((await nova({ provedor: 'ollama', ativa: true })).status, 400, 'servidor local precisa de endereço');
+
+  const r = await nova({ provedor: 'kimi', rotulo: 'Kimi da GGPCG', chave: CHAVE, modelo: 'modelo-x', url: urlFalso, juridico: true });
   assert.equal(r.status, 200);
-  const k = r.json.provedores.find((p) => p.provedor === 'kimi');
-  assert.equal(k.configurada, true); assert.equal(k.final, '5678'); assert.equal(k.ativo, true); assert.equal(k.juridico.por, 'nathalia');
+  const k = r.json.chaves.find((c) => c.chave_id === r.json.chave_id);
+  assert.equal(k.final, '5678'); assert.equal(k.ativa, true); assert.equal(k.juridico.por, 'nathalia'); assert.equal(k.rotulo, 'Kimi da GGPCG');
   assert.doesNotMatch(JSON.stringify(r.json), /sk-teste|ABCDEFGH/, 'a chave nunca volta');
   assert.doesNotMatch(JSON.stringify((await nath.get('/api/gestao/ia')).json), /sk-teste|ABCDEFGH/);
-
-  const linha = S.db.get("SELECT chave_cifrada, chave_final FROM ia_config WHERE provedor = 'kimi'");
-  assert.doesNotMatch(linha.chave_cifrada, /sk-teste|ABCDEFGH/, 'cifrada no banco');
-  assert.match(linha.chave_cifrada, /^v1:/);
-  const tr = JSON.stringify((await nath.get('/api/ctai/trilha?tabela=ia_config&limite=50')).json);
+  const linha = S.db.get('SELECT chave_cifrada FROM ia_chaves WHERE chave_id = ?', k.chave_id);
+  assert.doesNotMatch(linha.chave_cifrada, /sk-teste|ABCDEFGH/, 'cifrada no banco'); assert.match(linha.chave_cifrada, /^v1:/);
+  const tr = JSON.stringify((await nath.get('/api/ctai/trilha?tabela=ia_chaves&limite=50')).json);
   assert.match(tr, /kimi/); assert.doesNotMatch(tr, /sk-teste|ABCDEFGH|chave_cifrada/);
   assert.equal(require('../server/ia-config').decifrar(linha.chave_cifrada), CHAVE);
 
-  const t = await nath.post('/api/gestao/ia/kimi/testar', {});
+  // teste de conexão: por chave, conta o uso e guarda o resultado
+  const t = await nath.post('/api/gestao/ia/chaves/' + k.chave_id + '/testar', {});
   assert.equal(t.status, 200); assert.equal(t.json.ok, true, JSON.stringify(t.json));
-  const uso = t.json.estado.provedores.find((p) => p.provedor === 'kimi');
-  assert.equal(uso.usoMes, 1); assert.equal(uso.falhasMes, 0);
-  // a análise do Analista CTAI passa a usar o provedor ligado e conta o uso
+  const dep = t.json.estado.chaves.find((c) => c.chave_id === k.chave_id);
+  assert.equal(dep.usoMes, 1); assert.equal(dep.falhasMes, 0); assert.equal(dep.teste.ok, true);
   const providers = require('../modules/analista/providers');
   assert.equal(providers.estado().provedores.find((p) => p.nome === 'kimi').disponivel, true);
 
-  assert.equal((await nath.put('/api/gestao/ia/kimi', { ativo: false })).status, 200);
-  assert.equal((await nath.post('/api/gestao/ia/kimi/testar', {})).status, 400, 'desligado não testa');
-  assert.equal(providers.estado().provedores.find((p) => p.nome === 'kimi').disponivel, false);
-  assert.equal((await nath.put('/api/gestao/ia/kimi', { removerChave: true })).status, 200);
-  assert.equal(S.db.get("SELECT chave_cifrada FROM ia_config WHERE provedor = 'kimi'").chave_cifrada, null);
+  // várias chaves: a de menor ordem é tentada primeiro; se falhar, passa para a próxima
+  const ruim = (await nova({ provedor: 'kimi', rotulo: 'Chave vencida', chave: 'sk-RUIM-00000000', url: urlFalso, juridico: true, ordem: 1 })).json.chave_id;
+  assert.equal((await nath.put('/api/gestao/ia/chaves/' + k.chave_id, { ordem: 2 })).status, 200);
+  const tRuim = await nath.post('/api/gestao/ia/chaves/' + ruim + '/testar', {});
+  assert.equal(tRuim.json.ok, false); assert.doesNotMatch(JSON.stringify(tRuim.json), /sk-RUIM/);
+  const resp = await providers.PROVEDORES.kimi.chamar({ sistema: 's', usuario: 'u' });
+  assert.equal(resp, 'OK', 'a segunda chave respondeu quando a primeira falhou');
+  const lst = (await nath.get('/api/gestao/ia')).json.chaves;
+  assert.equal(lst.find((c) => c.chave_id === ruim).falhasMes >= 2, true);
+  // suspender e apagar
+  assert.equal((await nath.put('/api/gestao/ia/chaves/' + ruim, { ativa: false })).status, 200);
+  assert.equal((await nath.put('/api/gestao/ia/chaves/' + k.chave_id, { ativa: false })).status, 200);
+  assert.equal(providers.estado().provedores.find((p) => p.nome === 'kimi').disponivel, false, 'todas suspensas, desligado');
+  assert.equal((await nath.post('/api/gestao/ia/chaves/' + k.chave_id + '/testar', {})).status, 200, 'chave suspensa ainda pode ser testada');
+  assert.equal((await nath.del('/api/gestao/ia/chaves/' + ruim)).status, 200);
+  assert.equal((await nath.del('/api/gestao/ia/chaves/' + k.chave_id)).status, 200);
+  assert.equal(S.db.get('SELECT COUNT(*) AS n FROM ia_chaves').n, 0);
+  assert.equal((await nath.del('/api/gestao/ia/chaves/9999')).status, 404);
   assert.equal((await cleuton.get('/api/gestao/ia')).status, 403);
+  assert.equal((await admin.get('/api/gestao/ia')).status, 200, 'o administrador também gerencia o rack');
 });
 
 test('IA: sem CTAI_SEGREDO não guarda chave', async () => {
   const antes = process.env.CTAI_SEGREDO; delete process.env.CTAI_SEGREDO;
   try {
-    const r = await nath.put('/api/gestao/ia/groq', { chave: 'chave-qualquer-1234' });
+    const r = await nath.post('/api/gestao/ia/chaves', { provedor: 'groq', chave: 'chave-qualquer-1234', juridico: true });
     assert.equal(r.status, 400); assert.match(r.json.erro, /CTAI_SEGREDO/);
   } finally { process.env.CTAI_SEGREDO = antes; }
 });

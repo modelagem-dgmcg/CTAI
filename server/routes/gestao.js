@@ -122,9 +122,11 @@ module.exports = (db) => {
   r.get('/carteira/importar/historico', (req, res) => res.json({ importacoes: IMP.historico(db) }));
 
   // ---------- IA ----------
-  r.get('/ia', (req, res) => res.json(IA.estado(db)));
-  r.put('/ia/:provedor', (req, res) => { IA.salvar(db, req.usuario.login, req.params.provedor, req.body || {}); res.json(IA.estado(db)); });
-  r.post('/ia/:provedor/testar', async (req, res) => { const t = await IA.testar(db, req.usuario.login, req.params.provedor); res.json(Object.assign(t, { estado: IA.estado(db) })); });
+  r.get('/ia', (req, res) => res.json(IA.listar(db)));
+  r.post('/ia/chaves', (req, res) => { const id = IA.criar(db, req.usuario.login, req.body || {}); res.json(Object.assign({ chave_id: id }, IA.listar(db))); });
+  r.put('/ia/chaves/:id', (req, res) => { IA.atualizar(db, req.usuario.login, req.params.id, req.body || {}); res.json(IA.listar(db)); });
+  r.delete('/ia/chaves/:id', (req, res) => { IA.remover(db, req.usuario.login, req.params.id); res.json(IA.listar(db)); });
+  r.post('/ia/chaves/:id/testar', async (req, res) => { const t = await IA.testar(db, req.usuario.login, req.params.id); res.json(Object.assign(t, { estado: IA.listar(db) })); });
 
   // ---------- Produção ----------
   r.get('/producao', (req, res) => res.json(G.producao(db, { trimestre: req.query.trimestre, de: req.query.de, ate: req.query.ate, contrato: req.query.contrato, usuario_id: req.query.usuario_id })));

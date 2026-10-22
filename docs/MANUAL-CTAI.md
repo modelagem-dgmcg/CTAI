@@ -128,3 +128,12 @@ Regras: a unidade é identificada por **tipo + nome + município** (UPA Caruaru 
 - A chave é guardada **só no servidor, cifrada**, com o segredo `CTAI_SEGREDO` do `.env`. Ela nunca volta para a tela nem entra na trilha: aparece só "configurada" e os 4 últimos caracteres. Sem `CTAI_SEGREDO` o sistema não guarda chaves.
 - Para ligar um provedor em **nuvem** é preciso confirmar que o uso foi **aprovado pelo jurídico** (fica registrado quem e quando). Dados reais de unidade só podem ir para provedor aprovado; em nuvem sai somente texto mascarado.
 - "Testar" faz uma chamada mínima, sem dado de unidade.
+
+## Chaves de IA (rack)
+Em **Administração** (e também em **Gestão CTAI > IA**) fica o **rack de chaves de IA**. Cada chave cadastrada **vale para todos os usuários** do Analista CTAI; não há limite de chaves. Passos: **+ Adicionar chave**, escolha o serviço (Gemini, Groq, Kimi, DeepSeek, OpenRouter ou um servidor local Ollama), cole a chave, marque "uso aprovado pelo jurídico" (serviços em nuvem) e salve. **Gravar e testar** salva e já testa a conexão; **Testar** repete o teste a qualquer momento, e o resultado (respondeu ou falhou, tempo e data) fica na linha da chave.
+
+- **Ordem de tentativa:** com mais de uma chave, o sistema usa a de menor número e, se ela falhar (limite de uso ou chave vencida), passa para a próxima.
+- **Suspender** desliga a chave sem apagar; **Apagar** remove de vez. Se todas as chaves de um serviço estiverem suspensas, o serviço fica desligado.
+- A chave fica cifrada no servidor (precisa de `CTAI_SEGREDO` com 16 ou mais caracteres) e nunca volta para a tela: só aparecem os 4 últimos caracteres. Tudo (cadastro, troca, suspensão, teste) fica na trilha, sem a chave.
+- O teste envia só a pergunta "responda OK", sem nenhum dado de unidade. Para dados reais, a nuvem só recebe texto mascarado e só com a aprovação do jurídico registrada.
+- Quem usa o Analista CTAI não vê nada disso: a tela dele mostra apenas os achados.

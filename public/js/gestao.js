@@ -178,52 +178,10 @@
   }
 
   // ---------- IA ----------
+  // O rack de chaves é o mesmo da Administração (public/js/rack-ia.js).
   async function ia() {
-    const e = await api('GET', '/api/gestao/ia');
-    const cartao = (p) => {
-      const estadoSelo = p.ativoEfetivo ? selo('ligado', 'ok') : selo('desligado', '');
-      return h('div', { class: 'cartao ia-card', 'data-prov': p.provedor },
-        h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0;text-transform:capitalize' }, p.provedor), h('div', { class: 'linha' }, p.nuvem ? selo('nuvem', 'atencao') : selo('rede local', 'ok'), estadoSelo)),
-        h('div', { class: 'ia-info' },
-          h('div', null, h('div', { class: 'r' }, 'Chave'), p.configurada ? h('strong', null, p.precisaUrl && !p.final ? 'endereço configurado' : 'configurada · final ' + (p.final || '—')) : h('span', { class: 'mudo' }, 'não configurada'), p.origemChave ? h('div', { class: 'r' }, 'guardada em ' + (p.origemChave === 'painel' ? 'cofre do servidor (cifrada)' : '.env')) : null),
-          h('div', null, h('div', { class: 'r' }, 'Modelo'), h('strong', null, p.modelo || p.modeloPadrao), p.modelo ? null : h('div', { class: 'r' }, 'padrão')),
-          h('div', null, h('div', { class: 'r' }, 'Uso em ' + e.mes), h('strong', null, p.usoMes + ' chamada(s)'), h('div', { class: 'r' }, p.falhasMes + ' falha(s) · total ' + p.usoTotal)),
-          p.nuvem ? h('div', null, h('div', { class: 'r' }, 'Jurídico'), p.juridico ? h('strong', null, 'aprovado por ' + p.juridico.por) : h('span', { class: 'mudo' }, 'sem aprovação registrada'), p.juridico ? h('div', { class: 'r' }, fmt.data(p.juridico.em)) : null) : null),
-        h('div', { class: 'linha' },
-          h('button', { class: 'sec', id: 'ia-conf-' + p.provedor, onclick: () => configurar(p) }, 'Configurar'),
-          h('button', { class: 'sec', id: 'ia-testar-' + p.provedor, disabled: !p.ativoEfetivo, onclick: async (ev) => { ev.target.disabled = true; try { const t = await api('POST', '/api/gestao/ia/' + p.provedor + '/testar', {}); toast((t.ok ? 'Funcionou em ' + t.ms + ' ms.' : 'Falhou: ' + t.mensagem), !t.ok); } catch (x) { toast(x.message, true); } ia(); } }, 'Testar'),
-          h('button', { class: p.ativo ? 'leve' : '', id: 'ia-lig-' + p.provedor, onclick: async () => { try { await api('PUT', '/api/gestao/ia/' + p.provedor, p.nuvem && !p.ativo && !p.juridico ? { ativo: true, juridico: await juridico() } : { ativo: !p.ativo }); ia(); } catch (x) { toast(x.message, true); } } }, p.ativo ? 'Desligar' : 'Ligar')));
-    };
-    const juridico = async () => (await confirmar('Aprovação do jurídico', e.avisoJuridico + ' Confirma que o uso deste provedor foi aprovado pelo jurídico?', 'Sim, aprovado')) === true;
-    const configurar = async (p) => {
-      const chave = h('input', { type: 'password', id: 'ia-chave', autocomplete: 'off', placeholder: p.configurada ? 'deixe vazio para manter a chave atual' : 'cole a chave aqui' });
-      const modelo = h('input', { type: 'text', id: 'ia-modelo', value: p.modelo, placeholder: p.modeloPadrao });
-      const url = h('input', { type: 'text', id: 'ia-url', value: p.url, placeholder: p.precisaUrl ? 'http://servidor-local:11434' : 'padrão do provedor' });
-      const jur = h('input', Object.assign({ type: 'checkbox', id: 'ia-jur' }, p.juridico ? { checked: true } : {}));
-      const lig = h('input', Object.assign({ type: 'checkbox', id: 'ia-ligar' }, p.ativo ? { checked: true } : {}));
-      const corpo = h('div', null, aviso('atencao', e.avisoJuridico),
-        e.segredoConfigurado ? null : aviso('erro', 'O servidor não tem CTAI_SEGREDO no .env. Sem ele não é possível guardar chaves. Defina e reinicie.'),
-        p.precisaUrl ? null : h('div', { class: 'campo' }, h('label', { for: 'ia-chave' }, 'Chave (fica só no servidor, cifrada; nunca volta para a tela)'), chave),
-        h('div', { class: 'campo' }, h('label', { for: 'ia-modelo' }, 'Modelo'), modelo),
-        h('div', { class: 'campo' }, h('label', { for: 'ia-url' }, p.precisaUrl ? 'Endereço do servidor' : 'Endereço da API (opcional)'), url),
-        p.nuvem ? h('label', { class: 'ck' }, jur, ' Confirmo que o uso deste provedor foi aprovado pelo jurídico') : null,
-        h('label', { class: 'ck' }, lig, ' Ligado'),
-        p.origemChave === 'painel' ? h('p', { class: 'peq' }, h('a', { href: '#', onclick: async (ev) => { ev.preventDefault(); if (await confirmar('Remover a chave?', 'A chave cifrada é apagada do servidor e o provedor deixa de funcionar.', 'Remover', true)) { try { await api('PUT', '/api/gestao/ia/' + p.provedor, { removerChave: true, ativo: false }); document.querySelector('dialog') && document.querySelector('dialog').close(); ia(); } catch (x) { toast(x.message, true); } } } }, 'Remover a chave guardada')) : null);
-      const r = await janela('Configurar ' + p.provedor, corpo, [{ rotulo: 'Cancelar', valor: null, sec: true }, { rotulo: 'Salvar', valor: 'ok' }]);
-      if (r !== 'ok') return;
-      const dados = { ativo: lig.checked, modelo: modelo.value, url: url.value };
-      if (chave.value.trim()) dados.chave = chave.value.trim();
-      if (p.nuvem) dados.juridico = jur.checked;
-      try { await api('PUT', '/api/gestao/ia/' + p.provedor, dados); toast('Configuração salva.'); } catch (x) { toast(x.message, true); }
-      ia();
-    };
-    montar(cabecalho('ia'),
-      aviso('atencao', h('strong', null, 'Atenção. '), e.avisoJuridico),
-      e.segredoConfigurado ? null : aviso('erro', h('strong', null, 'Chaves não podem ser guardadas ainda. '), 'Defina CTAI_SEGREDO (mínimo de 16 caracteres) no .env do servidor e reinicie. Sem isso a tela só mostra o estado dos provedores.'),
-      h('p', { class: 'mudo' }, 'Todos os provedores começam desligados. A análise por regras locais funciona sempre, sem internet e sem chave. Em nuvem, sai somente texto mascarado.'),
-      e.provedores.map(cartao));
+    montar(cabecalho('ia'), window.CTAI_RACK_IA());
   }
-
 
   // ---------- Importar unidades e carteira (CSV) ----------
   const E = { csv: '', nomeArquivo: '', modo: 'acrescentar', ignorar: false, decisoes: { conflitos: {}, analistas: {} }, previa: null, ultimo: null };
