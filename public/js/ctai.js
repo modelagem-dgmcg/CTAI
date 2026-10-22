@@ -293,6 +293,49 @@
   }
 
   // ---------- Pareceres ----------
+
+  // Modelo do Parecer CTAI: seções numeradas, quadros e a revisão completa.
+  function cartaoModelo(P, c, editavel, recarregar, def) {
+    const base = '/api/ctai/pareceres/' + P.parecer_id;
+    const M = c.modelo;
+    if (!M) return h('div', { class: 'cartao', id: 'md-escolha' }, h('h2', null, '3. Parecer CTAI'), h('p', { class: 'peq mudo' }, 'Escolha como começar. O modelo padrão traz o texto-padrão com os dados da unidade e do período; a opção em branco deixa tudo para preencher à mão.'),
+      editavel ? h('div', { class: 'linha' }, h('button', { id: 'md-padrao', onclick: async () => { try { await api('POST', base + '/modelo', { modo: 'padrao' }); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Modelo padrão com os dados'), h('button', { class: 'sec', id: 'md-branco', onclick: async () => { try { await api('POST', base + '/modelo', { modo: 'branco' }); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Em branco')) : null);
+    const SEC = def.secoes;
+    const areas = {}, tabs = {};
+    const quadros = JSON.parse(JSON.stringify(M.quadros));
+    const caixaRev = h('div', { id: 'md-revisao' });
+    const lerTudo = () => ({ secoes: Object.fromEntries(Object.entries(areas).map(([k, el]) => [k, el.value])), quadros });
+    const gravar = async () => { try { await api('PUT', base + '/modelo', lerTudo()); toast('Parecer salvo.'); recarregar(); } catch (e) { toast(e.message, true); } };
+    const quadro = (q) => {
+      const corpo = h('div');
+      const pintar = () => corpo.replaceChildren(h('table', { class: 'tabela peq' }, h('thead', null, h('tr', null, q.colunas.map((x) => h('th', null, x)), editavel ? h('th') : null)),
+        h('tbody', null, quadros[q.id].map((lin, i) => h('tr', null, q.colunas.map((_, j) => h('td', null, editavel ? h('input', { type: 'text', value: lin[j] || '', style: 'width:100%', oninput: (ev) => { lin[j] = ev.target.value; } }) : (lin[j] || ''))), editavel ? h('td', null, h('button', { class: 'leve', onclick: () => { quadros[q.id].splice(i, 1); pintar(); } }, 'Remover')) : null)))),
+        editavel ? h('button', { class: 'sec', onclick: () => { quadros[q.id].push(q.colunas.map(() => '')); pintar(); } }, 'Adicionar linha') : null);
+      pintar();
+      return h('div', { style: 'margin:12px 0' }, h('h4', null, q.titulo), corpo);
+    };
+    const revisar = async () => {
+      troca(caixaRev, h('p', { class: 'mudo' }, 'Revisando: conferências locais, Analista, normas da unidade e busca externa… pode levar alguns segundos.'));
+      try {
+        await api('PUT', base + '/modelo', lerTudo());
+        const o = await api('POST', '/api/analista/pareceres/' + P.parecer_id + '/revisao-completa', {});
+        const ex = o.externa || {};
+        troca(caixaRev, h('p', { class: 'peq mudo' }, o.achados.length + ' achado(s) · ' + o.provedor + (o.normasDaUnidade ? ' · ' + o.normasDaUnidade + ' norma(s) da unidade consideradas' : '')),
+          o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'Nenhum achado nas conferências locais e no Analista.'),
+          h('h4', null, 'Busca externa (normas e jurisprudência)'),
+          ex.ok ? [ex.aviso ? h('p', { class: 'peq mudo' }, ex.aviso) : h('p', { class: 'peq', style: 'white-space:pre-wrap' }, ex.resposta || ''), ex.fontes && ex.fontes.length ? h('ul', { class: 'peq' }, ex.fontes.map((f) => h('li', null, h('a', { href: f.url, target: '_blank', rel: 'noopener noreferrer' }, f.titulo)))) : null]
+            : aviso('atencao', ex.motivo || 'Busca externa indisponível.'),
+          h('p', { class: 'peq mudo' }, 'Para a busca externa só saem as citações de lei/decreto e os nomes dos indicadores; o texto do parecer não é enviado.'));
+      } catch (e) { troca(caixaRev, aviso('erro', e.message)); }
+    };
+    return h('div', { class: 'cartao', id: 'md-cartao' }, h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, '3. Parecer CTAI' + (M.modo === 'branco' ? ' · em branco' : ' · modelo padrão')),
+        editavel ? h('div', { class: 'linha' }, h('button', { class: 'sec', onclick: async () => { if (!(await confirmar('Refazer o texto', 'Isto substitui as seções pelo texto-padrão atual (com os dados do período). Edições feitas serão perdidas.', 'Refazer'))) return; try { await api('POST', base + '/modelo', { modo: 'padrao' }); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Refazer com os dados'), h('button', { class: 'sec', onclick: async () => { if (!(await confirmar('Esvaziar o parecer', 'Todas as seções ficam em branco.', 'Esvaziar'))) return; try { await api('POST', base + '/modelo', { modo: 'branco' }); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Deixar em branco')) : null),
+      h('p', { class: 'peq mudo' }, 'Título: ' + def.titulo.replace('{numero}', c.identificacao.numero_parecer || 'xxx') + '. Edite cada seção; os quadros entram no PDF depois da seção 5.'),
+      SEC.map((sc) => { areas[sc.id] = h('textarea', { id: 'md-' + sc.id, rows: Math.min(14, Math.max(3, Math.ceil((M.secoes[sc.id] || '').length / 90))) }, M.secoes[sc.id] || ''); if (!editavel) areas[sc.id].setAttribute('disabled', ''); return h('div', { class: 'campo' }, h('label', { for: 'md-' + sc.id }, sc.titulo), areas[sc.id], sc.id === 'analise' ? def.quadros.map(quadro) : null); }),
+      editavel ? h('div', { class: 'linha' }, h('button', { id: 'md-salvar', onclick: gravar }, 'Salvar o parecer'), h('button', { class: 'sec', id: 'md-revisar', onclick: revisar }, 'Revisão completa')) : h('button', { class: 'sec', onclick: revisar }, 'Revisão completa'),
+      caixaRev);
+  }
+
   async function pareceres() {
     const [lista, cs] = await Promise.all([api('GET', '/api/ctai/pareceres'), api('GET', '/api/ctai/contratos')]);
     const podeCriar = eh('criador');
@@ -300,10 +343,15 @@
       const sel = h('select', { id: 'np-c' }, cs.contratos.map((c) => h('option', { value: c.contrato_id }, c.unidade)));
       const comps = h('div', { class: 'linha' });
       const pintar = () => { const c = cs.contratos.find((x) => x.contrato_id === sel.value); comps.replaceChildren(...c.competencias.map((k) => h('label', { style: 'font-weight:400;margin:0' }, h('input', { type: 'checkbox', value: k.competencia_id, checked: true }), ' ' + k.competencia_id))); };
-      sel.addEventListener('change', pintar); pintar();
-      const tri = h('input', { type: 'text', id: 'np-t', placeholder: '2026-T2' }), num = h('input', { type: 'text', id: 'np-n', placeholder: 'ex.: 204/2026' });
+      const tri = h('input', { type: 'text', id: 'np-t', placeholder: '2026-T2' });
+      const sugerirTri = () => { const m = comps.querySelector('input:checked'); if (m && !tri.dataset.manual) { const [a, mm] = m.value.split('-'); tri.value = a + '-T' + Math.ceil(Number(mm) / 3); } };
+      tri.addEventListener('input', () => { tri.dataset.manual = '1'; });
+      sel.addEventListener('change', () => { pintar(); sugerirTri(); }); pintar(); sugerirTri();
+      const branco = h('input', { type: 'checkbox', id: 'np-b' });
+      const num = h('input', { type: 'text', id: 'np-n', placeholder: 'ex.: 204/2026' });
       return h('div', { class: 'cartao' }, h('h3', null, 'Novo parecer'), h('div', { class: 'duas' }, h('div', { class: 'campo' }, h('label', { for: 'np-c' }, 'Contrato'), sel), h('div', { class: 'campo' }, h('label', { for: 'np-t' }, 'Trimestre'), tri), h('div', { class: 'campo' }, h('label', null, 'Competências'), comps), h('div', { class: 'campo' }, h('label', { for: 'np-n' }, 'Número do parecer (se já tiver)'), num)),
-        h('button', { onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres', { contrato_id: sel.value, trimestre: tri.value, numero_parecer: num.value, competencias: [...comps.querySelectorAll('input:checked')].map((x) => x.value) }); location.hash = '#/p/' + o.parecer_id; } catch (e) { toast(e.message, true); } } }, 'Criar a minuta'));
+        h('p', { class: 'peq mudo' }, 'Documento: Parecer Técnico CTAI. O texto-padrão já vem preenchido com os dados da unidade e do período.'), h('label', { style: 'font-weight:400' }, branco, ' Começar em branco (preenchimento manual)'),
+        h('button', { onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres', { contrato_id: sel.value, trimestre: tri.value, numero_parecer: num.value, competencias: [...comps.querySelectorAll('input:checked')].map((x) => x.value) }); await api('POST', '/api/ctai/pareceres/' + o.parecer_id + '/modelo', { modo: branco.checked ? 'branco' : 'padrao' }); location.hash = '#/p/' + o.parecer_id; } catch (e) { toast(e.message, true); } } }, 'Criar a minuta'));
     };
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Pareceres'), h('p', null, 'Quem cria monta e congela; os colegas conferem; a superintendente autoriza; quem criou anexa no SEI.'))),
       podeCriar || ehAdmin() ? formNovo() : aviso('info', 'Só o perfil criador abre uma minuta nova.'),
@@ -334,7 +382,8 @@
         c.indicadores.competencias.some((k) => !k.envio) ? h('p', { class: 'mudo peq' }, 'Meses sem envio pelo portal usam os totais da carga (somente leitura).') : null),
       h('div', { class: 'cartao' }, h('h2', null, '2. Divergências, desconto e alertas'), h('p', { class: 'peq' }, c.divergencias.length + ' divergência(s) (' + c.divergencias.filter((x) => x.status === 'aberta').length + ' abertas) · ' + c.alertas.recalculo.length + ' alerta(s) do recálculo'), renderSecao('desconto', c),
         c.desconto.decisoesAbertas.length ? h('p', { class: 'peq' }, h('a', { href: '#/regras/' + P.contrato_id }, 'Decidir as dúvidas de regra')) : null),
-      h('div', { class: 'cartao' }, h('h2', null, '3. Texto do parecer'),
+      cartaoModelo(P, c, eCriador && !travado, () => parecer(p), d.modeloDef),
+      c.modelo ? null : h('div', { class: 'cartao' }, h('h2', null, '3b. Texto livre (formato antigo)'),
         area('abertura', 'Abertura'), area('analise', 'Análise'), area('conclusao', 'Conclusão'),
         eCriador && !travado ? h('div', { class: 'linha' }, h('button', { onclick: salvarTexto }, 'Salvar o texto'), h('button', { class: 'sec', onclick: async () => { const s = await api('POST', '/api/ctai/pareceres/' + P.parecer_id + '/rascunho-texto', { aplicar: true }); toast('Sugestão aplicada nos campos vazios.'); void s; parecer(p); } }, 'Sugerir texto a partir dos números'),
           h('button', { class: 'sec', onclick: async () => { try { troca(achadosMin, h('p', { class: 'mudo' }, 'Lendo…')); const o = await api('POST', '/api/analista/pareceres/' + P.parecer_id + '/analisar', {}); troca(achadosMin, h('p', { class: 'peq mudo' }, o.achados.length + ' ponto(s) · ' + o.provedor), o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'O Analista não apontou nada no texto.')); } catch (e) { troca(achadosMin, aviso('erro', e.message)); } } }, 'Pedir ao Analista que leia o texto')) : null, achadosMin),

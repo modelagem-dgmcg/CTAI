@@ -57,6 +57,8 @@ module.exports = (db) => {
     res.json(Object.assign(out, { salvos }));
   });
 
+  r.post('/pareceres/:id/revisao-completa', async (req, res) => res.json(await require('../parecer-revisao').revisar(db, req.params.id, req.usuario)));
+
   const soEquipe = (u) => { if (!['criador', 'admin', 'superintendente'].includes(u.perfil)) throw erro(403, 'Só a equipe que monta o parecer (criador, superintendente) faz esta alteração.'); };
 
   // ---------- Achados: lista, fixar/descartar, encaminhar à unidade ----------

@@ -1,0 +1,23 @@
+{
+  "modelo": "parecer-ctai-v1",
+  "titulo": "PARECER TÉCNICO CTAI N.º {numero}",
+  "aviso": "Texto-padrão com dados fictícios. Revise cada seção; os campos entre chaves são preenchidos pelo sistema.",
+  "secoes": [
+    { "id": "objeto", "titulo": "Objeto", "texto": "Parecer Técnico da Comissão Técnica de Acompanhamento Interno dos Contratos de Gestão – CTAI sobre o desempenho da unidade {unidade}, gerida pela {oss}, no {trimestre} ({periodo})." },
+    { "id": "introducao", "titulo": "1. DA INTRODUÇÃO", "texto": "Trata-se da análise do relatório assistencial trimestral da unidade {unidade}, referente ao período de {periodo}, no âmbito do Contrato de Gestão n.º {cg}, firmado com a {oss}." },
+    { "id": "fundamentacao", "titulo": "2. DA FUNDAMENTAÇÃO LEGAL", "texto": "Esta Comissão atua com base no art. 35 do Decreto Estadual n.º 58.200/2025, que regulamenta a Lei Estadual n.º 15.210/2013. (Insira aqui os dispositivos citados no parecer.)" },
+    { "id": "identificacao", "titulo": "3. DA IDENTIFICAÇÃO DO CONTRATO DE GESTÃO, DA OSS E UNIDADE DE SAÚDE", "texto": "• OSS: {oss}\n• Unidade: {unidade}\n• Contrato de Gestão: n.º {cg}\n• Período analisado: {periodo}\n• Vigência / termos aditivos: (preencher)\n• Endereço: (preencher)\n• Perfil assistencial: (preencher)\n• Repasse mensal: (preencher)" },
+    { "id": "simas", "titulo": "4. DO SISTEMA SIMAS", "texto": "Os dados de produção e de qualidade foram extraídos do SIMAS e dos relatórios assistenciais mensais enviados pela unidade, conforme prazos abaixo.\n{prazos}" },
+    { "id": "analise", "titulo": "5. DA ANÁLISE DOS INDICADORES", "texto": "{analise_igq}\n\nQuadro 01 – Indicadores de produção valorados; Quadro 02 – Indicadores de produção sem valoração; Quadro 03 – Indicadores de qualidade (parte variável). Preencha os quadros abaixo e comente o que fugir da meta." },
+    { "id": "descontos", "titulo": "6. DOS APONTAMENTOS DE DESCONTO", "texto": "{desconto}" },
+    { "id": "financeiro", "titulo": "7. DAS INFORMAÇÕES FINANCEIRAS REFERENTE AO CONTRATO DE GESTÃO N.º {cg}", "texto": "As informações financeiras do período encontram-se acostadas ao processo. (Informe o documento e o percentual de gasto com pessoal por mês.)" },
+    { "id": "cma", "titulo": "8. DAS CONSIDERAÇÕES SOBRE O PARECER CONCLUSIVO DA COMISSÃO MISTA DE AVALIAÇÃO – CMA", "texto": "(Registre as recomendações da CMA ao parecer anterior e a resposta da CTAI. Se não houver, escreva: não há considerações da CMA a registrar.)" },
+    { "id": "finais", "titulo": "9. DAS CONSIDERAÇÕES FINAIS", "texto": "Diante do exposto, e após análise dos dados apresentados pela unidade {unidade}, conforme transcritos nos Quadros 01, 02 e 03, esta Comissão Técnica não possui novas considerações a serem feitas." },
+    { "id": "conclusao", "titulo": "10. DA CONCLUSÃO", "texto": "A Comissão Técnica de Acompanhamento Interno dos Contratos de Gestão – CTAI tem primado pelo monitoramento eficaz das metas e serviços pactuados em relação à unidade {unidade}, sob o prisma dos princípios da eficiência e da legalidade da Administração Pública. Encaminhará o presente parecer à Comissão Mista de Avaliação, para análise e demais providências." }
+  ],
+  "quadros": [
+    { "id": "q1", "titulo": "Quadro 01 – Produção valorados", "colunas": ["Nº", "Indicador", "Meta mensal", "Produção", "% trimestral", "Status"] },
+    { "id": "q2", "titulo": "Quadro 02 – Produção sem valoração", "colunas": ["Nº", "Indicador", "Meta mensal", "Produção", "% trimestral", "Status"] },
+    { "id": "q3", "titulo": "Quadro 03 – Qualidade (parte variável)", "colunas": ["Nº", "Indicador", "Meta mensal", "Resultado", "% / pontos", "Status"] }
+  ]
+}

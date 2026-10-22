@@ -21,10 +21,26 @@ function construirMinuta(conteudo, versao, estado) {
     ['Parecer nº', id.numero_parecer || 'a definir'], ['Regra de pontuação', id.regra], ['Criado por', id.criador],
   ] });
 
-  blocos.push({ tipo: 'titulo', nivel: 1, texto: 'Texto do parecer' });
-  for (const [k, t] of [['abertura', 'Abertura'], ['analise', 'Análise'], ['conclusao', 'Conclusão']]) {
-    blocos.push({ tipo: 'titulo', nivel: 2, texto: t });
-    blocos.push({ tipo: 'paragrafo', texto: conteudo.texto[k] || '(sem texto)' });
+  if (conteudo.modelo) {
+    const PM = require('../parecer-modelo');
+    blocos.push({ tipo: 'titulo', nivel: 1, texto: PM.MODELO.titulo.replace('{numero}', id.numero_parecer || 'xxx') });
+    for (const sc of PM.MODELO.secoes) {
+      const t = conteudo.modelo.secoes[sc.id];
+      if (!t) continue;
+      blocos.push({ tipo: 'titulo', nivel: 2, texto: sc.titulo });
+      for (const par of String(t).split(/\n{2,}/)) blocos.push({ tipo: 'paragrafo', texto: par });
+      if (sc.id === 'analise') for (const q of PM.MODELO.quadros) {
+        const l = conteudo.modelo.quadros[q.id] || [];
+        if (!l.length) continue;
+        blocos.push({ tipo: 'tabela', titulo: q.titulo, colunas: q.colunas.map((r, i) => ({ rotulo: r, largura: i === 1 ? 3 : 1 })), linhas: l });
+      }
+    }
+  } else {
+    blocos.push({ tipo: 'titulo', nivel: 1, texto: 'Texto do parecer' });
+    for (const [k, t] of [['abertura', 'Abertura'], ['analise', 'Análise'], ['conclusao', 'Conclusão']]) {
+      blocos.push({ tipo: 'titulo', nivel: 2, texto: t });
+      blocos.push({ tipo: 'paragrafo', texto: conteudo.texto[k] || '(sem texto)' });
+    }
   }
 
   blocos.push({ tipo: 'titulo', nivel: 1, texto: 'Indicadores e pontos' });

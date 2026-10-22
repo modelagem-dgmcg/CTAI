@@ -219,6 +219,7 @@ function conteudoAtual(db, parecerId) {
     alertas: { recalculo: alertas, integridade },
     texto: Object.assign({ abertura: '', analise: '', conclusao: '' }, p.blocos.texto || {}),
     achados: pinned,
+    modelo: p.blocos.modelo || null,
   };
 }
 
@@ -354,8 +355,8 @@ function detalhe(db, parecerId, usuario) {
   const atual = conteudoAtual(db, p.parecer_id);
   const alterado = ult ? hashDe(atual) !== ult.hash : true;
   const colegas = db.all("SELECT usuario_id, nome FROM usuarios WHERE perfil = 'colega' AND ativo = 1 AND usuario_id <> ?", p.criador_id);
-  return { parecer: Object.assign({}, p, { demo: !!contrato.demo, unidade: contrato.unidade }), conteudoAtual: atual, alteradoDesdeCongelamento: alterado, versoes, ultima: estado, colegasDisponiveis: colegas,
+  return { parecer: Object.assign({}, p, { demo: !!contrato.demo, unidade: contrato.unidade }), conteudoAtual: atual, modeloDef: (() => { const m = require('./parecer-modelo').MODELO; return { titulo: m.titulo, secoes: m.secoes.map((x) => ({ id: x.id, titulo: x.titulo })), quadros: m.quadros }; })(), alteradoDesdeCongelamento: alterado, versoes, ultima: estado, colegasDisponiveis: colegas,
     voce: { eCriador: usuario.usuario_id === p.criador_id, perfil: usuario.perfil } };
 }
 
-module.exports = { ITENS, obter, listar, criar, salvarTexto, adotar, conteudoAtual, hashDe, rascunhoDeTexto, ultimaVersao, congelar, estadoDaVersao, conferir, autorizar, registrarSEI, detalhe };
+module.exports = { exigirCriador, ITENS, obter, listar, criar, salvarTexto, adotar, conteudoAtual, hashDe, rascunhoDeTexto, ultimaVersao, congelar, estadoDaVersao, conferir, autorizar, registrarSEI, detalhe };

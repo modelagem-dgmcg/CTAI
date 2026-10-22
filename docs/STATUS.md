@@ -79,3 +79,8 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 5. Confirme com a chefia e a CTAI antes de abrir para os colegas (combinado em `docs/lista-de-pedidos.md`).
 6. Revisão de **LGPD** pelo encarregado: o sistema foi desenhado para não ter dado de paciente, mas a conferência humana continua necessária.
 7. Apague a demonstração (Administração) quando não precisar mais.
+
+## Parecer CTAI (modelo) — 22/10/2026
+- Aba Pareceres: novo parecer já nasce com o **modelo padrão** (texto-padrão com unidade, OSS, contrato, período, prazos, IGQ e desconto do trimestre) ou **em branco**. Seções 1–10 e Quadros 01/02/03 do parecer real (templates/parecer-ctai-v1.json, só texto fictício). Quadro 03 vem preenchido pelos pontos do período; Quadros 01/02 (produção) são digitados.
+- **Revisão completa**: conferências locais (seção vazia, campo pendente, nome de outra unidade, mês fora do período, texto × desconto/quadro), Analista (regras + IA mascarada, com as normas da unidade) e busca externa (Gemini + Google Search, com fontes). Para a busca só saem as citações de lei/decreto e os nomes dos indicadores.
+- Congelar, conferência, autorização, PDF e número do SEI seguem como antes. Ofício e despacho ficam para depois.
