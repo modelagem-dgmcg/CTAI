@@ -57,3 +57,10 @@ test('PDF da versão congelada traz as seções do modelo', async () => {
   const blocos = pdfs.construirMinuta ? pdfs.construirMinuta(c, { numero: 1, hash: 'a'.repeat(64), criada_em: '2026-01-01T00:00:00Z' }, 'em conferência') : null;
   assert.ok(blocos); assert.ok(JSON.stringify(blocos).includes('DA INTRODUÇÃO'));
 });
+
+test('parecer pode ser criado para trimestre sem competência cadastrada', async () => {
+  const r = await cleuton.post('/api/ctai/pareceres', { contrato_id: 'DEMO-UPA', trimestre: '2030-T3', competencias: ['2030-07', '2030-08', '2030-09'] });
+  assert.equal(r.status, 200);
+  const ruim = await cleuton.post('/api/ctai/pareceres', { contrato_id: 'DEMO-UPA', trimestre: '2030-T4', competencias: ['x'] });
+  assert.equal(ruim.status, 400);
+});

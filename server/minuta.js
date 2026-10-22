@@ -49,7 +49,8 @@ function criar(db, usuario, dados) {
   if (!c) throw erro(400, 'Contrato não encontrado.');
   const comps = (dados.competencias || []).map(String);
   if (!comps.length) throw erro(400, 'Escolha ao menos uma competência.');
-  for (const id of comps) if (!db.get('SELECT 1 FROM competencias WHERE contrato_id = ? AND competencia_id = ?', c.contrato_id, id)) throw erro(400, 'A competência ' + id + ' não existe neste contrato.');
+  // A competência não precisa existir no sistema (a unidade pode ainda não ter enviado dados): o parecer só registra o período.
+  for (const id of comps) if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(id)) throw erro(400, 'Competência inválida: ' + id + ' (use AAAA-MM).');
   const trimestre = String(dados.trimestre || '').trim();
   if (!trimestre) throw erro(400, 'Informe o trimestre (ex.: 2026-T2).');
   if (db.get('SELECT 1 FROM pareceres WHERE contrato_id = ? AND trimestre = ?', c.contrato_id, trimestre)) throw erro(409, 'Já existe parecer deste contrato para ' + trimestre + '.');

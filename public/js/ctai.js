@@ -392,7 +392,9 @@
       const pintar = () => {
         const c = cs.contratos.find((x) => x.contrato_id === sel.value);
         const doTri = (id) => { const [a, m] = id.split('-'); return a + '-T' + Math.ceil(Number(m) / 3) === triVal(); };
-        comps.replaceChildren(...c.competencias.map((k) => h('label', { style: 'font-weight:400;margin:0' }, h('input', { type: 'checkbox', value: k.competencia_id, checked: doTri(k.competencia_id) }), ' ' + k.competencia_id)));
+        const meses = [1, 2, 3].map((i) => selAno.value + '-' + String((Number(selTri.value) - 1) * 3 + i).padStart(2, '0'));
+        const ids = [...new Set(c.competencias.map((k) => k.competencia_id).concat(meses))].sort();
+        comps.replaceChildren(...ids.map((id) => h('label', { style: 'font-weight:400;margin:0' }, h('input', { type: 'checkbox', value: id, checked: doTri(id) }), ' ' + id)));
       };
       sel.addEventListener('change', pintar); selAno.addEventListener('change', pintar); selTri.addEventListener('change', pintar); pintar();
       const branco = h('input', { type: 'checkbox', id: 'np-b' });
