@@ -287,6 +287,13 @@
     const topoUn = h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, c.unidade), estadoSelo(c));
     const arqUn = h('input', { type: 'file', id: 'rg-arq', accept: '.json,application/json' });
     const importarUn = async () => { try { const j = await lerJson(arqUn); await api('POST', '/api/ctai/contratos/' + id + '/regras/importar', { regras: Array.isArray(j) ? j[0] : (j.unidades ? j.unidades[0] : j) }); toast('Regras importadas. Falta conferir.'); regras(p); } catch (e) { toast(e.message, true); } };
+    const cartaoContrato = (cr) => {
+      const k = cr.conteudo;
+      const tipoRot = { producao: 'Produção', qualidade: 'Qualidade', monitoramento: 'Monitoramento' };
+      return h('div', { class: 'cartao' }, h('h3', null, 'O que o contrato diz (lido do documento' + (cr.conferida ? ', conferido' : ', a conferir') + ')'),
+        h('p', { class: 'mudo peq' }, [k.contrato_numero ? 'Contrato ' + k.contrato_numero : null, k.oss, k.variavel_pct ? 'parte variável ' + PERC(k.variavel_pct) : null].filter(Boolean).join(' · ') + (k.cobertura ? ' — ' + k.cobertura : '')),
+        h('div', { class: 'tabela-rolavel' }, tabela([{ t: 'Tipo' }, { t: 'Indicador' }, { t: 'Peso máx.', n: true }, { t: 'Meta' }, { t: 'Fonte' }], k.indicadores.map((i) => [tipoRot[i.tipo] || i.tipo, i.nome, PERC(i.peso_pct_total !== null && i.peso_pct_total !== undefined ? i.peso_pct_total : i.peso_pct_variavel) + (i.peso_pct_total === null || i.peso_pct_total === undefined ? ' da variável' : ''), i.meta || '—', i.fonte || '—']), { vazio: 'Nenhum indicador lido automaticamente: leitura manual no documento.' })));
+    };
     if (r.descritiva) {
       const cr = r.contratoRegras, k = cr.conteudo;
       const confere = async () => { try { await api('POST', '/api/ctai/contratos/' + id + '/regras/conferida', {}); toast('Regra marcada como conferida.'); regras(p); } catch (e) { toast(e.message, true); } };
@@ -326,6 +333,7 @@
           pode ? h('button', { onclick: async () => { try { await api('PUT', '/api/ctai/contratos/' + id + '/decisoes/' + q.chave, { valor: sel.value, justificativa: just.value }); toast('Decisão registrada.'); regras(p); } catch (e) { toast(e.message, true); } } }, 'Registrar decisão') : null);
       }),
       h('div', { class: 'cartao' }, h('h3', null, 'Pontos em aberto na própria regra'), r.regraPendencias.length ? h('ul', null, r.regraPendencias.map((x) => h('li', null, h('strong', null, x.onde + ': '), x.texto))) : h('p', { class: 'mudo' }, 'Nenhum.')),
+      r.contratoRegras ? cartaoContrato(r.contratoRegras) : null,
       h('div', { class: 'cartao' }, h('h3', null, 'Regra ' + tabelaRegra.versao), tabela([{ t: 'Item' }, { t: 'Indicador' }, { t: 'Faixas' }, { t: 'Máx.', n: true }], tabelaRegra.indicadores.map((i) => [i.id, i.nome, i.faixas, String(i.max)]))));
   }
 

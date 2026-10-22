@@ -131,7 +131,7 @@ module.exports = (db) => {
   r.get('/contratos/:id/decisoes', (req, res) => {
     let regras;
     try { regras = D.regrasDoContrato(db, req.params.id).regras; } catch (e) { if (e.status === 409) { const cr = CR.ler(db, req.params.id); return res.json(cr ? { decisoes: [], regraPendencias: [], semRegras: false, descritiva: true, contratoRegras: cr, regra: RC.estado(db, req.params.id) } : { decisoes: [], regraPendencias: [], semRegras: true, regra: { tem: false } }); } throw e; }
-    res.json({ decisoes: Object.values(D.decisoes(db, req.params.id)), regraPendencias: R.pendencias(regras), regra: RC.estado(db, req.params.id) });
+    res.json({ decisoes: Object.values(D.decisoes(db, req.params.id)), regraPendencias: R.pendencias(regras), regra: RC.estado(db, req.params.id), contratoRegras: CR.ler(db, req.params.id) });
   });
   r.post('/contratos/:id/regras/modelo', (req, res) => res.json({ regra: RC.aplicarModelo(db, req.usuario, req.params.id, req.body && req.body.modelo) }));
   r.post('/contratos/:id/regras/conferida', (req, res) => res.json({ regra: RC.marcarConferida(db, req.usuario, req.params.id) }));

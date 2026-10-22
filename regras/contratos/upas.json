@@ -1,0 +1,1493 @@
+{
+ "gerado_em": "2026-10-22",
+ "aviso": "Leitura automática dos contratos; tudo a conferir.",
+ "unidades": [
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Olinda",
+   "chaves": [
+    "olinda"
+   ],
+   "contrato_numero": "001/2022",
+   "oss": "INSTITUTO SOCIAL MEDIANEIRAS DA PAZ – ISMEP",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS com o prazo preconizado pela Regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos registrados no sistema SIA/SUS",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor igual ou superior a 90% de satisfação do usuário",
+     "especificacao": "Medir a satisfação do usuário assistido e dos seus acompanhantes através de pesquisa de satisfação",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor $\\ge$ a 80% de resolução das queixas recebidas",
+     "especificacao": "Aferir a taxa de resolutividade das queixas realizadas pelos usuários da unidade e seus acompanhantes",
+     "fonte": "Relatório, mensal, enviado à SES, dos registros das queixas recebidas e o tempo de resolução do período",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Odontológica",
+     "peso_pct_total": 0.5,
+     "meta": "Execução de 100% da escala",
+     "especificacao": "Averiguar o cumprimento da escala mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, com as informações da escala",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor $\\leq$ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas ou quadro que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário",
+     "fonte": "Relatórios, mensais, enviados à SES, dos prontuários cadastrados no sistema do SUS",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor $\\ge$ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "ATENÇÃO AO USUÁRIO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 30,
+     "meta": "Acolhimento ao paciente com base no seu sofrimento em conformidade com os protocolos vigentes",
+     "especificacao": "Acolhimento com classificação de risco (10% da parte variável - qualidade)",
+     "fonte": "Atingir a meta do acolhimento do ACCR"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUALIDADE DA INFORMAÇÃO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 20,
+     "meta": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES",
+     "especificacao": "Taxa de profissionais médicos cadastrados no CNES (10% da parte variável - qualidade)",
+     "fonte": "100% do total de profissionais médicos da unidade cadastrados no CNES"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUALIDADE DO ATENDIMENTO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 40,
+     "meta": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "especificacao": "Escala médica (5% da parte variável - qualidade)",
+     "fonte": "Execução de 100% da escala médica"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "ENSINO E PESQUISA (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários",
+     "especificacao": "Taxa de revisão de prontuários de pacientes com classificação de risco Vermelho e Amarelo (10% da parte variável - qualidade)",
+     "fonte": "Revisar um quantitativo $\\ge$ a 90% dos prontuários classificados como vermelho e amarelo"
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 15; com meta e fonte: 10. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "001_2022_-_UPA_OLINDA_.docx",
+   "tas_no_arquivo": 111
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Igarassu",
+   "chaves": [
+    "igarassu"
+   ],
+   "contrato_numero": "002/2022",
+   "oss": "SOCIEDADE PERNAMBUCANA DE COMBATE AO CÂNCER (HOSPITAL DE CÂNCER DE PERNAMBUCO)",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, permitindo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Envio do relatório mensal do ACCR",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% da satisfação do usuário.",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes através de pesquisa de satisfação.",
+     "fonte": "Relatório mensal, enviado à SES, do total de questionários aplicados.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "especificacao": "Aferir a taxa de resolução das queixas prestadas pelos usuários da unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução do período.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES.",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários registrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 1,
+     "meta": "Execução de 100% da escala médica",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas do atendimento realizado ou queixas que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "fonte": "Relatórios, mensais, enviados à SES, dos procedimentos contidos no sistema do SUS.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento da execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 10; com meta e fonte: 9. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "002_2022_-_UPA_IGARASSU.docx",
+   "tas_no_arquivo": 121
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Imbiribeira",
+   "chaves": [
+    "imbiribeira"
+   ],
+   "contrato_numero": "003/2021",
+   "oss": "ASSOCIAÇÃO DE PROTEÇÃO A MATERNIDADE E INFÂNCIA UBAÍRA - S3 GESTÃO EM SAÚDE",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Estrutura do contrato diferente do padrão: o quadro de indicadores não foi lido automaticamente; leitura manual necessária.",
+   "fonte_arquivo": "003_2021_-_UPA_IMBIRIBEIRA.docx",
+   "tas_no_arquivo": 125
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Paulista",
+   "chaves": [
+    "paulista"
+   ],
+   "contrato_numero": "003/2022",
+   "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA – HOSPITAL MARIA LUCINDA",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo variar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS, no prazo preconizado pela regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 2,
+     "meta": "Envio do relatório mensal do ACCR",
+     "especificacao": "Acolhimento ao paciente e classificação de atendimento em conformidade com os protocolos vigentes.",
+     "fonte": "Relatório mensal, enviado à SES, dos resultados do ACCR.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% de satisfação do usuário.",
+     "especificacao": "Medir a satisfação do usuário em relação aos serviços e seus acompanhantes através de pesquisa de satisfação.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "especificacao": "Aferir a taxa de resolutividade das queixas recebidas pelos usuários da unidade e seus acompanhantes.",
+     "fonte": "Relatório mensal, enviado à SES, do acompanhamento das queixas recebidas e o registro da resolução no período.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários cadastrados nos sistemas SIA/SUS com o respectivo cadastro do registro profissional médico.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 0.5,
+     "meta": "Execução de 100% da escala médica",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Odontológica",
+     "peso_pct_total": 0.5,
+     "meta": "Execução de 100% da escala",
+     "especificacao": "Averiguar o cumprimento da escala mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram à unidade apresentando os mesmos sintomas do atendimento realizado ou queixas que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "fonte": "Relatórios, mensais, enviados à SES, dos prontuários cadastrados no sistema do SUS.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente.",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 11; com meta e fonte: 10. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "003_2022_-_UPA_PAULISTA_.docx",
+   "tas_no_arquivo": 120
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Curado",
+   "chaves": [
+    "curado"
+   ],
+   "contrato_numero": "004/2022",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Envio do relatório mensal do ACCR",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% de satisfação do usuário.",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes através de pesquisa de satisfação.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 0.5,
+     "meta": "Execução de 100% da escala médica",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Odontológica",
+     "peso_pct_total": 0.5,
+     "meta": "Execução de 100% da escala",
+     "especificacao": "Averiguar o cumprimento da escala mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas do atendimento realizado ou queixas que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "fonte": "Relatórios, mensais, enviados à SES, dos procedimentos cadastrados no sistema do SUS.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 11; com meta e fonte: 10. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "004_2022_-_UPA_CURADO_.docx",
+   "tas_no_arquivo": 119
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Barra de Jangada",
+   "chaves": [
+    "barra de jangada"
+   ],
+   "contrato_numero": "005/2022",
+   "oss": "INSTITUTO SOCIAL MEDIANEIRAS DA PAZ – ISMEP",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Envio do relatório mensal do ACCR",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% de satisfação do usuário.",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes através de pesquisa de satisfação.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 1,
+     "meta": "Execução de 100% da escala médica",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas do atendimento realizado ou queixas que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "fonte": "Relatórios, mensais, enviados à SES, dos procedimentos cadastrados no sistema do SUS.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 10; com meta e fonte: 9. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "005_2022_-_UPA_BARRA_DE_JANGADA.docx",
+   "tas_no_arquivo": 109
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA São Lourenço",
+   "chaves": [
+    "sao lourenco"
+   ],
+   "contrato_numero": "006/2022",
+   "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Envio do relatório mensal do ACCR",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% de satisfação do usuário.",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes através de pesquisa de satisfação.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 1,
+     "meta": "Execução de 100% da escala médica",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas do atendimento realizado ou queixas que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "fonte": "Relatórios, mensais, enviados à SES, dos procedimentos cadastrados no sistema do SUS.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 10; com meta e fonte: 9. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "006_2022_-_UPA_S_O_LOUREN_O.docx",
+   "tas_no_arquivo": 113
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Caxangá",
+   "chaves": [
+    "caxanga"
+   ],
+   "contrato_numero": "007/2022",
+   "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA – HOSPITAL MARIA LUCINDA",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registrar a produção realizada pelo serviço, no Sistema SIA/SUS no prazo preconizado pela regulação/SES.",
+     "especificacao": "Registro da Produção no sistema SIA/SUS",
+     "fonte": "Registro de 100% no Sistema SIA/SUS, dos atendimentos realizados na unidade, apresentando quantitativo de glosa superior a 10% e até no máximo 26%.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Acolhimento ao paciente e classificação de risco, conforme especificações deste Termo de Referência.",
+     "especificacao": "Acolhimento com classificação de risco",
+     "fonte": "Envio do relatório mensal do ACCR",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Medir a satisfação do usuário atendido pela unidade e seus representantes através da pesquisa de satisfação.",
+     "especificacao": "Satisfação do usuário",
+     "fonte": "Atingir valor ≥ a 90% de satisfação do usuário.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Aferir a taxa de resolutividade das queixas recebidas pelos usuários da unidade e seus acompanhantes.",
+     "especificacao": "Taxa de resolução das queixas recebidas",
+     "fonte": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES.",
+     "especificacao": "Taxa de profissionais médicos cadastrados no CNES",
+     "fonte": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 1,
+     "meta": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "especificacao": "Escala médica",
+     "fonte": "Execução de 100% da escala médica",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "especificacao": "Taxa de atendimento de retorno em até 24hs",
+     "fonte": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas de atendimento, complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "especificacao": "Taxa de revisão de prontuários de pacientes com classificação de risco Vermelho e Amarelo",
+     "fonte": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Avaliar a execução do plano de educação permanente",
+     "especificacao": "Taxa de execução do plano de educação permanente",
+     "fonte": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 10; com meta e fonte: 9. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "007_2022_-_UPA_CAXANG_.docx",
+   "tas_no_arquivo": 111
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Nova Descoberta",
+   "chaves": [
+    "nova descoberta"
+   ],
+   "contrato_numero": "008/2022",
+   "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA – HOSPITAL MARIA LUCINDA",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Odontológica",
+     "peso_pct_total": 0.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "ATENÇÃO AO USUÁRIO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Acolhimento ao paciente e classificação de risco realizado em conformidade com os protocolos vigentes",
+     "especificacao": "Acolhimento com Classificação de Risco (10% da parte variável - qualidade)",
+     "fonte": "Envio do relatório mensal do ACCR"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "ATENÇÃO AO USUÁRIO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Medir a satisfação do usuário atendido pela unidade seus acompanhantes através de pesquisa de satisfação",
+     "especificacao": "Satisfação do usuário (10% da parte variável - qualidade)",
+     "fonte": "Atingir valor ≥ a 90% de satisfação do usuário"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "ATENÇÃO AO USUÁRIO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Aferir a taxa de resolutividade das queixas apresentadas por usuários da unidade e seus acompanhantes",
+     "especificacao": "Taxa de resolução das queixas recebidas (10% da parte variável - qualidade)",
+     "fonte": "Atingir valor ≥ a 80% de resolução das queixas recebidas"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUALIDADE DA INFORMAÇÃO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Garantir que os profissionais médicos que realizam os procedimentos na unidade estejam devidamente cadastrados no CNES",
+     "especificacao": "Taxa de profissionais médicos cadastrados no CNES (10% da parte variável - qualidade)",
+     "fonte": "100% do total de profissionais médicos da unidade cadastrados no CNES"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUALIDADE DA INFORMAÇÃO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo definido pela escala de regulação/SES",
+     "especificacao": "Registro da Produção no Sistema SIA/SUS (10% da parte variável - qualidade)",
+     "fonte": "Registro de 100% no sistema SIA/SUS, dos procedimentos realizados na unidade, podendo apresentar no máximo 10% de glosas"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUALIDADE DA INFORMAÇÃO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Averiguar o cumprimento da escala mínima prevista em contrato",
+     "especificacao": "Escala médica (5% da parte variável - qualidade)",
+     "fonte": "Execução de 100% da escala médica"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUALIDADE DA INFORMAÇÃO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Averiguar o cumprimento da escala mínima prevista em contrato",
+     "especificacao": "Escala odontológica (5% da parte variável - qualidade)",
+     "fonte": "Execução de 100% da escala"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUALIDADE DO ATENDIMENTO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Avaliar a efetividade do atendimento realizado ao usuário",
+     "especificacao": "Taxa de atendimento de retorno em até 24hrs (20% da parte variável - qualidade)",
+     "fonte": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram pela unidade apresentando os mesmos sintomas e/ou complicações da doença do atendimento realizado ou queixas que representem complicações da doença ou erro no tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUALIDADE DO ATENDIMENTO (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários",
+     "especificacao": "Taxa de revisão de prontuários de pacientes com classificação de risco vermelho e amarelo (10% da parte variável - qualidade)",
+     "fonte": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "ENSINO E PESQUISA (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Avaliar a execução do plano de educação permanente",
+     "especificacao": "Taxa de execução do plano de educação permanente (10% da parte variável - qualidade)",
+     "fonte": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente"
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 21; com meta e fonte: 10. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "008_2022_-_UPA_NOVA_DESCOBERTA_.docx",
+   "tas_no_arquivo": 111
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Torrões",
+   "chaves": [
+    "torroes"
+   ],
+   "contrato_numero": "009/2022",
+   "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA – HOSPITAL MARIA LUCINDA",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "1%",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes comClassificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação",
+     "peso_pct_total": null,
+     "meta": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "especificacao": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "fonte": "A entrega do Relatório de Prestação de Contas Mensal deverá ser apresentado à SES até o dia 20 do mês subsequente, relativo à prestação de contas mensais da Unidade.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "pagamento da parte variável do contrato (grupo/indicador do anexo)",
+     "peso_pct_variavel": 10,
+     "meta": "Acolhimento com Classificação de Risco, Satisfação do Usuário, Taxa de Resolução",
+     "especificacao": "deverá atingir mensalmente as metas definidas para os seguintes indicadores:",
+     "fonte": "das Queixas Recebidas, Taxa de Profissionais Médicos Cadastrados no CNES,"
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 10; com meta e fonte: 3. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "009_2022_-_UPA_TORR_ES.docx",
+   "tas_no_arquivo": 113
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Engenho Velho",
+   "chaves": [
+    "engenho velho"
+   ],
+   "contrato_numero": "010/2022",
+   "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA – HOSPITAL MARIA LUCINDA",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Envio do relatório mensal do ACCR",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% de satisfação do usuário.",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes através de pesquisa de satisfação.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 0.5,
+     "meta": "Execução de 100% da escala médica",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Odontológica",
+     "peso_pct_total": 0.5,
+     "meta": "Execução de 100% da escala",
+     "especificacao": "Averiguar o cumprimento da escala mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala.",
+     "peso_pct_variavel": 5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas do atendimento realizado ou queixas que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "fonte": "Relatórios, mensais, enviados à SES, dos procedimentos cadastrados no sistema do SUS.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 11; com meta e fonte: 10. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "010_2022_-_UPA_ENGENHO_VELHO.docx",
+   "tas_no_arquivo": 130
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Caruaru",
+   "chaves": [
+    "caruaru"
+   ],
+   "contrato_numero": "011/2022",
+   "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA – HOSPITAL MARIA LUCINDA",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Envio do relatório mensal do ACCR",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% de satisfação do usuário.",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes através de pesquisa de satisfação.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 1,
+     "meta": "Execução de 100% da escala médica",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas do atendimento realizado ou queixas que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "fonte": "Relatórios, mensais, enviados à SES, dos procedimentos cadastrados no sistema do SUS.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 10; com meta e fonte: 9. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "011_2022_-_UPA_CARUARU_.docx",
+   "tas_no_arquivo": 107
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Cabo de Santo Agostinho",
+   "chaves": [
+    "cabo"
+   ],
+   "contrato_numero": "012/2022",
+   "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA – HOSPITAL MARIA LUCINDA",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Envio do relatório mensal do ACCR",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% de satisfação do usuário.",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes através de pesquisa de satisfação.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 1,
+     "meta": "Execução de 100% da escala médica",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas do atendimento realizado ou queixas que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "fonte": "Relatórios, mensais, enviados à SES, dos procedimentos cadastrados no sistema do SUS.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 10; com meta e fonte: 9. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "012_222_-_UPA_CABO_DE_SANTO_AGOSTINHO.docx",
+   "tas_no_arquivo": 111
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Ibura",
+   "chaves": [
+    "ibura"
+   ],
+   "contrato_numero": "015/2022",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Produção",
+     "peso_pct_total": 20,
+     "meta": "Registro de 100% no sistema SIA/SUS, dos atendimentos realizados na unidade, podendo apresentar no máximo 10% de glosas.",
+     "especificacao": "Registrar a produção realizada pela unidade no sistema SIA/SUS no prazo preconizado pela regulação/SES",
+     "fonte": "Relatório, mensal, enviado à SES, dos atendimentos realizados e registrados no sistema SIA/SUS.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Acolhimento com Classificação de Risco",
+     "peso_pct_total": 1,
+     "meta": "Envio do relatório mensal do ACCR",
+     "especificacao": "Acolhimento ao paciente e classificação do atendimento em conformidade com os protocolos vigentes",
+     "fonte": "Relatório mensal, enviado à SES, de resultados do ACCR.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% de satisfação do usuário.",
+     "especificacao": "Medir a satisfação do usuário atendido pela unidade e seus acompanhantes através de pesquisa de satisfação.",
+     "fonte": "Relatório mensal, enviado à SES, do total dos questionários aplicados.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Resolução das Queixas Recebidas",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 80% de resolução das queixas recebidas.",
+     "especificacao": "Aferir a taxa de resolutividade das queixas prestadas pelos usuários da unidade e seus acompanhantes",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento das queixas recebidas e o tempo de resolução no período.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais Médicos Cadastrados no CNES",
+     "peso_pct_total": 1,
+     "meta": "100% do total de profissionais médicos da unidade cadastrados no CNES.",
+     "especificacao": "Garantir que os profissionais médicos que realizam os atendimentos nas unidades estejam devidamente cadastrados no CNES",
+     "fonte": "Relatórios mensal, enviado à SES, dos prontuários cadastrados nos sistemas do SUS com o respectivo cadastro do CNES do profissional médico.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da Produção no Sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Escala Médica",
+     "peso_pct_total": 1,
+     "meta": "Execução de 100% da escala médica",
+     "especificacao": "Averiguar o cumprimento da escala médica mínima prevista em contrato",
+     "fonte": "Relatório gerencial mensal, enviado à SES, contendo informações da escala médica.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Atendimento de Retorno em até 24hs",
+     "peso_pct_total": 2,
+     "meta": "Atingir valor ≤ a 5% dos pacientes atendidos que retornaram para a unidade apresentando os mesmos sintomas do atendimento realizado ou queixas que representem complicações da doença de base e/ou do tratamento proposto (avaliado por meio do CID de saída) no prazo de 24hs.",
+     "especificacao": "Avaliar a efetividade do atendimento realizado ao usuário.",
+     "fonte": "Relatórios, mensais, enviados à SES, dos procedimentos cadastrados no sistema do SUS.",
+     "peso_pct_variavel": 20
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Revisão de Prontuários de Pacientes com Classificação de Risco Vermelho e Amarelo",
+     "peso_pct_total": 1,
+     "meta": "Revisar um quantitativo ≥ a 90% do total de prontuários classificados como vermelho e amarelo.",
+     "especificacao": "Certificar que os prontuários dos pacientes classificados como vermelho e amarelo foram revisados pela comissão de prontuários.",
+     "fonte": "Relatório mensal, enviado à SES, dos prontuários revisados pela comissão de prontuários com classificação de risco vermelho e amarelo.",
+     "peso_pct_variavel": 10
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Execução do Plano de Educação Permanente",
+     "peso_pct_total": 1,
+     "meta": "Atingir valor ≥ a 90% das atividades previstas para o plano de educação permanente",
+     "especificacao": "Avaliar a execução do plano de educação permanente",
+     "fonte": "Relatório mensal, enviado à SES, de acompanhamento de execução das atividades de educação permanente do período.",
+     "peso_pct_variavel": 10
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Indicadores lidos: 10; com meta e fonte: 9. O contrato agrupa indicadores de qualidade em blocos com percentual da parte variável. Valor mensal não identificado.",
+   "fonte_arquivo": "015_2022_-_UPA_IBURA.docx",
+   "tas_no_arquivo": 115
+  }
+ ]
+}

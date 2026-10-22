@@ -1,0 +1,926 @@
+{
+ "gerado_em": "2026-10-22",
+ "aviso": "Leitura automática dos contratos; tudo a conferir.",
+ "unidades": [
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Grande Recife (Paulista)",
+   "chaves": [
+    "grande recife"
+   ],
+   "contrato_numero": "001/2018",
+   "oss": "ASSOC DE PROT A MATERNIDADE E A INFANCIA DE SURUBIM - APAMI SURUBIM",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas Especializadas da Região de Saúde",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "1.4. Na remuneração variável (grupo/indicador do anexo)",
+     "peso_pct_variavel": 30,
+     "meta": "1.5.1. 70,0% (setenta por cento) dos valores mencionados para despesas operacionais no item ‘1.3’ acima, ou seja, R$ 2.174.083,13 (dois milhões, cento e setenta e quatro mil, oitenta e três reais e treze centavos) será repassado em até 6 (seis) parcelas mensais de R$ 362.347,19 (trezentos e sessenta e dois mil, trezentos e quarenta e sete reais e dezenove centavos).",
+     "especificacao": "1.5. Conforme o disposto no Contrato de Gestão, as parcelas mensais de pagamento repassadas à CONTRATADA são subdivididas da seguinte forma:",
+     "fonte": "1.5.2. 20,0% (vinte por cento) dos valores mencionados para despesas operacionais no item ‘1.3’ acima, ou seja, R$ 621.166,61 (seiscentos e vinte e um mil, cento e sessenta e seis reais e sessenta e um centavos) será repassado em até 6 (seis) parcelas mensais, junto à parcela fixa, com valor mensal "
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Para fins de aferição e do pagamento correspondente à parte variável (grupo/indicador do anexo)",
+     "peso_pct_variavel": 30,
+     "meta": "1.1. Este documento descreve os indicadores que serão avaliados pela Secretaria Estadual de Saúde de Pernambuco na análise para repasse de 30,0% da parte variável (indicadores de produção e qualidade) do Contrato de Gestão em seus respectivos meses de avaliação. O monitoramento e avaliação de cada indicador será mensal, mas sua consolidação e análise ocorrerá de forma trimestral, se atingir o per. Para efeitos de valoração financeira, considera-se o atingimento das metas trimestrais mensais, que",
+     "especificacao": "1. INTRODUÇÃO",
+     "fonte": "2. METAS E INDICADORES"
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "A parte variável é avaliada por trimestre; o desconto incide nos meses seguintes ao trimestre avaliado.",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 3. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "001_2018_-_UPAE_GRANDE_RECIFE_.docx",
+   "tas_no_arquivo": 65
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Serra Talhada",
+   "chaves": [
+    "serra talhada"
+   ],
+   "contrato_numero": "002/2014",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas Especializadas da Região de Saúde",
+     "peso_pct_total": null
+    }
+   ],
+   "observacoes": [
+    "A parte variável é avaliada por trimestre; o desconto incide nos meses seguintes ao trimestre avaliado.",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 1. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "002_2014_-_UPAE_SERRA_TALHADA_.docx",
+   "tas_no_arquivo": 85
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Ouricuri",
+   "chaves": [
+    "ouricuri"
+   ],
+   "contrato_numero": "002/2020",
+   "oss": "INSTITUTO SOCIAL MEDIANEIRAS DA PAZ - ISMEP (UPAE OURICURI)",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Número de consultas médicas",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de consultas não médicas",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de sessões de reabilitação",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "producao",
+     "nome": "Número de procedimentos de SADT por tipo",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do Usuário",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de aprovação da resolução de queixas registradas",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Percentual de glosas decorrentes da falta de profissional registrado no CNES",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Percentual de glosas no SIA/SUS",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do relatório de prestação de contas",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Qualidade da publicação das informações de transparência",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de cancelamento de consultas e procedimentos por motivos alheios ao paciente",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Índice de retorno de consulta médica",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": null
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "A parte variável é avaliada por trimestre; o desconto incide nos meses seguintes ao trimestre avaliado.",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 13. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "002_2020_-_UPAE_OURICURI_.docx",
+   "tas_no_arquivo": 129
+  },
+  {
+   "tipo": "UPA",
+   "unidade": "UPA Petrolina",
+   "chaves": [
+    "petrolina"
+   ],
+   "contrato_numero": "002/2025",
+   "oss": "INSTITUTO DE MEDICINA INTEGRAL PROFESSOR FERNANDO FIGUEIRA - IMIP",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "qualidade",
+     "nome": "1.4. Na remuneração variável",
+     "peso_pct_variavel": 30,
+     "meta": "1.5.1. 70,0% (setenta por cento) dos valores mencionados no item “1.3” acima, ou seja, R$ 13.421.553,10 (treze milhões, quatrocentos e vinte e um mil, quinhentos e cinqüenta e três reais e dez centavos) e serão repassadas em até 6 (seis) parcelas mensais de R$ 2.236.925,52 (dois milhões, duzentos e trinta e seis mil, novecentos e vinte e cinco reais e cinqüenta e dois centavos).",
+     "especificacao": "1.5. Conforme o disposto na Cláusula Sétima do Contrato de Gestão, as parcelas mensais de pagamento repassadas à CONTRATADA são subdivididas da seguinte forma:",
+     "fonte": "1.5.2. 20,0% (vinte por cento) do valor mencionado no item “1.3” acima, ou seja, R$ 3.834.729,46 (três milhões, oitocentos e trinta e quatro mil, setecentos e vinte e nove reais e quarenta e seis centavos) e serão repassadas até 6 (seis) parcelas mensais, junto à parcela fixa, com valor mensal estim"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Para fins de aferição e de pagamento correspondente à parte variável",
+     "peso_pct_variavel": 30,
+     "meta": "1.1. Este documento descreve os indicadores que serão avaliados pela Secretaria Estadual de Saúde de Pernambuco na análise para repasse de 30,0% da parte variável (indicadores de produção e qualidade) do Contrato de Gestão em seus respectivos meses de avaliação. O monitoramento e a avaliação de cada indicador serão mensais, mas sua consolidação e análise ocorrerão de forma trimestral. Para efeitos de valoração financeira, considerar-se-á o atingimento das metas trimestrais e mensais, que somente",
+     "especificacao": "1. INTRODUÇÃO",
+     "fonte": "1.2. As informações apresentadas pela CONTRATADA para demonstrar o desempenho dos indicadores estabelecidos frente às metas estipuladas poderão ser objeto de verificação por agentes da Secretaria Estadual de Saúde – Controle Interno, agentes da Comissão Técnica de Avaliação Interna e outros que demo"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUADRO GERAL DE INDICADORES",
+     "peso_pct_variavel": 30,
+     "meta": "INDICADOR",
+     "especificacao": "TIPO",
+     "fonte": "% CORRESPONDENTE"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "1.4. Na remuneração variável (grupo/indicador do anexo)",
+     "peso_pct_variavel": 30,
+     "meta": "1.5.1. 70,0% (setenta por cento) dos valores mencionados no item “1.3” acima, ou seja, R$ 13.421.553,10 (treze milhões, quatrocentos e vinte e um mil, quinhentos e cinqüenta e três reais e dez centavos) e serão repassadas em até 6 (seis) parcelas mensais de R$ 2.236.925,52 (dois milhões, duzentos e trinta e seis mil, novecentos e vinte e cinco reais e cinqüenta e dois centavos).",
+     "especificacao": "1.5. Conforme o disposto na Cláusula Sétima do Contrato de Gestão, as parcelas mensais de pagamento repassadas à CONTRATADA são subdivididas da seguinte forma:",
+     "fonte": "1.5.2. 20,0% (vinte por cento) do valor mencionado no item “1.3” acima, ou seja, R$ 3.834.729,46 (três milhões, oitocentos e trinta e quatro mil, setecentos e vinte e nove reais e quarenta e seis centavos) e serão repassadas até 6 (seis) parcelas mensais, junto à parcela fixa, com valor mensal estim"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Para fins de aferição e de pagamento correspondente à parte variável (grupo/indicador do anexo)",
+     "peso_pct_variavel": 30,
+     "meta": "1.1. Este documento descreve os indicadores que serão avaliados pela Secretaria Estadual de Saúde de Pernambuco na análise para repasse de 30,0% da parte variável (indicadores de produção e qualidade) do Contrato de Gestão em seus respectivos meses de avaliação. O monitoramento e a avaliação de cada indicador serão mensais, mas sua consolidação e análise ocorrerão de forma trimestral. Para efeitos de valoração financeira, considerar-se-á o atingimento das metas trimestrais e mensais, que somente",
+     "especificacao": "1. INTRODUÇÃO",
+     "fonte": "1.2. As informações apresentadas pela CONTRATADA para demonstrar o desempenho dos indicadores estabelecidos frente às metas estipuladas poderão ser objeto de verificação por agentes da Secretaria Estadual de Saúde – Controle Interno, agentes da Comissão Técnica de Avaliação Interna e outros que demo"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUADRO GERAL DE INDICADORES (grupo/indicador do anexo)",
+     "peso_pct_variavel": 30,
+     "meta": "INDICADOR",
+     "especificacao": "TIPO",
+     "fonte": "% CORRESPONDENTE"
+    }
+   ],
+   "observacoes": [
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 6. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Pesos não lidos (contrato sem quadro geral). Valor mensal não identificado.",
+   "fonte_arquivo": "002_2025_-_UPA_UPAE_PETROLINA.docx",
+   "tas_no_arquivo": 5
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Petrolina",
+   "chaves": [
+    "petrolina"
+   ],
+   "contrato_numero": "002/2025",
+   "oss": "INSTITUTO DE MEDICINA INTEGRAL PROFESSOR FERNANDO FIGUEIRA - IMIP",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "qualidade",
+     "nome": "1.4. Na remuneração variável",
+     "peso_pct_variavel": 30,
+     "meta": "1.5.1. 70,0% (setenta por cento) dos valores mencionados no item “1.3” acima, ou seja, R$ 13.421.553,10 (treze milhões, quatrocentos e vinte e um mil, quinhentos e cinqüenta e três reais e dez centavos) e serão repassadas em até 6 (seis) parcelas mensais de R$ 2.236.925,52 (dois milhões, duzentos e trinta e seis mil, novecentos e vinte e cinco reais e cinqüenta e dois centavos).",
+     "especificacao": "1.5. Conforme o disposto na Cláusula Sétima do Contrato de Gestão, as parcelas mensais de pagamento repassadas à CONTRATADA são subdivididas da seguinte forma:",
+     "fonte": "1.5.2. 20,0% (vinte por cento) do valor mencionado no item “1.3” acima, ou seja, R$ 3.834.729,46 (três milhões, oitocentos e trinta e quatro mil, setecentos e vinte e nove reais e quarenta e seis centavos) e serão repassadas até 6 (seis) parcelas mensais, junto à parcela fixa, com valor mensal estim"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Para fins de aferição e de pagamento correspondente à parte variável",
+     "peso_pct_variavel": 30,
+     "meta": "1.1. Este documento descreve os indicadores que serão avaliados pela Secretaria Estadual de Saúde de Pernambuco na análise para repasse de 30,0% da parte variável (indicadores de produção e qualidade) do Contrato de Gestão em seus respectivos meses de avaliação. O monitoramento e a avaliação de cada indicador serão mensais, mas sua consolidação e análise ocorrerão de forma trimestral. Para efeitos de valoração financeira, considerar-se-á o atingimento das metas trimestrais e mensais, que somente",
+     "especificacao": "1. INTRODUÇÃO",
+     "fonte": "1.2. As informações apresentadas pela CONTRATADA para demonstrar o desempenho dos indicadores estabelecidos frente às metas estipuladas poderão ser objeto de verificação por agentes da Secretaria Estadual de Saúde – Controle Interno, agentes da Comissão Técnica de Avaliação Interna e outros que demo"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUADRO GERAL DE INDICADORES",
+     "peso_pct_variavel": 30,
+     "meta": "INDICADOR",
+     "especificacao": "TIPO",
+     "fonte": "% CORRESPONDENTE"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "1.4. Na remuneração variável (grupo/indicador do anexo)",
+     "peso_pct_variavel": 30,
+     "meta": "1.5.1. 70,0% (setenta por cento) dos valores mencionados no item “1.3” acima, ou seja, R$ 13.421.553,10 (treze milhões, quatrocentos e vinte e um mil, quinhentos e cinqüenta e três reais e dez centavos) e serão repassadas em até 6 (seis) parcelas mensais de R$ 2.236.925,52 (dois milhões, duzentos e trinta e seis mil, novecentos e vinte e cinco reais e cinqüenta e dois centavos).",
+     "especificacao": "1.5. Conforme o disposto na Cláusula Sétima do Contrato de Gestão, as parcelas mensais de pagamento repassadas à CONTRATADA são subdivididas da seguinte forma:",
+     "fonte": "1.5.2. 20,0% (vinte por cento) do valor mencionado no item “1.3” acima, ou seja, R$ 3.834.729,46 (três milhões, oitocentos e trinta e quatro mil, setecentos e vinte e nove reais e quarenta e seis centavos) e serão repassadas até 6 (seis) parcelas mensais, junto à parcela fixa, com valor mensal estim"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Para fins de aferição e de pagamento correspondente à parte variável (grupo/indicador do anexo)",
+     "peso_pct_variavel": 30,
+     "meta": "1.1. Este documento descreve os indicadores que serão avaliados pela Secretaria Estadual de Saúde de Pernambuco na análise para repasse de 30,0% da parte variável (indicadores de produção e qualidade) do Contrato de Gestão em seus respectivos meses de avaliação. O monitoramento e a avaliação de cada indicador serão mensais, mas sua consolidação e análise ocorrerão de forma trimestral. Para efeitos de valoração financeira, considerar-se-á o atingimento das metas trimestrais e mensais, que somente",
+     "especificacao": "1. INTRODUÇÃO",
+     "fonte": "1.2. As informações apresentadas pela CONTRATADA para demonstrar o desempenho dos indicadores estabelecidos frente às metas estipuladas poderão ser objeto de verificação por agentes da Secretaria Estadual de Saúde – Controle Interno, agentes da Comissão Técnica de Avaliação Interna e outros que demo"
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "QUADRO GERAL DE INDICADORES (grupo/indicador do anexo)",
+     "peso_pct_variavel": 30,
+     "meta": "INDICADOR",
+     "especificacao": "TIPO",
+     "fonte": "% CORRESPONDENTE"
+    }
+   ],
+   "observacoes": [
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 6. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Pesos não lidos (contrato sem quadro geral). Valor mensal não identificado.",
+   "fonte_arquivo": "002_2025_-_UPA_UPAE_PETROLINA.docx",
+   "tas_no_arquivo": 5
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Limoeiro",
+   "chaves": [
+    "limoeiro"
+   ],
+   "contrato_numero": "003/2014",
+   "oss": "ASSOCIAÇÃO DE PROTEÇÃO À MATERNIDADE E À INFÂNCIA DE SURUBIM - APAMI",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas Especializadas da Região de Saúde",
+     "peso_pct_total": null
+    }
+   ],
+   "observacoes": [
+    "A parte variável é avaliada por trimestre; o desconto incide nos meses seguintes ao trimestre avaliado.",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 1. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "003_2014_-_UPAE_LIMOEIRO_.docx",
+   "tas_no_arquivo": 89
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Caruaru",
+   "chaves": [
+    "caruaru"
+   ],
+   "contrato_numero": "003/2018",
+   "oss": "SOCIEDADE PERNAMBUCANA DE COMBATE AO CÂNCER - SPPC",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas Especializadas",
+     "peso_pct_total": 13.8
+    },
+    {
+     "tipo": "producao",
+     "nome": "Cirurgias Ambulatoriais",
+     "peso_pct_total": 5.4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Consultas de Especialidades não médicas",
+     "peso_pct_total": 0.4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Sessões de Reabilitação",
+     "peso_pct_total": 0.4
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do usuário",
+     "peso_pct_total": 1.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Aprovação da Resolução das Queixas Registradas",
+     "peso_pct_total": 1.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais de Nível Superior Não médicos cadastrados no CNES",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensais",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Qualidade da publicação das informações de transparência",
+     "peso_pct_total": 1.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Cancelamento de Consultas e/ou procedimentos",
+     "peso_pct_total": 1.5
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação",
+     "peso_pct_total": 1
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "A parte variável é avaliada por trimestre; o desconto incide nos meses seguintes ao trimestre avaliado.",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 12. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "003_2018_-_UPAE_CARUARU.docx",
+   "tas_no_arquivo": 134
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Goiana",
+   "chaves": [
+    "goiana"
+   ],
+   "contrato_numero": "003/2021",
+   "oss": "",
+   "valor_mensal": "",
+   "fixa_pct": null,
+   "variavel_pct": null,
+   "indicadores": [],
+   "observacoes": [],
+   "cobertura": "Estrutura do contrato diferente do padrão: o quadro de indicadores não foi lido automaticamente; leitura manual necessária. Contratos de UPAE costumam remeter a um Manual de Indicadores da parte variável, avaliado por trimestre.",
+   "fonte_arquivo": "003_2021_-_UPAE_GOIANA.docx",
+   "tas_no_arquivo": 13
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Belo Jardim",
+   "chaves": [
+    "belo jardim"
+   ],
+   "contrato_numero": "004/2014",
+   "oss": "SOCIEDADE PERNAMBUCANA DE COMBATE AO CÂNCER",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Total",
+     "peso_pct_total": null
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "A parte variável é avaliada por trimestre; o desconto incide nos meses seguintes ao trimestre avaliado.",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 2. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "004_2014_-_UPAE_BELO_JARDIM.docx",
+   "tas_no_arquivo": 111
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Arcoverde",
+   "chaves": [
+    "arcoverde"
+   ],
+   "contrato_numero": "005/2014",
+   "oss": "SOCIEDADE PERNAMBUCANA DE COMBATE AO CÂNCER",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas",
+     "peso_pct_total": null
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Total",
+     "peso_pct_total": null
+    }
+   ],
+   "observacoes": [
+    "A parte variável é avaliada por trimestre; o desconto incide nos meses seguintes ao trimestre avaliado.",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 2. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "005_2014_-_UPAE_ARCOVERDE_.docx",
+   "tas_no_arquivo": 95
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Salgueiro",
+   "chaves": [
+    "salgueiro"
+   ],
+   "contrato_numero": "006/2014",
+   "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas Especializadas da Região de Saúde",
+     "peso_pct_total": null
+    }
+   ],
+   "observacoes": [
+    "A parte variável é avaliada por trimestre; o desconto incide nos meses seguintes ao trimestre avaliado.",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 1. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "006_2014_-_UPAE_SALGUEIRO_.docx",
+   "tas_no_arquivo": 107
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Afogados da Ingazeira",
+   "chaves": [
+    "afogados"
+   ],
+   "contrato_numero": "007/2014",
+   "oss": "HOSPITAL DO TRICENTENÁRIO",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 20,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas",
+     "peso_pct_total": null
+    }
+   ],
+   "observacoes": [
+    "A parte variável é avaliada por trimestre; o desconto incide nos meses seguintes ao trimestre avaliado.",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 1. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "007_2014_-_UPAE_AFOGADOS_DA_INGAZEIRA.docx",
+   "tas_no_arquivo": 97
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Garanhuns",
+   "chaves": [
+    "garanhuns"
+   ],
+   "contrato_numero": "009/2025",
+   "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas Especializadas da Região de Saúde",
+     "peso_pct_total": null
+    }
+   ],
+   "observacoes": [
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 1. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "009_2025_-_UPAE_GARANHUNS.docx",
+   "tas_no_arquivo": 2
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Escada",
+   "chaves": [
+    "escada"
+   ],
+   "contrato_numero": "021/2022",
+   "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas Especializadas",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Consultas de Especialidades não médicas",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "producao",
+     "nome": "Sessões de Reabilitação",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Medir o acesso e a realização de exames de mamografia",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Descentralização do Programa de Ostomizados",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Matriciamento das equipes de Saúde da Família dos municípios da sua área de abrangência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "producao",
+     "nome": "Supervisão do cuidado prestado nas Unidades Básicas de Saúde (UBS)",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do usuário",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais de Nível Superior Não Médicos Cadastrados no CNES",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da produção no sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Preenchimento de Prontuários",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Cancelamento de Consultas e/ou Procedimentos",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Índice de Retorno / Consultas Médicas",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de elaboração do Plano de Cuidado do paciente",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Promover Integração com todos os níveis de atendimento com a implantação de sistema de referência/contra referência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 1
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 20. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "021_2022_-_UPAE_ESCADA_.docx",
+   "tas_no_arquivo": 59
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Carpina",
+   "chaves": [
+    "carpina"
+   ],
+   "contrato_numero": "022/2022",
+   "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas Especializadas",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Consultas de Especialidades não médicas",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "producao",
+     "nome": "Sessões de Reabilitação",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Medir o acesso e a realização de exames de mamografia",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Descentralização do Programa de Ostomizados",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Matriciamento das equipes de Saúde da Família dos municípios da sua área de abrangência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "producao",
+     "nome": "Supervisão do cuidado prestado nas Unidades Básicas de Saúde (UBS)",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do usuário",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais de Nível Superior Não Médicos Cadastrados no CNES",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da produção no sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Preenchimento de Prontuários",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Cancelamento de Consultas e/ou Procedimentos",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Índice de Retorno / Consultas Médicas",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de elaboração do Plano de Cuidado do paciente",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Promover Integração com todos os níveis de atendimento com a implantação de sistema de referência/contra referência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 1
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 20. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "022_2022_-_UPAE_CARPINA.docx",
+   "tas_no_arquivo": 65
+  },
+  {
+   "tipo": "UPAE",
+   "unidade": "UPAE Palmares",
+   "chaves": [
+    "palmares"
+   ],
+   "contrato_numero": "020/2022",
+   "oss": "SOCIEDADE PERNAMBUCANA DE COMBATE AO CÂNCER – SPCC",
+   "valor_mensal": "",
+   "fixa_pct": 70,
+   "variavel_pct": 30,
+   "indicadores": [
+    {
+     "tipo": "producao",
+     "nome": "Consultas Médicas Especializadas",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Consultas de Especialidades não médicas",
+     "peso_pct_total": 2
+    },
+    {
+     "tipo": "producao",
+     "nome": "Sessões de Reabilitação",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Medir o acesso e a realização de exames de mamografia",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Descentralização do Programa de Ostomizados",
+     "peso_pct_total": 4
+    },
+    {
+     "tipo": "producao",
+     "nome": "Matriciamento das equipes de Saúde da Família dos municípios da sua área de abrangência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "producao",
+     "nome": "Supervisão do cuidado prestado nas Unidades Básicas de Saúde (UBS)",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Satisfação do usuário",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de resolução das queixas recebidas",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de profissionais médicos cadastrados no CNES",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Profissionais de Nível Superior Não Médicos Cadastrados no CNES",
+     "peso_pct_total": 0.25
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Registro da produção no sistema SIA/SUS",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Preenchimento de Prontuários",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Entrega do Relatório de Prestação de Contas Mensal",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Informação e Transparência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de Cancelamento de Consultas e/ou Procedimentos",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Índice de Retorno / Consultas Médicas",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de elaboração do Plano de Cuidado do paciente",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Promover Integração com todos os níveis de atendimento com a implantação de sistema de referência/contra referência",
+     "peso_pct_total": 1
+    },
+    {
+     "tipo": "qualidade",
+     "nome": "Taxa de execução do plano de educação permanente",
+     "peso_pct_total": 1
+    }
+   ],
+   "observacoes": [
+    "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
+    "Sem desconto de produção quando o único motivo for a inexistência de demanda, desde que os dados enviados sejam validados pela SES."
+   ],
+   "cobertura": "Leitura parcial: indicadores do quadro geral: 20. Metas e fórmulas estão no Manual de Indicadores do contrato (avaliação trimestral); leitura manual necessária. Valor mensal não identificado.",
+   "fonte_arquivo": "_020_2022_-_UPAE_PALMARES.docx",
+   "tas_no_arquivo": 60
+  }
+ ]
+}

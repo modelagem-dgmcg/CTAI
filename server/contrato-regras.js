@@ -89,7 +89,7 @@ function aplicarSementes(db) {
       const par = contratos.filter((c) => (!it.tipo || c.tipo === String(it.tipo).toUpperCase()) && chaves.some((k) => c.nome.includes(k)));
       if (par.length !== 1) continue;
       const id = par[0].id;
-      if (db.get('SELECT 1 FROM contrato_regras WHERE contrato_id = ?', id) || db.get('SELECT 1 FROM regras WHERE contrato_id = ?', id)) continue;
+      if (db.get('SELECT 1 FROM contrato_regras WHERE contrato_id = ?', id)) continue;
       try { gravar(db, sistema, id, it, 'regras do repositório (' + arq + ')'); aplicadas++; } catch (_) { /* segue */ }
     }
   }
