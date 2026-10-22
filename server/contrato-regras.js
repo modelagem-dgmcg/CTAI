@@ -52,11 +52,11 @@ function importar(db, usuario, contratoId, dados) {
 function importarLote(db, usuario, lista) {
   if (!['superintendente', 'admin'].includes(usuario.perfil)) throw erro(403, 'A importação em lote é da superintendência ou do administrador.');
   if (!Array.isArray(lista) || !lista.length) throw erro(400, 'O arquivo não traz nenhuma unidade.');
-  const contratos = db.all('SELECT contrato_id, unidade FROM contratos WHERE demo = 0').map((c) => ({ id: c.contrato_id, nome: semAcento(c.unidade), unidade: c.unidade }));
+  const contratos = db.all('SELECT contrato_id, unidade FROM contratos WHERE demo = 0').map((c) => ({ id: c.contrato_id, nome: semAcento(c.unidade), unidade: c.unidade, tipo: String(c.contrato_id).split('-')[0].toUpperCase() }));
   const importadas = [], semPar = [], duvida = [];
   for (const it of lista) {
     const chaves = (Array.isArray(it.chaves) && it.chaves.length ? it.chaves : [it.unidade]).map(semAcento).filter(Boolean);
-    const par = contratos.filter((c) => chaves.some((k) => c.nome.includes(k)));
+    const par = contratos.filter((c) => (!it.tipo || c.tipo === String(it.tipo).toUpperCase()) && chaves.some((k) => c.nome.includes(k)));
     if (!par.length) { semPar.push(it.unidade || chaves[0]); continue; }
     if (par.length > 1) { duvida.push({ arquivo: it.unidade, unidades: par.map((x) => x.unidade) }); continue; }
     try { gravar(db, usuario, par[0].id, it, 'importação em lote'); importadas.push({ arquivo: it.unidade, unidade: par[0].unidade, indicadores: (it.indicadores || []).length }); } catch (e) { semPar.push((it.unidade || '') + ' (' + e.message + ')'); }
@@ -78,7 +78,7 @@ function aplicarSementes(db) {
   const fs = require('fs'), path = require('path');
   const dir = path.join(__dirname, '..', 'regras', 'contratos');
   if (!fs.existsSync(dir)) return { aplicadas: 0 };
-  const contratos = db.all('SELECT contrato_id, unidade FROM contratos WHERE demo = 0').map((c) => ({ id: c.contrato_id, nome: semAcento(c.unidade) }));
+  const contratos = db.all('SELECT contrato_id, unidade FROM contratos WHERE demo = 0').map((c) => ({ id: c.contrato_id, nome: semAcento(c.unidade), tipo: String(c.contrato_id).split('-')[0].toUpperCase() }));
   if (!contratos.length) return { aplicadas: 0 };
   const sistema = { login: 'sistema' };
   let aplicadas = 0;
@@ -86,7 +86,7 @@ function aplicarSementes(db) {
     let lista; try { const j = JSON.parse(fs.readFileSync(path.join(dir, arq), 'utf8')); lista = Array.isArray(j) ? j : j.unidades; } catch (_) { continue; }
     for (const it of lista || []) {
       const chaves = (Array.isArray(it.chaves) && it.chaves.length ? it.chaves : [it.unidade]).map(semAcento).filter(Boolean);
-      const par = contratos.filter((c) => chaves.some((k) => c.nome.includes(k)));
+      const par = contratos.filter((c) => (!it.tipo || c.tipo === String(it.tipo).toUpperCase()) && chaves.some((k) => c.nome.includes(k)));
       if (par.length !== 1) continue;
       const id = par[0].id;
       if (db.get('SELECT 1 FROM contrato_regras WHERE contrato_id = ?', id) || db.get('SELECT 1 FROM regras WHERE contrato_id = ?', id)) continue;

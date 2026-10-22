@@ -14,11 +14,11 @@ test.before(async () => {
 });
 test.after(async () => { await S.fechar(); });
 
-const item = (unidade, chaves, n) => ({ unidade, chaves, contrato_numero: '001/2020', fixa_pct: 70, variavel_pct: 30, valor_mensal: '1.000,00',
+const item = (unidade, chaves, n) => ({ unidade, chaves, contrato_numero: '001/2020', tipo: 'HOSPITAL', fixa_pct: 70, variavel_pct: 30, valor_mensal: '1.000,00',
   indicadores: Array.from({ length: n }, (_, i) => ({ tipo: i ? 'qualidade' : 'producao', nome: 'Indicador ' + (i + 1), peso_pct_total: 5, meta: 'Meta ' + (i + 1) })) });
 
 test('lote casa pelo nome, aponta ambíguo e sem par; unidade mostra a regra a conferir; conferir marca', async () => {
-  const r = await adm.post('/api/ctai/regras/importar-lote', { lista: [item('Hospital Delta', ['delta'], 3), item('Gama', ['exemplo gama'], 2), item('Zeta', ['zeta'], 1)] });
+  const r = await adm.post('/api/ctai/regras/importar-lote', { lista: [item('Hospital Delta', ['delta'], 3), Object.assign(item('Gama', ['exemplo gama'], 2), { tipo: '' }), item('Zeta', ['zeta'], 1)] });
   assert.equal(r.status, 200);
   assert.equal(r.json.importadas.length, 1);
   assert.equal(r.json.duvida.length, 1, 'Gama existe como Hospital e como UPAE');

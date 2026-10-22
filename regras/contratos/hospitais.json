@@ -150,7 +150,8 @@
    ],
    "cobertura": "Quadro de indicadores: 26; com meta e fonte lidas: 0. Valor mensal não identificado.",
    "fonte_arquivo": "001_2015_-_HOSP._MESTRE_VITALINO_DOS_SANTOS.docx",
-   "tas_no_arquivo": 332
+   "tas_no_arquivo": 332,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Regional Fernando Bezerra",
@@ -194,7 +195,8 @@
    ],
    "cobertura": "Quadro de indicadores: 3; com meta e fonte lidas: 3. Pesos não lidos (contrato sem quadro geral). Valor mensal não identificado.",
    "fonte_arquivo": "001_2019_-_HOSP._REGIONAL_FERNANDO_BEZERRA.docx",
-   "tas_no_arquivo": 293
+   "tas_no_arquivo": 293,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Mat. Brites de Albuquerque",
@@ -338,7 +340,8 @@
    ],
    "cobertura": "Quadro de indicadores: 16; com meta e fonte lidas: 11. Valor mensal não identificado.",
    "fonte_arquivo": "001_2023_-_HOSP._MAT._BRITES_DE_ALBUQUERQUE.docx",
-   "tas_no_arquivo": 69
+   "tas_no_arquivo": 69,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital da Mulher do Agreste",
@@ -357,7 +360,8 @@
    ],
    "cobertura": "Estrutura do contrato diferente do padrão: o quadro de indicadores não foi lido automaticamente; leitura manual necessária.",
    "fonte_arquivo": "001_2025_-_HOSP._DA_MULHER_DO_AGRESTE.docx",
-   "tas_no_arquivo": 37
+   "tas_no_arquivo": 37,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Ruy de Barros Correia",
@@ -378,7 +382,8 @@
    ],
    "cobertura": "Estrutura do contrato diferente do padrão: o quadro de indicadores não foi lido automaticamente; leitura manual necessária.",
    "fonte_arquivo": "001__2016_-__HOSP._RUY_DE_BARROS_CORREIA_.docx",
-   "tas_no_arquivo": 226
+   "tas_no_arquivo": 226,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Emília Câmara",
@@ -533,7 +538,8 @@
    ],
    "cobertura": "Quadro de indicadores: 27; com meta e fonte lidas: 0. Valor mensal não identificado.",
    "fonte_arquivo": "002_2017_-__HOSP._EM_LIA_C_MARA_.docx",
-   "tas_no_arquivo": 285
+   "tas_no_arquivo": 285,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital São Sebastião",
@@ -552,7 +558,8 @@
    ],
    "cobertura": "Estrutura do contrato diferente do padrão: o quadro de indicadores não foi lido automaticamente; leitura manual necessária.",
    "fonte_arquivo": "002_2018_-_HOSP._S_O_SEBASTI_O.docx",
-   "tas_no_arquivo": 121
+   "tas_no_arquivo": 121,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Central de Paulista",
@@ -595,7 +602,8 @@
    ],
    "cobertura": "Quadro de indicadores: 3; com meta e fonte lidas: 3. Pesos não lidos (contrato sem quadro geral). Valor mensal não identificado.",
    "fonte_arquivo": "003_2026_-_HOSP._CENTRAL_DE_PAULISTA.docx",
-   "tas_no_arquivo": 2
+   "tas_no_arquivo": 2,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital ERM Rio Coutinho (Ermírio Coutinho)",
@@ -760,7 +768,8 @@
    ],
    "cobertura": "Quadro de indicadores: 21; com meta e fonte lidas: 10. Valor mensal não identificado.",
    "fonte_arquivo": "014_2022_-_HOSP._ERM_RIO_COUTINHO.docx",
-   "tas_no_arquivo": 112
+   "tas_no_arquivo": 112,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Metropolitano Oeste Pelópidas Silveira",
@@ -930,7 +939,8 @@
    ],
    "cobertura": "Quadro de indicadores: 18; com meta e fonte lidas: 15. Valor mensal não identificado.",
    "fonte_arquivo": "017_2022_-_HOSP._METROPOLITANO_OESTE_PEL_PIDAS_SILVEIRA_.docx",
-   "tas_no_arquivo": 80
+   "tas_no_arquivo": 80,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Dom Helder Câmara",
@@ -1096,7 +1106,8 @@
    ],
    "cobertura": "Quadro de indicadores: 18; com meta e fonte lidas: 14. Valor mensal não identificado.",
    "fonte_arquivo": "018_2022_-_HOSP._DOM_HELDER_C_MERA_.docx",
-   "tas_no_arquivo": 131
+   "tas_no_arquivo": 131,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Regional de Palmares Dr. Sílvio Magalhães",
@@ -1274,12 +1285,13 @@
    ],
    "cobertura": "Quadro de indicadores: 18; com meta e fonte lidas: 17. Valor mensal não identificado.",
    "fonte_arquivo": "019_2022_-_HOSP._REGIONAL_DE_PALMARES_DR._S_LVIO_MAGALH_ES_.docx",
-   "tas_no_arquivo": 118
+   "tas_no_arquivo": 118,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Nossa Senhora das Graças (antigo Hospital Alfa)",
    "chaves": [
-    "alfa",
+    "hospital alfa",
     "nossa senhora das gracas"
    ],
    "contrato_numero": "024/2022",
@@ -1457,7 +1469,8 @@
    ],
    "cobertura": "Quadro de indicadores: 18; com meta e fonte lidas: 18.",
    "fonte_arquivo": "024_2022_-HOSP.NOSSA_SENHORA_DAS_GRA_AS.docx",
-   "tas_no_arquivo": 41
+   "tas_no_arquivo": 41,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Governador Eduardo Campos",
@@ -1602,7 +1615,8 @@
    ],
    "cobertura": "Quadro de indicadores: 17; com meta e fonte lidas: 10.",
    "fonte_arquivo": "025_2022_-_HOSP._GOVERNADOR_EDUARDO_CAMPOS.docx",
-   "tas_no_arquivo": 151
+   "tas_no_arquivo": 151,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital João Murilo de Oliveira",
@@ -1775,7 +1789,8 @@
    ],
    "cobertura": "Quadro de indicadores: 17; com meta e fonte lidas: 17.",
    "fonte_arquivo": "026_2022_-_HOSP._JO_O_MURILO_DE_OLIVEIRA_.docx",
-   "tas_no_arquivo": 118
+   "tas_no_arquivo": 118,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Dom Malan",
@@ -1958,7 +1973,8 @@
    ],
    "cobertura": "Quadro de indicadores: 23; com meta e fonte lidas: 12.",
    "fonte_arquivo": "027_2022_-_HOSP._DOM_MALAN_.docx",
-   "tas_no_arquivo": 245
+   "tas_no_arquivo": 245,
+   "tipo": "HOSPITAL"
   },
   {
    "unidade": "Hospital Miguel Arraes",
@@ -2131,7 +2147,8 @@
    ],
    "cobertura": "Quadro de indicadores: 17; com meta e fonte lidas: 17.",
    "fonte_arquivo": "_023_2022_-_HOSP._MIGUEL_ARRAES.docx",
-   "tas_no_arquivo": 111
+   "tas_no_arquivo": 111,
+   "tipo": "HOSPITAL"
   }
  ]
 }
