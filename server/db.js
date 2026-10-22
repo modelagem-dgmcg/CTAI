@@ -16,6 +16,10 @@ CREATE TABLE IF NOT EXISTS regras (
   regra_id TEXT PRIMARY KEY, versao TEXT NOT NULL, contrato_id TEXT, vigente_de TEXT, vigente_ate TEXT, arquivo_json TEXT, conteudo TEXT NOT NULL,
   pendencias TEXT, aprovada_por TEXT, data_aprovacao TEXT
 );
+-- Regras descritivas do contrato (hospitais e UPAE): lidas do contrato e dos TAs, a conferir. Não alimentam o recálculo; orientam a análise.
+CREATE TABLE IF NOT EXISTS contrato_regras (
+  contrato_id TEXT PRIMARY KEY, conteudo TEXT NOT NULL, origem TEXT, importado_por TEXT, importado_em TEXT, conferida_por TEXT, conferida_em TEXT
+);
 CREATE TABLE IF NOT EXISTS competencias (
   cid INTEGER PRIMARY KEY AUTOINCREMENT, competencia_id TEXT NOT NULL, contrato_id TEXT NOT NULL, regra_id TEXT,
   mes_implantacao INTEGER NOT NULL DEFAULT 0, processo_sei TEXT, parecer_numero TEXT, status TEXT NOT NULL DEFAULT 'aberta',

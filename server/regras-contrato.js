@@ -12,7 +12,9 @@ const tipoDe = (c) => String(c.contrato_id).split('-')[c.demo ? 1 : 0].toUpperCa
 const podeGerir = (u) => ['criador', 'superintendente', 'admin'].includes(u.perfil);
 
 function estado(db, contratoId) {
+  const cr = require('./contrato-regras').ler(db, contratoId);
   const l = db.get('SELECT regra_id, versao, aprovada_por, data_aprovacao, pendencias, vigente_de FROM regras WHERE contrato_id = ? ORDER BY vigente_de DESC, regra_id DESC', contratoId);
+  if (!l && cr) return { tem: true, descritiva: true, conferida: cr.conferida, conferida_por: cr.conferida_por, conferida_em: cr.conferida_em, nota: cr.conferida ? null : 'Regras lidas do contrato e dos TAs: confira com o documento original.', indicadores: cr.conteudo.indicadores.length };
   if (!l) return { tem: false };
   return { tem: true, regra_id: l.regra_id, versao: l.versao, conferida: !!l.aprovada_por, conferida_por: l.aprovada_por || null, conferida_em: l.data_aprovacao || null, nota: l.pendencias || null };
 }
@@ -51,6 +53,7 @@ function aplicarEmLote(db, usuario, tipo, modelo) {
 function marcarConferida(db, usuario, contratoId) {
   if (!podeGerir(usuario)) throw erro(403, 'Só quem cria o parecer, a superintendência ou o administrador confere regras.');
   const e = estado(db, contratoId);
+  if (e.descritiva) { require('./contrato-regras').marcarConferida(db, usuario, contratoId); return estado(db, contratoId); }
   if (!e.tem) throw erro(409, 'Esta unidade ainda não tem regras.');
   db.run('UPDATE regras SET aprovada_por = ?, data_aprovacao = ?, pendencias = NULL WHERE regra_id = ?', usuario.login, agora(), e.regra_id);
   trilha.registrar(db, { usuario: usuario.login, tabela: 'regras', registro: e.regra_id, campo: 'conferida', valor_novo: { por: usuario.login } });
