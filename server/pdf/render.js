@@ -6,7 +6,7 @@ const path = require('path');
 const PDFDocument = require('pdfkit');
 
 const FONTES_DIR = path.join(__dirname, 'fontes');
-const COR = { escuro: '#12303B', claro: '#F6F4EF', acento: '#16697D', ciano: '#5FD0E8', ambar: '#A8620A', vermelho: '#9B2335', cinza: '#4F6B78', texto: '#14242B', linha: '#DDD8CC' };
+const COR = { escuro: '#1a1d20', claro: '#f0f2f5', acento: '#5c636a', ciano: '#d97706', ambar: '#b45309', vermelho: '#8e1628', cinza: '#6c757d', texto: '#212529', linha: '#dee2e6' };
 
 function registrarFontes(doc) {
   const f = (arq) => path.join(FONTES_DIR, arq);
