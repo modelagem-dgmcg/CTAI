@@ -116,21 +116,26 @@ const ABERTOS_EXTERNOS = [
 ];
 
 // Primeira peça da cadeia: marca a origem e, se for externa, deixa passar só o Portal da Unidade.
-function barreira() {
+function barreira(db) {
   return (req, res, next) => {
     const o = origemDe(req);
     req.origem = o;
     if (!o.externa || modo() === 'aberta') return next();
     if (ABERTOS_EXTERNOS.some((re) => re.test(req.path))) return next();
+    // Exceção nominal: logins listados em CTAI_USUARIOS_EXTERNOS (ex.: admin) alcançam o console de fora da rede, com sessão válida.
+    if (db) { try { const u = A.usuarioDaSessao(db, req); if (u && externoLiberado(u.login)) return next(); } catch (_) { /* segue bloqueando */ } }
     if (req.path.startsWith('/api/')) return res.status(404).json({ erro: 'Rota não encontrada.' });
     return res.status(404).type('text/plain').send('Not found');
   };
 }
 
-// Perfis da CTAI só se autenticam e só usam sessão dentro da rede interna.
-function perfilPermitido(req, perfil) {
+// Logins liberados nominalmente para acessar o console de fora da rede (CTAI_USUARIOS_EXTERNOS=admin,outro). Vazio = ninguém.
+const externoLiberado = (login) => lista('CTAI_USUARIOS_EXTERNOS').includes(String(login || '').trim().toLowerCase());
+
+// Perfis da CTAI só se autenticam e só usam sessão dentro da rede interna (salvo os logins liberados nominalmente).
+function perfilPermitido(req, perfil, login) {
   if (modo() === 'aberta') return true;
-  return !origemDe(req).externa || A.PERFIS_UNIDADE.includes(perfil);
+  return !origemDe(req).externa || A.PERFIS_UNIDADE.includes(perfil) || externoLiberado(login);
 }
 
-module.exports = { clienteIp, listaInternaDefinida, origemDe, ipDe, agenteDe, barreira, perfilPermitido, modo };
+module.exports = { clienteIp, listaInternaDefinida, origemDe, ipDe, agenteDe, barreira, perfilPermitido, externoLiberado, modo };

@@ -113,3 +113,21 @@ test('backup do banco: só administrador, arquivo SQLite válido', async () => {
   assert.equal((await fetch(S.base + '/api/admin/backup', { headers: xff('8.8.8.8, 10.0.0.1') })).status, 404, 'por fora nem existe');
   limpar();
 });
+
+test('CTAI_USUARIOS_EXTERNOS: só o login liberado alcança o console de fora; os demais continuam bloqueados', async () => {
+  cfg({ CTAI_IPS_INTERNOS: '10.0.0.0/8' });
+  const fora = { 'x-forwarded-for': '8.8.8.8' };
+  const login = async (u) => { const c = cliente(S.base); return c; };
+  // sem a variável: ninguém de fora
+  let r = await fetch(S.base + '/api/auth/login', { method: 'POST', headers: Object.assign({ 'content-type': 'application/json', 'x-ctai': '1' }, fora), body: JSON.stringify({ login: 'admin', senha: 'Senha@12345' }) });
+  assert.equal(r.status, 401);
+  process.env.CTAI_USUARIOS_EXTERNOS = 'admin';
+  r = await fetch(S.base + '/api/auth/login', { method: 'POST', headers: Object.assign({ 'content-type': 'application/json', 'x-ctai': '1' }, fora), body: JSON.stringify({ login: 'admin', senha: 'Senha@12345' }) });
+  assert.equal(r.status, 200);
+  const ck = (r.headers.get('set-cookie') || '').split(';')[0];
+  const c = await fetch(S.base + '/api/ctai/contratos', { headers: Object.assign({ cookie: ck }, fora) });
+  assert.notEqual(c.status, 404);
+  const n = await fetch(S.base + '/api/auth/login', { method: 'POST', headers: Object.assign({ 'content-type': 'application/json', 'x-ctai': '1' }, fora), body: JSON.stringify({ login: 'nathalia', senha: 'Senha@12345' }) });
+  assert.equal(n.status, 401);
+  delete process.env.CTAI_USUARIOS_EXTERNOS;
+});

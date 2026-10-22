@@ -10,7 +10,7 @@ const M = require('./minuta');
 function criarApp(db) {
   const app = express();
   app.disable('x-powered-by');
-  app.use(require('./exposicao').barreira()); // origem externa só alcança o Portal da Unidade
+  app.use(require('./exposicao').barreira(db)); // origem externa só alcança o Portal da Unidade
   app.use(express.json({ limit: '6mb' }));
 
   // Cabeçalhos de segurança.

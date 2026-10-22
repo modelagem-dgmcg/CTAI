@@ -23,7 +23,7 @@ module.exports = (db) => {
       }
     };
     if (e.erro) { falha(e.motivo || 'falhou', e.conhecido, e.bloqueou); return res.status(401).json({ erro: e.erro }); }
-    if (!EX.perfilPermitido(req, e.usuario.perfil)) { falha('recusada fora da rede interna', e.usuario); return res.status(401).json({ erro: 'Usuário ou senha incorretos.' }); }
+    if (!EX.perfilPermitido(req, e.usuario.perfil, e.usuario.login)) { falha('recusada fora da rede interna', e.usuario); return res.status(401).json({ erro: 'Usuário ou senha incorretos.' }); }
     const s = A.criarSessao(db, e.usuario.usuario_id);
     res.setHeader('Set-Cookie', A.cookieDe(s.token, s.expira));
     const hash = trilha.registrar(db, { usuario: e.usuario.login, tabela: 'sessoes', registro: 'login', campo: 'entrada', valor_novo: 'ok' });
@@ -43,7 +43,7 @@ module.exports = (db) => {
   r.get('/me', (req, res) => {
     const u = A.usuarioDaSessao(db, req);
     if (!u) return res.status(401).json({ erro: 'Sem sessão.' });
-    if (!EX.perfilPermitido(req, u.perfil)) return res.status(401).json({ erro: 'Sem sessão.' });
+    if (!EX.perfilPermitido(req, u.perfil, u.login)) return res.status(401).json({ erro: 'Sem sessão.' });
     res.json({ usuario: publico(u) });
   });
 
