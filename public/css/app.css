@@ -131,3 +131,11 @@ td .linha{flex-wrap:nowrap;white-space:nowrap}
 .sobre-texto p{margin:0 0 10px}
 .sobre-texto h3{font-size:13.5px;margin:12px 0 4px;color:var(--escuro)}
 .creditos{margin:14px 0 0;font-size:12px;color:#c9d6db;text-align:center}
+/* Novo usuário: escolha CTAI/Unidade, chips e lista de unidades com busca */
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{padding:8px 14px}
+.seg button.ativo{background:var(--acento);color:#fff;border-color:var(--acento)}
+.seg.grande button{padding:11px 20px;font-size:15.5px}
+.lista-un{max-height:230px;overflow:auto;border:1px solid var(--borda);border-radius:8px;padding:4px 10px;background:#fff}
+.lista-un label.ck{margin:0}
+.seletor-un input[type=search]{width:100%;padding:9px 11px;border:1px solid #bfb9aa;border-radius:8px;background:#fff;margin-bottom:6px}

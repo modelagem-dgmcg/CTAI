@@ -20,7 +20,7 @@ module.exports = (db) => {
   // ---------- Usuários ----------
   const listaUsuarios = () => db.all('SELECT usuario_id, login, nome, perfil, contrato_id, setor, ativo, trocar_senha, ultimo_login, criado_em FROM usuarios ORDER BY perfil, nome')
     .map((u) => Object.assign(u, { ativo: !!u.ativo, trocar_senha: !!u.trocar_senha, unidades: ['criador', 'colega'].includes(u.perfil) ? CART.doUsuario(db, u.usuario_id) : null }));
-  r.get('/usuarios', (req, res) => res.json({ usuarios: listaUsuarios(), perfis: A.PERFIS, contratos: db.all('SELECT contrato_id, unidade, demo FROM contratos ORDER BY demo, unidade'), setores: require('../../core/formularios').SETORES }));
+  r.get('/usuarios', (req, res) => res.json({ usuarios: listaUsuarios(), perfis: A.PERFIS, contratos: db.all('SELECT contrato_id, unidade, municipio, demo FROM contratos ORDER BY demo, unidade'), setores: require('../../core/formularios').SETORES }));
 
   // A superintendente não cria nem altera administradores; só o administrador mexe em administradores.
   const protegido = (req, perfil) => { if (perfil === 'admin' && req.usuario.perfil !== 'admin') throw erro(403, 'Só o administrador cria ou altera administradores.'); };
@@ -31,7 +31,11 @@ module.exports = (db) => {
     protegido(req, b.perfil);
     if (!String(b.nome || '').trim()) throw erro(400, 'Informe o nome.');
     if (b.senha) { const e = A.validarForcaSenha(b.senha); if (e) throw erro(400, e); }
-    const id = A.criarUsuario(db, { login: b.login, nome: String(b.nome).trim(), perfil: b.perfil, contrato_id: b.contrato_id, setor: b.setor, senha: b.senha }, req.usuario.login);
+    const id = db.tx(() => {
+      const novo = A.criarUsuario(db, { login: b.login, nome: String(b.nome).trim(), perfil: b.perfil, contrato_id: b.contrato_id, setor: b.setor, senha: b.senha }, req.usuario.login);
+      if (Array.isArray(b.unidades) && b.unidades.length && CART.ELEGIVEIS.includes(b.perfil)) CART.definir(db, req.usuario.login, novo, b.unidades, 'Definida no cadastro do usuário');
+      return novo;
+    });
     res.json({ usuario_id: id, senhaTemporaria: b.senha ? undefined : config.senhaTemporaria, aviso: 'A pessoa troca a senha no primeiro acesso.' });
   });
 

@@ -4,6 +4,7 @@ const A = require('../auth');
 const trilha = require('../trilha');
 const seed = require('../seed');
 const config = require('../config');
+const CART = require('../carteira');
 
 const { erro } = A;
 
@@ -11,11 +12,15 @@ module.exports = (db) => {
   const r = express.Router();
   r.use(A.exigir(db, ['admin']));
 
-  r.get('/usuarios', (req, res) => res.json({ usuarios: db.all('SELECT usuario_id, login, nome, perfil, contrato_id, setor, ativo, trocar_senha, ultimo_login FROM usuarios ORDER BY usuario_id'), perfis: A.PERFIS, contratos: db.all('SELECT contrato_id, unidade, demo FROM contratos') }));
+  r.get('/usuarios', (req, res) => res.json({ usuarios: db.all('SELECT usuario_id, login, nome, perfil, contrato_id, setor, ativo, trocar_senha, ultimo_login FROM usuarios ORDER BY usuario_id'), perfis: A.PERFIS, contratos: db.all('SELECT contrato_id, unidade, municipio, demo FROM contratos ORDER BY demo, unidade') }));
 
   r.post('/usuarios', (req, res) => {
     const b = req.body || {};
-    const id = A.criarUsuario(db, b, req.usuario.login);
+    const id = db.tx(() => {
+      const novo = A.criarUsuario(db, b, req.usuario.login);
+      if (Array.isArray(b.unidades) && b.unidades.length && CART.ELEGIVEIS.includes(b.perfil)) CART.definir(db, req.usuario.login, novo, b.unidades, 'Definida no cadastro do usuário');
+      return novo;
+    });
     res.json({ usuario_id: id, senhaTemporaria: b.senha ? undefined : config.senhaTemporaria, aviso: 'A pessoa troca a senha no primeiro acesso.' });
   });
 

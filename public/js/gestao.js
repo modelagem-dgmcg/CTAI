@@ -133,10 +133,6 @@
   // ---------- Usuários ----------
   async function usuarios() {
     const u = await api('GET', '/api/gestao/usuarios');
-    const f = { login: h('input', { type: 'text', id: 'gu-l' }), nome: h('input', { type: 'text', id: 'gu-n' }),
-      perfil: h('select', { id: 'gu-p' }, Object.entries(u.perfis).map(([k, r]) => h('option', { value: k }, r))),
-      contrato: h('select', { id: 'gu-c' }, [h('option', { value: '' }, '— nenhum —')].concat(u.contratos.map((c) => h('option', { value: c.contrato_id }, c.unidade)))),
-      setor: h('select', { id: 'gu-s' }, [h('option', { value: '' }, '— nenhum —')].concat(u.setores.map((x) => h('option', { value: x.id }, x.nome)))) };
     const editar = async (x) => {
       const nome = h('input', { type: 'text', id: 'eu-n', value: x.nome });
       const perfil = h('select', { id: 'eu-p' }, Object.entries(u.perfis).map(([k, r]) => h('option', Object.assign({ value: k }, k === x.perfil ? { selected: true } : {}), r)));
@@ -151,11 +147,8 @@
           h('div', { class: 'linha' }, h('button', { class: 'leve', onclick: () => editar(x) }, 'Editar'),
             h('button', { class: 'leve', onclick: async () => { if (await confirmar('Definir senha temporária para ' + x.login + '?', 'A pessoa precisa trocar a senha no próximo acesso e as sessões abertas são encerradas.', 'Definir')) { try { const o = await api('POST', '/api/gestao/usuarios/' + x.usuario_id + '/senha', {}); toast('Senha temporária: ' + (o.senhaTemporaria || '(definida)')); usuarios(); } catch (e) { toast(e.message, true); } } } }, 'Trocar senha'),
             h('button', { class: 'leve', onclick: async () => { try { await api('POST', '/api/gestao/usuarios/' + x.usuario_id + '/ativo', { ativo: !x.ativo }); usuarios(); } catch (e) { toast(e.message, true); } } }, x.ativo ? 'Desativar' : 'Ativar'))]))),
-      h('div', { class: 'cartao' }, h('h3', null, 'Novo usuário'),
-        h('div', { class: 'duas' }, h('div', { class: 'campo' }, h('label', { for: 'gu-l' }, 'Login'), f.login), h('div', { class: 'campo' }, h('label', { for: 'gu-n' }, 'Nome'), f.nome), h('div', { class: 'campo' }, h('label', { for: 'gu-p' }, 'Perfil'), f.perfil),
-          h('div', { class: 'campo' }, h('label', { for: 'gu-c' }, 'Unidade (usuários de unidade)'), f.contrato), h('div', { class: 'campo' }, h('label', { for: 'gu-s' }, 'Setor (responsável de setor)'), f.setor)),
-        h('button', { id: 'gu-criar', onclick: async () => { try { const o = await api('POST', '/api/gestao/usuarios', { login: f.login.value, nome: f.nome.value, perfil: f.perfil.value, contrato_id: f.contrato.value || null, setor: f.setor.value || null }); toast('Usuário criado. Senha temporária: ' + (o.senhaTemporaria || '(definida)')); usuarios(); } catch (e) { toast(e.message, true); } } }, 'Criar usuário'),
-        h('p', { class: 'mudo peq' }, 'Tudo fica registrado na trilha. O sistema nunca guarda senha do SEI.')));
+      window.CTAI_USUARIO_FORM({ perfis: u.perfis, contratos: u.contratos, setores: u.setores, endpoint: '/api/gestao/usuarios', aoCriar: usuarios }),
+      h('p', { class: 'mudo peq' }, 'Tudo fica registrado na trilha. O sistema nunca guarda senha do SEI.'));
   }
 
   // ---------- Acessos (somente leitura) ----------

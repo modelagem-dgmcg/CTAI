@@ -11,7 +11,7 @@ const PERFIS = {
   criador: 'Criador do parecer (CTAI)',
   colega: 'Colega conferente (CTAI)',
   superintendente: 'Superintendente (CTAI)',
-  gestor_unidade: 'Gestor da unidade',
+  gestor_unidade: 'Administrador da unidade',
   setor_unidade: 'Responsável de setor da unidade',
 };
 const PERFIS_CTAI = ['admin', 'criador', 'colega', 'superintendente'];
