@@ -6,6 +6,7 @@ const http = require('node:http');
 const { iniciar, cliente } = require('./helpers');
 
 process.env.CTAI_SEGREDO = 'segredo-de-teste-com-mais-de-16-caracteres';
+process.env.CTAI_EXIGIR_JURIDICO = 'sim';
 const OLINDA = 'UPA-OLINDA', DEMO = 'DEMO-UPA';
 let S, nath, admin, cleuton, colega1, colega2, gestor, falso, urlFalso;
 
@@ -171,6 +172,18 @@ test('IA: rack de chaves — cifrada e nunca devolvida; nuvem exige o jurídico;
   assert.equal((await nath.del('/api/gestao/ia/chaves/9999')).status, 404);
   assert.equal((await cleuton.get('/api/gestao/ia')).status, 403);
   assert.equal((await admin.get('/api/gestao/ia')).status, 200, 'o administrador também gerencia o rack');
+});
+
+test('IA em fase de teste: sem CTAI_EXIGIR_JURIDICO a chave de nuvem liga sem a aprovação do jurídico', async () => {
+  const antes = process.env.CTAI_EXIGIR_JURIDICO; delete process.env.CTAI_EXIGIR_JURIDICO;
+  try {
+    assert.equal((await nath.get('/api/gestao/ia')).json.exigirJuridico, false);
+    const r = await nath.post('/api/gestao/ia/chaves', { provedor: 'deepseek', chave: 'sk-teste-sem-juridico-1111', url: urlFalso });
+    assert.equal(r.status, 200, JSON.stringify(r.json));
+    const providers = require('../modules/analista/providers');
+    assert.equal(providers.estado().provedores.find((p) => p.nome === 'deepseek').disponivel, true, 'liberado para o Analista sem a trava');
+    assert.equal((await nath.del('/api/gestao/ia/chaves/' + r.json.chave_id)).status, 200);
+  } finally { process.env.CTAI_EXIGIR_JURIDICO = antes; }
 });
 
 test('IA: sem CTAI_SEGREDO não guarda chave', async () => {

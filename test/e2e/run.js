@@ -34,6 +34,7 @@ const limpa = (p) => p.evaluate(() => document.querySelectorAll('.toast').forEac
 const dialogo = async (p, rotulo) => { await p.waitForSelector('dialog[open]'); await p.click('dialog[open] button:has-text("' + rotulo + '")'); await p.waitForSelector('dialog', { state: 'detached' }); };
 
 process.env.CTAI_SEGREDO = 'segredo-e2e-com-mais-de-16-caracteres';
+process.env.CTAI_EXIGIR_JURIDICO = 'sim';
 let base;
 (async () => {
   const S = await H.iniciar(); base = S.base;

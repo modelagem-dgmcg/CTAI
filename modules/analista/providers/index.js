@@ -66,7 +66,7 @@ function montar(nome) {
   return {
     nome, nuvem: d.nuvem,
     ativo: () => disponiveis(nome).length > 0,
-    nuvemLiberada: () => d.nuvem && disponiveis(nome).some((e) => e.juridico),
+    nuvemLiberada: () => d.nuvem && disponiveis(nome).length > 0 && (!config.exigirJuridico() || disponiveis(nome).some((e) => e.juridico)),
     // Tenta as chaves na ordem; se uma falhar (limite, chave vencida), passa para a próxima.
     async chamar(pedido, opcoes) {
       const ms = opcoes && opcoes.ms;

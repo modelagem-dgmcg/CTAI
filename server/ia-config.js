@@ -82,7 +82,7 @@ function listar(db) {
   });
   const doEnv = Object.entries(providers.DEFS).filter(([nome, d]) => !chaves.some((c) => c.provedor === nome) && providers.efetiva(nome).origem === 'env' && providers.efetiva(nome).ativo)
     .map(([nome, d]) => ({ provedor: nome, final: d.chaveEnv ? providers.efetiva(nome).chave.slice(-4) : null }));
-  return { avisoJuridico: AVISO_JURIDICO, segredoConfigurado: segredo().length >= 16, mes, servicos, chaves, doEnv };
+  return { exigirJuridico: config.exigirJuridico(), avisoJuridico: AVISO_JURIDICO, segredoConfigurado: segredo().length >= 16, mes, servicos, chaves, doEnv };
 }
 
 function validar(d, b, atual, quem) {
@@ -100,7 +100,7 @@ function validar(d, b, atual, quem) {
   if (b.juridico === true && !jurEm) { jurPor = quem; jurEm = agoraIso(); }
   if (b.juridico === false) { jurPor = null; jurEm = null; }
   if (def.tipo === 'ollama' && !url) throw erro(400, 'Informe o endereço do servidor (ex.: http://servidor-local:11434).');
-  if (ativa && def.nuvem && !jurEm) throw erro(400, 'Para ligar uma chave de serviço em nuvem, confirme que o uso foi aprovado pelo jurídico. ' + AVISO_JURIDICO);
+  if (config.exigirJuridico() && ativa && def.nuvem && !jurEm) throw erro(400, 'Para ligar uma chave de serviço em nuvem, confirme que o uso foi aprovado pelo jurídico. ' + AVISO_JURIDICO);
   return { nome, def, url, rotulo, modelo, ordem, ativa, jurPor, jurEm };
 }
 function chaveNova(def, b) {

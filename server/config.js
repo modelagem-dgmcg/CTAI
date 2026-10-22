@@ -45,6 +45,8 @@ module.exports = {
   senhaTemporaria: env('CTAI_SENHA_TEMPORARIA', 'Trocar@123'),
   // CTAI_TROCA_SENHA_OBRIGATORIA=nao: a senha temporária vale como senha, sem pedir troca no primeiro acesso (a gestão redefine quando precisar). Padrão: sim.
   trocaSenhaObrigatoria: env('CTAI_TROCA_SENHA_OBRIGATORIA', 'sim').toLowerCase() !== 'nao',
+  // CTAI_EXIGIR_JURIDICO=sim: serviço de IA em nuvem só liga com a aprovação do jurídico registrada. Padrão: nao (fase de teste, só dados fictícios).
+  exigirJuridico: () => env('CTAI_EXIGIR_JURIDICO', 'nao').toLowerCase() === 'sim',
   cookieSeguro: env('CTAI_COOKIE_SEGURO', 'nao') === 'sim',
   chavePseudonimo: env('CTAI_CHAVE_PSEUDONIMO', '') || chaveLocal(),
   semear: env('CTAI_SEMEAR', 'sim') !== 'nao',

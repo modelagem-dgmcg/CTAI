@@ -28,10 +28,11 @@
       const blocoChave = h('div', { class: 'campo' }, h('label', { for: 'ri-chave' }, edit ? 'Trocar a chave (opcional)' : 'Chave'), chave, h('div', { class: 'ajuda' }, 'Fica cifrada no servidor. Depois de salva, só aparecem os 4 últimos caracteres.'));
       const rotUrl = h('label', { for: 'ri-url' }, 'Endereço da API (opcional)');
       const blocoJur = h('div', { class: 'campo' }, h('label', { class: 'ck' }, jur, ' Uso aprovado pelo jurídico'), h('div', { class: 'ajuda' }, E.avisoJuridico));
+      if (!E.exigirJuridico) blocoJur.style.display = 'none';
       const ajustar = () => {
         const s = E.servicos[serv.value];
         blocoChave.style.display = s.semChave ? 'none' : '';
-        blocoJur.style.display = s.nuvem ? '' : 'none';
+        blocoJur.style.display = s.nuvem && E.exigirJuridico ? '' : 'none';
         rotUrl.textContent = s.precisaUrl ? 'Endereço do servidor (obrigatório)' : 'Endereço da API (opcional)';
         url.placeholder = s.precisaUrl ? 'http://servidor-local:11434' : 'padrão do serviço';
         modelo.placeholder = s.modeloPadrao;
@@ -82,7 +83,7 @@
         return [h('strong', null, String(k.ordem)),
           h('div', null, h('strong', null, k.provedor), h('div', { class: 'mudo peq' }, k.rotulo || '')),
           s.semChave ? h('span', { class: 'mudo' }, k.url || 'servidor local') : h('span', { style: 'font-family:monospace' }, '••••' + (k.final || '')),
-          h('div', null, k.ativa ? selo('ativa', 'ok') : selo('suspensa', ''), ' ', s.nuvem ? selo(k.juridico ? 'nuvem · jurídico ok' : 'nuvem', k.juridico ? '' : 'atencao') : selo('rede local', 'ok')),
+          h('div', null, k.ativa ? selo('ativa', 'ok') : selo('suspensa', ''), ' ', s.nuvem ? selo(k.juridico ? 'nuvem · jurídico ok' : 'nuvem', k.juridico || !E.exigirJuridico ? '' : 'atencao') : selo('rede local', 'ok')),
           h('div', { class: 'peq' }, k.usoMes + ' uso(s) · ' + k.falhasMes + ' falha(s)'),
           k.teste ? h('div', { class: 'peq' }, selo(k.teste.ok ? 'respondeu' : 'falhou', k.teste.ok ? 'ok' : 'alta'), ' ', seg(k.teste.ms), h('div', { class: 'mudo' }, fmt.data(k.teste.em))) : h('span', { class: 'mudo peq' }, 'não testada'),
           h('div', { class: 'linha' },
@@ -94,6 +95,7 @@
       raiz.replaceChildren(h('div', { class: 'cartao' },
         h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, 'Chaves de IA'), h('button', { id: 'ri-nova', onclick: () => formulario(null) }, '+ Adicionar chave')),
         h('p', { class: 'mudo peq' }, 'Cada chave do rack vale para todos os usuários do Analista CTAI. Com mais de uma, o sistema tenta na ordem e passa para a próxima se uma falhar (limite de uso, chave vencida). As verificações locais continuam funcionando sempre, sem chave.'),
+        E.exigirJuridico ? null : aviso('atencao', h('strong', null, 'Modo de teste. '), 'A aprovação do jurídico não está sendo exigida. Use somente dados fictícios (de demonstração). Para exigir, defina CTAI_EXIGIR_JURIDICO=sim no servidor.'),
         E.segredoConfigurado ? null : aviso('atencao', h('strong', null, 'Falta o CTAI_SEGREDO. '), 'Defina essa variável no servidor (mínimo de 16 caracteres) antes de cadastrar chaves.'),
         tabela([{ t: 'Ordem' }, { t: 'Serviço' }, { t: 'Chave' }, { t: 'Situação' }, { t: 'Uso no mês' }, { t: 'Último teste' }, { t: '' }], linhas, { vazio: 'Nenhuma chave cadastrada. Use "Adicionar chave".' }),
         E.doEnv.length ? h('p', { class: 'mudo peq' }, 'Também há chave definida no servidor (.env) para: ' + E.doEnv.map((x) => x.provedor + (x.final ? ' (••••' + x.final + ')' : '')).join(', ') + '. Ela só é usada depois das chaves do rack.') : null));
