@@ -107,7 +107,9 @@ let base;
     // 2b. Analista CTAI: fila, encaminhar à unidade, resposta, normas, acervo e relatório trimestral
     await api(cri, 'POST', '/api/analista/analisar', { cid: cid06, salvar: true, texto: 'O valor foi R$ 1.000,00 (dois mil reais). Foram 63 de 100 (70%) casos no tempo de espera do atendimento vermelho.' });
     await ir(cri, '#/analista', 'text=O que pede ação');
-    assert.match(await cri.textContent('#conteudo'), /Analista CTAI/);
+    assert.match(await cri.textContent('#conteudo'), /Redator CTAI/); assert.equal(await cri.locator('#abas-redator a').count(), 6, 'abas unificadas do Redator');
+    assert.equal(await cri.locator('.lateral a.nav', { hasText: 'Analista CTAI' }).count(), 0, 'sem item Analista CTAI no menu');
+    await ir(cri, '#/analista/ler', '#an-importar'); await ir(cri, '#/analista', 'text=O que pede ação');
     await cri.setViewportSize({ width: 1280, height: 1300 }); await limpa(cri); await cri.screenshot({ path: path.join(CAP, '10-analista-fila.png') });
     await cri.click('button:has-text("Encaminhar à unidade") >> nth=0'); await cri.waitForSelector('dialog[open] #en-m');
     await cri.selectOption('#en-s', 'assistencia'); await cri.fill('#en-m', 'Explique a diferença entre o valor numérico e o escrito por extenso.');

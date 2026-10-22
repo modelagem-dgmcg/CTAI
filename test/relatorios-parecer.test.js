@@ -68,3 +68,13 @@ test('revisão completa acusa número do quadro que não está nos relatórios; 
   assert.equal((await outro.post(U(), { nome: 'a.txt', base64: b64('texto qualquer '.repeat(20)) })).status, 403);
   assert.equal((await a.del(U('/' + (await a.get(U())).json.relatorios[0].rel_id))).status, 200);
 });
+
+test('Ler arquivo (Analista): devolve o texto sem guardar; recusa tipo e escaneado', async () => {
+  const pdf = await pdfCom('Texto do relatório para leitura direta, com mais de oitenta caracteres para passar na checagem de texto legível. '.repeat(2));
+  const antes = (await a.get(U())).json.relatorios.length;
+  const r = (await a.post('/api/analista/extrair', { nome: 'x.pdf', base64: b64(pdf) })).json;
+  assert.match(r.texto, /leitura direta/); assert.equal(r.tipo, 'pdf');
+  assert.equal((await a.get(U())).json.relatorios.length, antes, 'nada foi guardado');
+  assert.equal((await a.post('/api/analista/extrair', { nome: 'x.exe', base64: b64('abc') })).status, 400);
+  assert.equal((await a.post('/api/analista/extrair', { nome: 'x.txt', base64: b64('oi') })).status, 422);
+});

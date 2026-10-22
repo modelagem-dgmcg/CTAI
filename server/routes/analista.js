@@ -44,6 +44,13 @@ module.exports = (db) => {
     res.json(Object.assign(res1, { salvos }));
   });
 
+  // Lê um arquivo (PDF com texto, Word, Excel, CSV, TXT) e devolve o texto, sem guardar nada.
+  r.post('/extrair', async (req, res) => {
+    const b = req.body || {};
+    const ex = await require('../extrair-texto').extrair(String(b.nome || 'arquivo'), Buffer.from(String(b.base64 || ''), 'base64'));
+    res.json({ texto: ex.texto, paginas: ex.paginas, tipo: ex.tipo });
+  });
+
   r.post('/envios/:id/analisar', async (req, res) => res.json(await E.analisarEnvio(db, req.params.id, req.usuario.login)));
 
   // Lê a própria minuta (texto + números) antes de congelar.

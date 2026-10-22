@@ -109,3 +109,4 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 - A revisão completa passou a acusar números dos quadros que não aparecem nos relatórios importados.
 - Novas dependências: unpdf (PDF) e jszip (Word/Excel).
 - Entrada da unidade: /unidade sem login abre “Portal da Unidade” (login com ?entrar=unidade); login da CTAI ali recebe aviso com link ao Console, em vez de cair no Console.
+- Menu: uma entrada só, **Redator CTAI**, com abas (Pareceres, Fila de achados, Relatório trimestral, Conferência com o acervo, Ler arquivo ou texto, Normas por unidade); ‘Ler’ ganhou importar arquivo. Tela de login: ‘Analista CTAI’.

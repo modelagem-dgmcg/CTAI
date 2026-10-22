@@ -394,7 +394,7 @@
         h('p', { class: 'peq mudo' }, 'Documento: Parecer Técnico CTAI. O texto-padrão já vem preenchido com os dados da unidade e do período.'), h('label', { style: 'font-weight:400' }, branco, ' Começar em branco (preenchimento manual)'),
         h('button', { onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres', { contrato_id: sel.value, trimestre: tri.value, numero_parecer: num.value, competencias: [...comps.querySelectorAll('input:checked')].map((x) => x.value) }); await api('POST', '/api/ctai/pareceres/' + o.parecer_id + '/modelo', { modo: branco.checked ? 'branco' : 'padrao' }); location.hash = '#/p/' + o.parecer_id; } catch (e) { toast(e.message, true); } } }, 'Criar a minuta'));
     };
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Redator CTAI'), h('p', null, 'Aqui o parecer é redigido. Quem cria monta e congela; os colegas conferem; a superintendente autoriza; quem criou anexa no SEI.'))),
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Redator CTAI'), h('p', null, 'Aqui o parecer é redigido. Quem cria monta e congela; os colegas conferem; a superintendente autoriza; quem criou anexa no SEI.'))), abasRedator('pareceres'),
       podeCriar || ehAdmin() ? formNovo() : aviso('info', 'Só o perfil criador abre uma minuta nova.'),
       h('div', { class: 'cartao' }, tabela([{ t: 'Parecer' }, { t: 'Unidade' }, { t: 'Trimestre' }, { t: 'Criado por' }, { t: 'Versão' }, { t: 'Situação' }], lista.pareceres.map((p) => [h('a', { href: '#/p/' + p.parecer_id }, p.titulo), p.unidade + (p.demo ? ' (demo)' : ''), p.trimestre, p.criador_nome, p.ultimaVersao ? 'v' + p.ultimaVersao.numero + ' · ' + p.ultimaVersao.status : '—', selo(p.status, p.status === 'anexado ao SEI' ? 'ok' : 'atencao')]), { vazio: 'Nenhum parecer ainda.' })));
   }
@@ -483,11 +483,13 @@
   }
 
   // ---------- Analista ----------
-  const ABAS_AN = [['', 'Fila'], ['relatorio', 'Relatório trimestral'], ['conferencia', 'Conferência com o acervo'], ['ler', 'Ler um texto'], ['normas', 'Normas por unidade']];
+  // O Redator reúne a redação do parecer e as ferramentas do Analista (achados, relatório trimestral, acervo, leitura de arquivo, normas).
+  const ABAS_RED = [['pareceres', 'Pareceres', '#/pareceres'], ['', 'Fila de achados', '#/analista'], ['relatorio', 'Relatório trimestral', '#/analista/relatorio'], ['conferencia', 'Conferência com o acervo', '#/analista/conferencia'], ['ler', 'Ler arquivo ou texto', '#/analista/ler'], ['normas', 'Normas por unidade', '#/analista/normas']];
+  const abasRedator = (ativo) => h('div', { class: 'abas', id: 'abas-redator' }, ABAS_RED.map(([k, r, href]) => h('a', { href, class: ativo === k ? 'ativo' : '' }, r)));
   async function analista(p) {
     const aba = (p && p.aba) || '';
-    const topo = [h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Analista CTAI'), h('p', null, 'Lê o que a unidade enviou, confere contra o recálculo e o acervo, aponta o que merece esclarecimento e monta o relatório trimestral. Quem decide é a equipe.'))),
-      h('div', { class: 'abas' }, ABAS_AN.map(([k, r]) => h('a', { href: '#/analista' + (k ? '/' + k : ''), class: aba === k ? 'ativo' : '' }, r)))];
+    const topo = [h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Redator CTAI'), h('p', null, 'Lê o que a unidade enviou, confere contra o recálculo e o acervo, aponta o que merece esclarecimento e monta o relatório trimestral. Quem decide é a equipe.'))),
+      abasRedator(aba)];
     const corpo = { '': anFila, relatorio: anRelatorio, conferencia: anConferencia, ler: anLer, normas: anNormas }[aba];
     if (!corpo) throw new Error('Página não encontrada.');
     montar(topo, await corpo());
@@ -543,9 +545,20 @@
   async function anLer() {
     const cs = await api('GET', '/api/ctai/contratos');
     const comp = h('select', { id: 'an-c' }, [h('option', { value: '' }, '— sem competência (só o texto) —')].concat(cs.contratos.flatMap((c) => c.competencias.map((k) => h('option', { value: k.cid }, c.unidade + ' · ' + k.competencia_id)))));
-    const texto = h('textarea', { id: 'an-t', rows: 12, placeholder: 'Cole aqui o texto do relatório da OSS (copiado do PDF ou do Word).' });
+    const texto = h('textarea', { id: 'an-t', rows: 12, placeholder: 'Importe o arquivo acima ou cole aqui o texto do relatório da OSS.' });
     const guardar = h('input', { type: 'checkbox', id: 'an-g' });
     const saida = h('div');
+    const arq = h('input', { type: 'file', id: 'an-arquivo', accept: '.pdf,.docx,.xlsx,.csv,.txt', 'aria-label': 'Importar arquivo' });
+    const importar = async () => {
+      const f = arq.files[0]; if (!f) { toast('Escolha um arquivo.', true); return; }
+      if (f.size > 4 * 1024 * 1024) { toast('Arquivo acima de 4 MB.', true); return; }
+      troca(saida, h('p', { class: 'mudo' }, 'Lendo o arquivo…'));
+      try {
+        const b64 = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => no(new Error('Não consegui ler o arquivo.')); r.readAsDataURL(f); });
+        const o = await api('POST', '/api/analista/extrair', { nome: f.name, base64: b64 });
+        texto.value = o.texto; troca(saida, aviso('ok', 'Arquivo lido (' + o.texto.length.toLocaleString('pt-BR') + ' caracteres' + (o.paginas ? ', ' + o.paginas + ' pág./planilha(s)' : '') + '). Confira o texto abaixo e clique em Analisar.'));
+      } catch (e) { troca(saida, aviso('erro', e.message)); }
+    };
     const analisar = async () => {
       troca(saida, h('p', { class: 'mudo' }, 'Lendo o documento…'));
       try {
@@ -555,7 +568,7 @@
           o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'O Analista não encontrou inconsistências neste texto. Isso não substitui a conferência humana.'));
       } catch (e) { troca(saida, aviso('erro', e.message)); }
     };
-    return [h('div', { class: 'cartao' }, h('h3', null, 'Analisar um texto'), aviso('atencao', 'Não cole dados de paciente. Se colar por engano, CPF, cartão SUS, e-mail e telefone são mascarados antes de qualquer envio à nuvem.'),
+    return [h('div', { class: 'cartao' }, h('h3', null, 'Analisar um arquivo ou texto'), h('div', { class: 'campo' }, h('label', { for: 'an-arquivo' }, 'Importar arquivo do relatório (PDF com texto, Word, Excel, CSV ou TXT, até 4 MB)'), h('div', { class: 'linha' }, arq, h('button', { class: 'sec', id: 'an-importar', onclick: importar }, 'Importar arquivo'))), aviso('atencao', 'Não cole dados de paciente. Se colar por engano, CPF, cartão SUS, e-mail e telefone são mascarados antes de qualquer envio à nuvem.'),
       h('div', { class: 'campo' }, h('label', { for: 'an-c' }, 'Competência (dá o contexto: mês, valores por cor, transparência)'), comp), h('div', { class: 'campo' }, h('label', { for: 'an-t' }, 'Texto do documento'), texto),
       h('div', { class: 'linha' }, h('button', { onclick: analisar }, 'Analisar'), h('label', { style: 'font-weight:400;margin:0' }, guardar, ' Guardar os achados na competência (para fixar na mesa ou encaminhar à unidade)')), saida)];
   }
@@ -671,7 +684,7 @@
     const meta0 = await api('GET', '/api/meta').catch(() => null);
     window.__semPainel = !!(me0 && ['criador', 'colega'].includes(me0.usuario.perfil) && meta0 && !meta0.painelAnalista);
     window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão CTAI' }] : [];
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/mensageiro', rotulo: 'Mensageiro' }, { href: '#/pareceres', rotulo: 'Redator CTAI' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
+    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/mensageiro', rotulo: 'Mensageiro' }, { href: '#/pareceres', rotulo: 'Redator CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); }, 60000);
