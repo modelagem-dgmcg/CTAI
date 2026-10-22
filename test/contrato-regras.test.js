@@ -50,5 +50,6 @@ test('regras que acompanham o sistema entram sozinhas ao importar a carteira, se
     const c = (await adm.get('/api/ctai/contratos')).json.contratos.find((x) => /Sigma/.test(x.unidade));
     assert.ok(c, 'unidade criada');
     assert.equal(c.regra.tem, true); assert.equal(c.regra.descritiva, true);
+    assert.equal(c.numero_cg, '001/2020', 'número do contrato preenchido onde estava vazio');
   } finally { fs.unlinkSync(arq); }
 });

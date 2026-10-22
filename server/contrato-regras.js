@@ -90,7 +90,11 @@ function aplicarSementes(db) {
       if (par.length !== 1) continue;
       const id = par[0].id;
       if (db.get('SELECT 1 FROM contrato_regras WHERE contrato_id = ?', id)) continue;
-      try { gravar(db, sistema, id, it, 'regras do repositório (' + arq + ')'); aplicadas++; } catch (_) { /* segue */ }
+      try {
+        gravar(db, sistema, id, it, 'regras do repositório (' + arq + ')'); aplicadas++;
+        // identificação do contrato, só onde está vazia
+        db.run("UPDATE contratos SET numero_cg = COALESCE(NULLIF(numero_cg, ''), ?), oss = COALESCE(NULLIF(oss, ''), ?) WHERE contrato_id = ?", it.contrato_numero || null, it.oss || null, id);
+      } catch (_) { /* segue */ }
     }
   }
   return { aplicadas };
