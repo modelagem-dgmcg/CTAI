@@ -267,3 +267,18 @@ test('produção: conferências, minutas e tempo entre recebimento e conferênci
   assert.ok(pn.parecer.congelado); assert.equal(pn.fase, 'Autorizado (aguarda o SEI)');
   assert.ok((await nath.get('/api/gestao/painel?trimestre=2026-T2')).json.cartoes.pareceres_congelados >= 1);
 });
+
+test('função Coordenador(a): só para superintendente, mesmas permissões, rótulo no perfil', async () => {
+  const lista = (await admin.get('/api/gestao/usuarios')).json.usuarios;
+  const col = lista.find((x) => x.login === 'colega1');
+  const sup = lista.find((x) => x.login === 'nathalia');
+  assert.equal((await admin.patch('/api/gestao/usuarios/' + col.usuario_id, { funcao: 'Coordenador(a)' })).status, 400);
+  const r = await admin.patch('/api/gestao/usuarios/' + sup.usuario_id, { funcao: 'Coordenador(a)' });
+  assert.equal(r.status, 200);
+  const eu = (await nath.get('/api/auth/me')).json;
+  const u = eu.usuario || eu;
+  assert.equal(u.perfil, 'superintendente');
+  assert.equal(u.perfilNome, 'Coordenador(a)');
+  assert.equal((await nath.get('/api/gestao/painel')).status, 200);
+  assert.equal((await admin.patch('/api/gestao/usuarios/' + sup.usuario_id, { funcao: '' })).status, 200);
+});

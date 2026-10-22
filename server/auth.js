@@ -65,7 +65,7 @@ function usuarioDaSessao(db, req) {
   const s = db.get('SELECT * FROM sessoes WHERE token_hash = ?', U.sha256(token));
   if (!s) return null;
   if (new Date(s.expira_em) < new Date()) { db.run('DELETE FROM sessoes WHERE token_hash = ?', s.token_hash); return null; }
-  const u = db.get('SELECT usuario_id, login, nome, perfil, contrato_id, setor, setores, trocar_senha, ativo FROM usuarios WHERE usuario_id = ?', s.usuario_id);
+  const u = db.get('SELECT usuario_id, login, nome, perfil, funcao, contrato_id, setor, setores, trocar_senha, ativo FROM usuarios WHERE usuario_id = ?', s.usuario_id);
   if (!u || !u.ativo) return null;
   return u;
 }

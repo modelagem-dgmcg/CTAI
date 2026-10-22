@@ -8,7 +8,7 @@ const AC = require('../acessos');
 
 module.exports = (db) => {
   const r = express.Router();
-  const publico = (u) => ({ usuario_id: u.usuario_id, login: u.login, nome: u.nome, perfil: u.perfil, perfilNome: A.PERFIS[u.perfil], contrato_id: u.contrato_id, setor: u.setor, setores: A.setoresDe(u), trocar_senha: !!u.trocar_senha });
+  const publico = (u) => ({ usuario_id: u.usuario_id, login: u.login, nome: u.nome, perfil: u.perfil, perfilNome: (u.perfil === 'superintendente' && u.funcao) || A.PERFIS[u.perfil], funcao: u.funcao || null, contrato_id: u.contrato_id, setor: u.setor, setores: A.setoresDe(u), trocar_senha: !!u.trocar_senha });
 
   r.post('/login', (req, res) => {
     const { login, senha } = req.body || {};

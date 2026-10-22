@@ -24,8 +24,8 @@ function doGestor(db, gestor, id) {
 }
 
 function listar(db, gestor) {
-  const todos = db.all("SELECT usuario_id, login, nome, perfil, setor, setores, ativo, trocar_senha, ultimo_login FROM usuarios WHERE contrato_id = ? AND perfil IN ('setor_unidade','gestor_unidade') ORDER BY perfil DESC, nome", gestor.contrato_id)
-    .map((u) => ({ usuario_id: u.usuario_id, login: u.login, nome: u.nome, perfil: u.perfil, perfilNome: A.PERFIS[u.perfil], setores: A.setoresDe(u), ativo: !!u.ativo, trocar_senha: !!u.trocar_senha, ultimo_login: u.ultimo_login, somenteLeitura: u.perfil !== 'setor_unidade' }));
+  const todos = db.all("SELECT usuario_id, login, nome, perfil, funcao, setor, setores, ativo, trocar_senha, ultimo_login FROM usuarios WHERE contrato_id = ? AND perfil IN ('setor_unidade','gestor_unidade') ORDER BY perfil DESC, nome", gestor.contrato_id)
+    .map((u) => ({ usuario_id: u.usuario_id, login: u.login, nome: u.nome, perfil: u.perfil, perfilNome: (u.perfil === 'superintendente' && u.funcao) || A.PERFIS[u.perfil], funcao: u.funcao || null, setores: A.setoresDe(u), ativo: !!u.ativo, trocar_senha: !!u.trocar_senha, ultimo_login: u.ultimo_login, somenteLeitura: u.perfil !== 'setor_unidade' }));
   const fichas = F.SETORES.map((s) => ({ id: s.id, nome: s.nome, responsaveis: todos.filter((u) => u.perfil === 'setor_unidade' && u.ativo && u.setores.includes(s.id)).map((u) => ({ usuario_id: u.usuario_id, nome: u.nome })) }));
   return { usuarios: todos, fichas, setores: F.SETORES.map((s) => ({ id: s.id, nome: s.nome })) };
 }

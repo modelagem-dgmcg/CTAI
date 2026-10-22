@@ -18,7 +18,7 @@ module.exports = (db) => {
   r.use(A.exigir(db, ['superintendente']));
 
   // ---------- Usuários ----------
-  const listaUsuarios = () => db.all('SELECT usuario_id, login, nome, perfil, contrato_id, setor, ativo, trocar_senha, ultimo_login, criado_em FROM usuarios ORDER BY perfil, nome')
+  const listaUsuarios = () => db.all('SELECT usuario_id, login, nome, perfil, funcao, contrato_id, setor, ativo, trocar_senha, ultimo_login, criado_em FROM usuarios ORDER BY perfil, nome')
     .map((u) => Object.assign(u, { ativo: !!u.ativo, trocar_senha: !!u.trocar_senha, unidades: ['criador', 'colega'].includes(u.perfil) ? CART.doUsuario(db, u.usuario_id) : null }));
   r.get('/usuarios', (req, res) => res.json({ usuarios: listaUsuarios(), perfis: A.PERFIS, contratos: db.all('SELECT contrato_id, unidade, municipio, demo FROM contratos ORDER BY demo, unidade'), setores: require('../../core/formularios').SETORES }));
 
@@ -58,6 +58,13 @@ module.exports = (db) => {
       if (A.PERFIS_UNIDADE.includes(b.perfil) && !(b.contrato_id || u.contrato_id)) throw erro(400, 'Usuário de unidade precisa de contrato.');
       mud.push(['perfil', u.perfil, b.perfil]);
     }
+    if (b.funcao !== undefined) {
+      const f = String(b.funcao || '').trim().slice(0, 40) || null;
+      const perfilFinal = b.perfil !== undefined ? b.perfil : u.perfil;
+      if (f && perfilFinal !== 'superintendente') throw erro(400, 'A função só existe para o perfil Superintendente.');
+      if (f !== (u.funcao || null)) mud.push(['funcao', u.funcao || null, f]);
+    }
+    if (b.perfil !== undefined && b.perfil !== 'superintendente' && u.funcao && b.funcao === undefined) mud.push(['funcao', u.funcao, null]);
     if (b.contrato_id !== undefined && (b.contrato_id || null) !== u.contrato_id) mud.push(['contrato_id', u.contrato_id, b.contrato_id || null]);
     if (b.setor !== undefined && (b.setor || null) !== u.setor) mud.push(['setor', u.setor, b.setor || null]);
     if (!mud.length) throw erro(400, 'Nada para alterar.');

@@ -136,10 +136,11 @@
     const editar = async (x) => {
       const nome = h('input', { type: 'text', id: 'eu-n', value: x.nome });
       const perfil = h('select', { id: 'eu-p' }, Object.entries(u.perfis).map(([k, r]) => h('option', Object.assign({ value: k }, k === x.perfil ? { selected: true } : {}), r)));
+      const funcao = h('select', { id: 'eu-f' }, [['', '— nenhuma —'], ['Coordenador(a)', 'Coordenador(a)']].map(([v, r]) => h('option', Object.assign({ value: v }, v === (x.funcao || '') ? { selected: true } : {}), r)));
       const contrato = h('select', { id: 'eu-c' }, [h('option', { value: '' }, '— nenhum —')].concat(u.contratos.map((c) => h('option', Object.assign({ value: c.contrato_id }, c.contrato_id === x.contrato_id ? { selected: true } : {}), c.unidade))));
-      const r = await janela('Editar ' + x.login, h('div', null, h('div', { class: 'campo' }, h('label', { for: 'eu-n' }, 'Nome'), nome), h('div', { class: 'campo' }, h('label', { for: 'eu-p' }, 'Perfil'), perfil), h('div', { class: 'campo' }, h('label', { for: 'eu-c' }, 'Unidade (usuários de unidade)'), contrato)), [{ rotulo: 'Cancelar', valor: null, sec: true }, { rotulo: 'Salvar', valor: 'ok' }]);
+      const r = await janela('Editar ' + x.login, h('div', null, h('div', { class: 'campo' }, h('label', { for: 'eu-n' }, 'Nome'), nome), h('div', { class: 'campo' }, h('label', { for: 'eu-p' }, 'Perfil'), perfil), h('div', { class: 'campo' }, h('label', { for: 'eu-f' }, 'Função (só Superintendente; mesmas permissões)'), funcao), h('div', { class: 'campo' }, h('label', { for: 'eu-c' }, 'Unidade (usuários de unidade)'), contrato)), [{ rotulo: 'Cancelar', valor: null, sec: true }, { rotulo: 'Salvar', valor: 'ok' }]);
       if (r !== 'ok') return;
-      try { await api('PATCH', '/api/gestao/usuarios/' + x.usuario_id, { nome: nome.value, perfil: perfil.value, contrato_id: contrato.value || null }); toast('Usuário atualizado.'); usuarios(); } catch (e) { toast(e.message, true); }
+      try { await api('PATCH', '/api/gestao/usuarios/' + x.usuario_id, { nome: nome.value, perfil: perfil.value, funcao: perfil.value === 'superintendente' ? funcao.value : '', contrato_id: contrato.value || null }); toast('Usuário atualizado.'); usuarios(); } catch (e) { toast(e.message, true); }
     };
     montar(cabecalho('usuarios'),
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Pessoas com acesso'),
