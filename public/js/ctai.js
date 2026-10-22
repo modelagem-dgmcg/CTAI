@@ -549,6 +549,9 @@
     const guardar = h('input', { type: 'checkbox', id: 'an-g' });
     const saida = h('div');
     const arq = h('input', { type: 'file', id: 'an-arquivo', accept: '.pdf,.docx,.xlsx,.csv,.txt', 'aria-label': 'Importar arquivo' });
+    const origem = { nome: null, base64: null };
+    const pars = (await api('GET', '/api/ctai/pareceres')).pareceres.filter((x) => x.criador_id === EU.usuario_id && x.status !== 'anexado ao SEI');
+    const selPar = h('select', { id: 'an-parecer' }, [h('option', { value: '' }, pars.length ? '— escolha o parecer —' : '— você não tem parecer em aberto —')].concat(pars.map((x) => h('option', { value: x.parecer_id }, x.titulo + ' · ' + x.unidade + ' · ' + x.trimestre))));
     const importar = async () => {
       const f = arq.files[0]; if (!f) { toast('Escolha um arquivo.', true); return; }
       if (f.size > 4 * 1024 * 1024) { toast('Arquivo acima de 4 MB.', true); return; }
@@ -556,8 +559,16 @@
       try {
         const b64 = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => no(new Error('Não consegui ler o arquivo.')); r.readAsDataURL(f); });
         const o = await api('POST', '/api/analista/extrair', { nome: f.name, base64: b64 });
+        origem.nome = f.name; origem.base64 = b64;
         texto.value = o.texto; troca(saida, aviso('ok', 'Arquivo lido (' + o.texto.length.toLocaleString('pt-BR') + ' caracteres' + (o.paginas ? ', ' + o.paginas + ' pág./planilha(s)' : '') + '). Confira o texto abaixo e clique em Analisar.'));
       } catch (e) { troca(saida, aviso('erro', e.message)); }
+    };
+    const usar = async () => {
+      if (!selPar.value) { toast('Escolha o parecer.', true); return; }
+      const nome = origem.nome || 'texto-colado.txt';
+      const base64 = origem.base64 || btoa(unescape(encodeURIComponent(texto.value)));
+      if (!texto.value.trim() && !origem.base64) { toast('Importe um arquivo ou cole o texto antes.', true); return; }
+      try { await api('POST', '/api/ctai/pareceres/' + selPar.value + '/relatorios', { nome, base64 }); toast('Guardado no parecer.'); location.hash = '#/p/' + selPar.value; } catch (e) { toast(e.message, true); }
     };
     const analisar = async () => {
       troca(saida, h('p', { class: 'mudo' }, 'Lendo o documento…'));
@@ -570,6 +581,7 @@
     };
     return [h('div', { class: 'cartao' }, h('h3', null, 'Analisar um arquivo ou texto'), h('div', { class: 'campo' }, h('label', { for: 'an-arquivo' }, 'Importar arquivo do relatório (PDF com texto, Word, Excel, CSV ou TXT, até 4 MB)'), h('div', { class: 'linha' }, arq, h('button', { class: 'sec', id: 'an-importar', onclick: importar }, 'Importar arquivo'))), aviso('atencao', 'Não cole dados de paciente. Se colar por engano, CPF, cartão SUS, e-mail e telefone são mascarados antes de qualquer envio à nuvem.'),
       h('div', { class: 'campo' }, h('label', { for: 'an-c' }, 'Competência (dá o contexto: mês, valores por cor, transparência)'), comp), h('div', { class: 'campo' }, h('label', { for: 'an-t' }, 'Texto do documento'), texto),
+      h('div', { class: 'campo' }, h('label', { for: 'an-parecer' }, 'Usar este arquivo em um parecer (vira fonte do parecer: propõe os quadros e confere os números)'), h('div', { class: 'linha' }, selPar, h('button', { class: 'sec', id: 'an-usar', onclick: usar }, 'Guardar no parecer e abrir'))),
       h('div', { class: 'linha' }, h('button', { onclick: analisar }, 'Analisar'), h('label', { style: 'font-weight:400;margin:0' }, guardar, ' Guardar os achados na competência (para fixar na mesa ou encaminhar à unidade)')), saida)];
   }
 
