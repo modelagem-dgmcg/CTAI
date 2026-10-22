@@ -97,3 +97,7 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 - No parecer: preenche a seção 3 (OSS, contrato, vigência, repasse, endereço) e a revisão completa confere número do contrato, OSS e vigência contra o GAOCG.
 - Os nomes dos campos do GAOCG foram assumidos por semelhança; use "Ver campos recebidos" (administração) para confirmar e ajustar server/gaocg.js (dadosDaUnidade) se preciso.
 - Ainda não usado: SOF, empenhos e recibos (próximos passos: conferir desconto × pago, alerta de SOF parado).
+
+## Base da equipe — 22/10/2026
+- CTAI_SEMENTE=equipe (banco novo): admin, nathalia, juliana.rocha, cecilia, juliana.ludmila, jussara; senha = CTAI_SENHA_TEMPORARIA. Mantém só o contrato UPA Olinda (carga/). A carteira (45 unidades) entra por Gestão CTAI > Importar com o CSV (fora do repositório).
+- O analista (perfil criador, "Analista CTAI (cria e confere)") também pode ser convocado para conferir o parecer de outra pessoa; nunca o próprio.

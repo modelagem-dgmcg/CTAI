@@ -5,7 +5,11 @@ const seed = require('./seed');
 const { criarApp } = require('./app');
 
 const db = envolver(abrir(config.arquivoBanco));
-if (config.semear && seed.semear(db)) {
+const semeou = config.semear && seed.semear(db);
+if (semeou === 'equipe') {
+  console.log('Base da equipe criada: admin, nathalia, juliana.rocha, cecilia, juliana.ludmila, jussara.');
+  console.log('Senha temporária: ' + config.senhaTemporaria);
+} else if (semeou) {
   console.log('Carga inicial feita. Usuários de teste: admin, nathalia, cleuton, colega1, colega2, gestor.olinda, gestor.demo.');
   console.log('Senha temporária (trocar no primeiro acesso): ' + config.senhaTemporaria);
 }

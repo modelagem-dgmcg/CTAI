@@ -8,7 +8,7 @@ const trilha = require('./trilha');
 
 const PERFIS = {
   admin: 'Administrador',
-  criador: 'Criador do parecer (CTAI)',
+  criador: 'Analista CTAI (cria e confere)',
   colega: 'Colega conferente (CTAI)',
   superintendente: 'Superintendente (CTAI)',
   gestor_unidade: 'Administrador da unidade',

@@ -427,7 +427,7 @@
     const ativo = !['autorizada', 'substituída'].includes(V.status);
     const euCriador = V.criada_por === EU.usuario_id;
     const euConvocado = V.convocados.some((x) => x.usuario_id === EU.usuario_id);
-    const posso = ativo && !euCriador && ((EU.perfil === 'colega' && euConvocado) || EU.perfil === 'superintendente');
+    const posso = ativo && !euCriador && ((['colega', 'criador'].includes(EU.perfil) && euConvocado) || EU.perfil === 'superintendente');
     const minhas = (it) => it.registros.find((r) => r.usuario_id === EU.usuario_id);
     const marcar = async (item, status) => { let comentario = null; if (status === 'reparo') { comentario = await perguntar('Reparo: ' + item.titulo, 'O que precisa mudar?', { longo: true, botao: 'Registrar reparo' }); if (!comentario) return; } try { await api('POST', '/api/ctai/versoes/' + V.versao_id + '/conferir', { item: item.id, status, comentario }); mesa(p); } catch (e) { toast(e.message, true); } };
     const todosOkMeus = v.itens.every((i) => { const m = minhas(i); return m && m.status === 'ok'; });

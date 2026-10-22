@@ -111,8 +111,27 @@ function semearUsuarios(db) {
   u('ouvidoria.demo', 'Responsável da ouvidoria (demo)', 'setor_unidade', DEMO, 'ouvidoria');
 }
 
+// Base da equipe (CTAI_SEMENTE=equipe): só quem trabalha na CTAI, sem usuários de demonstração. A carteira entra pela aba Importar (Gestão CTAI).
+function semearEquipe(db) {
+  const u = (login, nome, perfil) => auth.criarUsuario(db, { login, nome, perfil, contrato_id: null, setor: null }, 'carga');
+  u('admin', 'Administrador', 'admin');
+  u('nathalia', 'Nathália', 'superintendente');
+  u('juliana.rocha', 'Juliana Rocha', 'criador');
+  u('cecilia', 'Cecilia', 'criador');
+  u('juliana.ludmila', 'Juliana Ludmila', 'criador');
+  u('jussara', 'Jussara', 'criador');
+}
+
 function semear(db) {
   if (db.get('SELECT COUNT(*) AS n FROM usuarios').n > 0) return false;
+  if (String(config.env('CTAI_SEMENTE', '')).toLowerCase() === 'equipe') {
+    db.tx(() => {
+      semearEquipe(db);
+      semearContratoReal(db);
+      trilha.registrar(db, { usuario: 'sistema', tabela: 'sistema', registro: 'carga', campo: 'semente', valor_novo: 'Base da equipe: administrador, superintendente e 4 analistas; sem usuários de demonstração' });
+    });
+    return 'equipe';
+  }
   db.tx(() => {
     semearUsuarios(db);
     semearContratoReal(db);

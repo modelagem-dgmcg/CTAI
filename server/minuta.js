@@ -24,7 +24,8 @@ const ITENS = [
 ];
 
 const agora = () => new Date().toISOString();
-const ehMesa = (u) => u && (u.perfil === 'colega' || u.perfil === 'superintendente');
+// O analista (criador) também confere os pareceres dos colegas; nunca o próprio.
+const ehMesa = (u) => u && ['colega', 'criador', 'superintendente'].includes(u.perfil);
 
 // ---------- Parecer ----------
 function obter(db, id) {
@@ -249,7 +250,7 @@ function congelar(db, parecerId, usuario, dados) {
   if (!convocados.length) throw erro(400, 'Escolha ao menos um colega para conferir.');
   for (const uid of convocados) {
     const u = db.get('SELECT * FROM usuarios WHERE usuario_id = ? AND ativo = 1', uid);
-    if (!u || u.perfil !== 'colega') throw erro(400, 'Só colegas conferentes (perfil colega) podem ser convocados.');
+    if (!u || !['colega', 'criador'].includes(u.perfil)) throw erro(400, 'Só analistas e colegas conferentes podem ser convocados.');
     if (u.usuario_id === p.criador_id) throw erro(400, 'Quem cria o parecer não confere a própria versão.');
   }
   const ult = ultimaVersao(db, p.parecer_id);
@@ -303,7 +304,7 @@ function conferir(db, versaoId, usuario, itemId, status, comentario) {
   if (v.status === 'substituída') throw erro(409, 'Esta versão foi substituída por outra. Confira a versão mais recente.');
   if (v.status === 'autorizada') throw erro(409, 'Esta versão já foi autorizada.');
   const convocados = D.json(v.convocados, []);
-  if (usuario.perfil === 'colega' && !convocados.includes(usuario.usuario_id)) throw erro(403, 'Você não foi convocado para conferir esta versão.');
+  if (usuario.perfil !== 'superintendente' && !convocados.includes(usuario.usuario_id)) throw erro(403, 'Você não foi convocado para conferir esta versão.');
   if (!ITENS.some((i) => i.id === itemId)) throw erro(400, 'Item desconhecido.');
   if (!['ok', 'reparo'].includes(status)) throw erro(400, 'Marque "ok" ou "reparo".');
   if (status === 'reparo' && !String(comentario || '').trim()) throw erro(400, 'Explique o reparo para quem criou o parecer.');
@@ -354,7 +355,7 @@ function detalhe(db, parecerId, usuario) {
   const estado = ult ? estadoDaVersao(db, ult.versao_id) : null;
   const atual = conteudoAtual(db, p.parecer_id);
   const alterado = ult ? hashDe(atual) !== ult.hash : true;
-  const colegas = db.all("SELECT usuario_id, nome FROM usuarios WHERE perfil = 'colega' AND ativo = 1 AND usuario_id <> ?", p.criador_id);
+  const colegas = db.all("SELECT usuario_id, nome FROM usuarios WHERE perfil IN ('colega','criador') AND ativo = 1 AND usuario_id <> ?", p.criador_id);
   return { parecer: Object.assign({}, p, { demo: !!contrato.demo, unidade: contrato.unidade }), conteudoAtual: atual, modeloDef: (() => { const m = require('./parecer-modelo').MODELO; return { titulo: m.titulo, secoes: m.secoes.map((x) => ({ id: x.id, titulo: x.titulo })), quadros: m.quadros }; })(), alteradoDesdeCongelamento: alterado, versoes, ultima: estado, colegasDisponiveis: colegas,
     voce: { eCriador: usuario.usuario_id === p.criador_id, perfil: usuario.perfil } };
 }
