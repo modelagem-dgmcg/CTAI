@@ -25,7 +25,7 @@
     let j = null;
     try { j = await r.json(); } catch (_) { /* sem corpo */ }
     if (!r.ok) {
-      if (r.status === 401 && !url.startsWith('/api/auth/login') && !url.startsWith('/api/auth/me') && location.pathname !== '/') { location.href = '/'; }
+      if (r.status === 401 && !url.startsWith('/api/auth/login') && !url.startsWith('/api/auth/me') && location.pathname !== '/') { location.href = entrada(); }
       const e = new Error((j && j.erro) || 'Algo deu errado (' + r.status + ').');
       e.status = r.status; e.dados = j; throw e;
     }
@@ -89,11 +89,13 @@
   // Troca o conteúdo de um elemento aceitando listas (replaceChildren não aceita arrays).
   function troca(el, ...c) { el.replaceChildren(); add(el, c); return el; }
   function montar(...c) { const el = document.getElementById('conteudo'); el.replaceChildren(); add(el, c); el.focus && el.focus({ preventScroll: true }); }
+  // Quem chega por /unidade volta para a entrada da unidade, não para a da CTAI.
+  const entrada = () => (location.pathname === '/unidade' ? '/?entrar=unidade' : '/');
   async function casca(opc) {
     const me = await api('GET', '/api/auth/me').catch(() => null);
-    if (!me) { location.href = '/'; return null; }
+    if (!me) { location.href = entrada(); return null; }
     const u = me.usuario;
-    if (opc.perfis && !opc.perfis.includes(u.perfil) && u.perfil !== 'admin') { location.href = '/'; return null; }
+    if (opc.perfis && !opc.perfis.includes(u.perfil) && u.perfil !== 'admin') { location.href = entrada(); return null; }
     const lat = h('nav', { class: 'lateral', 'aria-label': 'Menu' },
       h('div', { class: 'marca' }, h('span', { class: 'logo', 'aria-hidden': 'true' }, 'C'), h('span', null, opc.titulo, h('small', null, opc.subtitulo))),
       opc.itens.map((i) => h('a', { class: 'nav', href: i.href, 'data-h': i.href }, i.rotulo)),

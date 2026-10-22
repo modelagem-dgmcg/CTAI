@@ -108,3 +108,4 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 - **Ler com a IA e propor os quadros**: a IA (rack de chaves, texto mascarado) propõe as linhas dos Quadros 01/02/03; linhas com todos os números presentes no texto importado vêm marcadas “números conferidos”; a pessoa marca e aplica. Nada entra sozinho.
 - A revisão completa passou a acusar números dos quadros que não aparecem nos relatórios importados.
 - Novas dependências: unpdf (PDF) e jszip (Word/Excel).
+- Entrada da unidade: /unidade sem login abre “Portal da Unidade” (login com ?entrar=unidade); login da CTAI ali recebe aviso com link ao Console, em vez de cair no Console.

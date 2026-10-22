@@ -12,6 +12,7 @@ const CAP = path.join(__dirname, '..', '..', 'docs', 'capturas');
 const SENHA = 'Senha@12345';
 const log = (m) => console.log('• ' + m);
 
+const page_url = (p) => p.url();
 async function entrar(browser, login, largura, jaTrocou) {
   const ctx = await browser.newContext({ viewport: { width: largura || 1280, height: 860 }, locale: 'pt-BR' });
   const p = await ctx.newPage();
@@ -44,6 +45,15 @@ let base;
   const mockSrv = await new Promise((ok) => { const m = mock.criar(); m.listen(4010, '127.0.0.1', () => ok(m)); m.on('error', () => ok(null)); });
   try {
     const cid06 = S.db.get("SELECT cid FROM competencias WHERE contrato_id='DEMO-UPA' AND competencia_id='2026-06'").cid;
+
+    // 0. O endereço da unidade abre a entrada da unidade (e não a da CTAI), mesmo para quem tem login da CTAI
+    { const ctx = await browser.newContext({ locale: 'pt-BR' }); const pg = await ctx.newPage();
+      await pg.goto(base + '/unidade'); await pg.waitForSelector('#titulo');
+      assert.equal(await pg.textContent('#titulo'), 'Portal da Unidade'); assert.match(await pg.title(), /Unidade/);
+      await pg.fill('#login', 'colega1'); await pg.fill('#senha', 'Trocar@123'); await pg.click('button[type=submit]');
+      await pg.waitForFunction(() => /equipe da CTAI/.test(document.getElementById('erro').textContent)); assert.match(page_url(pg), /entrar=unidade/);
+      await ctx.close(); }
+    log('/unidade abre o Portal da Unidade; login da CTAI ali recebe aviso e link para o Console');
 
     // 1. Unidade: gestor revisa e envia
     const gest = await entrar(browser, 'gestor.demo'); paginas.push(gest);
