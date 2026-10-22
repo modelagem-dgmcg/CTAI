@@ -84,7 +84,7 @@ function criarApp(db) {
     const status = err.status || (err.type === 'entity.too.large' ? 413 : 500);
     const esperado = !!err.status && err.expose !== false && !err.type; // erro lançado de propósito pelo sistema (erro())
     if (status >= 500 && !esperado) console.error('[erro]', req.method, req.originalUrl, err && err.stack ? err.stack.split('\n').slice(0, 4).join(' | ') : err);
-    const msg = status === 413 ? 'O conteúdo enviado é grande demais.'
+    const msg = status === 413 && !esperado ? 'O conteúdo enviado é grande demais.'
       : err.type === 'entity.parse.failed' ? 'O corpo da requisição não é um JSON válido.'
       : esperado ? err.message
       : status >= 500 ? (/constraint|não pode ser|não podem ser/i.test(String(err.message)) ? 'O banco recusou a operação: ' + String(err.message).replace(/^.*?: /, '') : 'Erro interno. Tente de novo; se continuar, avise o administrador.')

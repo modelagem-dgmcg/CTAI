@@ -23,9 +23,8 @@ module.exports = (db) => {
   // Análise de texto colado (relatório da OSS em PDF/Word, copiado como texto).
   r.post('/analisar', async (req, res) => {
     const b = req.body || {};
-    const texto = String(b.texto || '');
+    const texto = String(b.texto || '').slice(0, 200000); // documentos longos: analisa os primeiros 200.000 caracteres
     if (!texto.trim()) throw erro(400, 'Cole o texto do documento.');
-    if (texto.length > 200000) throw erro(413, 'Texto grande demais (máximo de 200.000 caracteres).');
     let contexto = { observacoes: b.observacoes || '' };
     let cid = null;
     if (b.cid) {

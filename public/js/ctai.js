@@ -560,7 +560,8 @@
         const b64 = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => no(new Error('Não consegui ler o arquivo.')); r.readAsDataURL(f); });
         const o = await api('POST', '/api/analista/extrair', { nome: f.name, base64: b64 });
         origem.nome = f.name; origem.base64 = b64;
-        texto.value = o.texto; troca(saida, aviso('ok', 'Arquivo lido (' + o.texto.length.toLocaleString('pt-BR') + ' caracteres' + (o.paginas ? ', ' + o.paginas + ' pág./planilha(s)' : '') + '). Confira o texto abaixo e clique em Analisar.'));
+        texto.value = o.texto;
+        if (o.texto.length > 200000) toast('Arquivo muito longo: a análise usa os primeiros 200.000 caracteres.', true); troca(saida, aviso('ok', 'Arquivo lido (' + o.texto.length.toLocaleString('pt-BR') + ' caracteres' + (o.paginas ? ', ' + o.paginas + ' pág./planilha(s)' : '') + '). Confira o texto abaixo e clique em Analisar.'));
       } catch (e) { troca(saida, aviso('erro', e.message)); }
     };
     const usar = async () => {
