@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  // Caixa de entrada da CTAI, ausência/substituição e "Minhas unidades".
+  // Caixa de entrada da CTAI: uma tela só, organizada por unidade (itens, situação, compartilhamento) e ausência/substituição.
   const { h, api, fmt, toast, janela, perguntar, selo, aviso, tabela, montar } = window.CTAI;
   const EU = () => window.__eu || {};
   const F = { unidade: '', tipo: '', situacao: 'pendentes' };
@@ -18,8 +18,14 @@
     } catch (_) { /* sem contador */ }
   }
 
+  F.busca = F.busca || ''; F.abertas = F.abertas || {};
+  const SIT = [['pendentes', 'Pendentes'], ['nao_lidos', 'Não lidos'], ['tratados', 'Tratados'], ['todos', 'Todos']];
+  const tomPrazo = (x) => (['vencido', 'entregue com atraso'].includes(x) ? 'alta' : (x === 'a vencer' ? 'atencao' : 'ok'));
+  const norm = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+  // Caixa de entrada única: um bloco por unidade, com tudo o que chegou, a situação e quem acompanha.
   async function caixa() {
-    const d = await api('GET', '/api/caixa' + qs(F));
+    const d = await api('GET', '/api/caixa/unidades' + qs({ tipo: F.tipo, situacao: F.situacao === '' ? 'todos' : F.situacao }));
     const s = await api('GET', '/api/caixa/substituicoes');
     const rs = await api('GET', '/api/caixa/resumo');
     const refazer = () => { caixa(); atualizarContador(); };
@@ -50,51 +56,94 @@
         h('button', { class: 'leve', onclick: () => redirecionar(i) }, 'Redirecionar'), h('button', { class: 'leve', onclick: () => historico(i) }, 'Histórico')));
     const opc = (id, rot, lista, v, fn) => h('div', { class: 'campo filtro' }, h('label', { for: id }, rot), h('select', { id, onchange: (e) => fn(e.target.value) }, lista.map(([k, t]) => h('option', Object.assign({ value: k }, String(k) === String(v) ? { selected: true } : {}), t))));
 
-    // substituição
+
+    // ---- Compartilhamento: liga/desliga por colega, dentro do bloco da unidade ----
+    const compartilhar = async (u, p, ligado) => {
+      try { await api('PUT', '/api/caixa/unidades/' + encodeURIComponent(u.contrato_id) + '/compartilhar/' + p.usuario_id, { ligado }); toast(ligado ? p.nome + ' passa a acompanhar ' + u.unidade + '.' : p.nome + ' deixa de acompanhar ' + u.unidade + '.'); } catch (e) { toast(e.message, true); }
+      refazer();
+    };
+    const interruptor = (u, p) => {
+      const ligado = u.equipe.includes(p.usuario_id);
+      const bloqueado = !u.pode_compartilhar || (!p.tem_carteira && !ligado);
+      const i = h('input', { type: 'checkbox', role: 'switch', class: 'cx-compart', 'data-pessoa': p.usuario_id, disabled: bloqueado, onchange: (e) => compartilhar(u, p, e.target.checked) });
+      i.checked = ligado;
+      return h('label', { class: 'ck interruptor' + (bloqueado ? ' mudo' : '') }, i, ' ', p.nome + (p.usuario_id === d.eu ? ' (você)' : ''), !p.tem_carteira ? h('span', { class: 'peq' }, ' · vê todas, sem carteira') : null);
+    };
+
+    // ---- Bloco de uma unidade ----
+    const bloco = (u) => {
+      const abertoPadrao = u.nao_lidos > 0;
+      const aberto = F.abertas[u.contrato_id] === undefined ? abertoPadrao : F.abertas[u.contrato_id];
+      const pz = u.pior_prazo;
+      const det = h('details', { class: 'cartao un-bloco', 'data-contrato': u.contrato_id },
+        h('summary', null, h('span', { class: 'un-nome' }, h('strong', null, u.unidade), h('span', { class: 'mudo peq' }, ' ' + ([u.tipo, u.municipio].filter(Boolean).join(' · ')))),
+          h('span', { class: 'un-selos' }, selo(u.fase, ''), pz ? selo('Prazo ' + pz.canal + ' ' + pz.situacao, tomPrazo(pz.situacao)) : null, u.sem_gestor ? selo('aguardando gestor', 'atencao') : null,
+            u.nao_lidos ? selo(u.nao_lidos + ' não lido(s)', 'alta') : null, selo(u.itens.length + ' item(ns)', u.itens.length ? 'atencao' : 'ok'))),
+        h('div', { class: 'un-corpo' },
+          h('div', { class: 'linha espaco' }, h('p', { class: 'mudo peq', style: 'margin:0' }, 'Última entrega: ' + (u.ultima_entrega ? fmt.data(u.ultima_entrega) : 'nenhuma ainda') + ' · Achados abertos: ' + u.achados.abertos + ' · Divergências abertas: ' + u.divergencias_abertas),
+            h('a', { class: 'btn sec', href: u.link }, 'Abrir conferência')),
+          u.itens.length ? u.itens.map(card) : h('p', { class: 'mudo' }, 'Nada neste filtro para esta unidade.'),
+          h('div', { class: 'compart' }, h('strong', null, 'Quem acompanha esta unidade'),
+            h('div', { class: 'interruptores' }, d.pessoas.map((p) => interruptor(u, p))),
+            u.pode_compartilhar ? null : h('p', { class: 'mudo peq', style: 'margin:4px 0 0' }, 'Só quem acompanha a unidade (ou a superintendência) muda o compartilhamento.'))));
+      if (aberto) det.open = true;
+      det.addEventListener('toggle', () => { F.abertas[u.contrato_id] = det.open; });
+      return det;
+    };
+
+    // ---- Ausência / substituição (liga e desliga) ----
     const pessoas = s.pessoas;
     const ehSuper = ['superintendente', 'admin'].includes(EU().perfil);
     const hoje = new Date().toISOString().slice(0, 10);
-    const f = { de: h('select', { id: 'sb-de' }, pessoas.map((p) => h('option', Object.assign({ value: p.usuario_id }, p.usuario_id === EU().usuario_id ? { selected: true } : {}), p.nome))),
-      para: h('select', { id: 'sb-para' }, pessoas.filter((p) => p.usuario_id !== EU().usuario_id).map((p) => h('option', { value: p.usuario_id }, p.nome))),
-      desde: h('input', { type: 'date', id: 'sb-desde', value: hoje }), ate: h('input', { type: 'date', id: 'sb-ate' }), motivo: h('input', { type: 'text', id: 'sb-motivo', placeholder: 'Ex.: férias' }) };
-    const criarSub = async () => {
-      try { await api('POST', '/api/caixa/substituicoes', { de_usuario_id: ehSuper ? Number(f.de.value) : undefined, para_usuario_id: Number(f.para.value), desde: f.desde.value, ate: f.ate.value, motivo: f.motivo.value }); toast('Caixa redirecionada.'); refazer(); } catch (e) { toast(e.message, true); }
+    const minhas = s.substituicoes.filter((x) => ehSuper || x.de_usuario_id === EU().usuario_id);
+    const ativas = minhas.filter((x) => ['em vigor', 'agendada'].includes(x.situacao));
+    const ativarAusencia = async (modelo) => {
+      const de = h('select', { id: 'sb-de' }, pessoas.map((p) => h('option', Object.assign({ value: p.usuario_id }, p.usuario_id === (modelo ? modelo.de_usuario_id : EU().usuario_id) ? { selected: true } : {}), p.nome)));
+      const para = h('select', { id: 'sb-para' }, pessoas.filter((p) => p.usuario_id !== EU().usuario_id || ehSuper).map((p) => h('option', Object.assign({ value: p.usuario_id }, modelo && p.usuario_id === modelo.para_usuario_id ? { selected: true } : {}), p.nome)));
+      const desde = h('input', { type: 'date', id: 'sb-desde', value: modelo && modelo.desde > hoje ? modelo.desde : hoje }), ate = h('input', { type: 'date', id: 'sb-ate', value: modelo ? modelo.ate : '' });
+      const motivo = h('input', { type: 'text', id: 'sb-motivo', placeholder: 'Ex.: férias', value: modelo ? (modelo.motivo || '') : '' });
+      const campo = (id, r, el) => h('div', { class: 'campo' }, h('label', { for: id }, r), el);
+      const r = await janela('Ativar ausência', h('div', null, h('p', { class: 'mudo peq' }, 'Os itens novos vão para o substituto, marcados "em substituição de ...", e ele(a) passa a abrir as unidades durante o período.'),
+        ehSuper ? campo('sb-de', 'Caixa de', de) : null, campo('sb-para', 'Substituto', para), campo('sb-desde', 'De', desde), campo('sb-ate', 'Até', ate), campo('sb-motivo', 'Motivo', motivo)),
+        [{ rotulo: 'Cancelar', valor: null, sec: true }, { rotulo: 'Ativar', valor: 'ok' }]);
+      if (r !== 'ok') return;
+      try { await api('POST', '/api/caixa/substituicoes', { de_usuario_id: ehSuper ? Number(de.value) : undefined, para_usuario_id: Number(para.value), desde: desde.value, ate: ate.value, motivo: motivo.value }); toast('Ausência ativada.'); refazer(); } catch (e) { toast(e.message, true); }
     };
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Caixa de entrada'), h('p', null, 'Tudo que chegou das unidades e o que está a vencer, nas unidades da sua carteira. Quem divide a unidade com você recebe os mesmos itens; o primeiro que tratar marca para todos.'))),
+    const desativar = async (x) => { try { await api('DELETE', '/api/caixa/substituicoes/' + x.subst_id); toast('Ausência desativada.'); refazer(); } catch (e) { toast(e.message, true); } };
+    const painelAusencia = h('div', { class: 'cartao', id: 'cx-subst', style: 'padding:10px 14px' },
+      h('div', { class: 'linha espaco' }, h('div', null, h('strong', null, 'Ausência / substituição '), ativas.length ? selo('ativa', 'ok') : selo('desligada', '')),
+        ativas.length ? null : h('button', { class: 'sec', id: 'sb-ativar', onclick: () => ativarAusencia(null) }, 'Ativar ausência')),
+      ativas.map((x) => h('div', { class: 'linha espaco', style: 'margin-top:8px' }, h('span', { class: 'peq' }, (ehSuper ? x.de_nome + ' → ' : 'Caixa → ') + x.para_nome + ' · ' + dataBr(x.desde) + ' a ' + dataBr(x.ate) + (x.motivo ? ' · ' + x.motivo : '')),
+        h('button', { class: 'sec', onclick: () => desativar(x) }, 'Desativar'))),
+      minhas.filter((x) => !['em vigor', 'agendada'].includes(x.situacao)).slice(0, 3).map((x) => h('div', { class: 'linha espaco mudo peq', style: 'margin-top:6px' }, h('span', null, (ehSuper ? x.de_nome + ' → ' : '') + x.para_nome + ' · ' + dataBr(x.desde) + ' a ' + dataBr(x.ate) + ' · ' + x.situacao),
+        x.ate >= hoje && !ativas.length ? h('button', { class: 'leve', onclick: () => ativarAusencia(x) }, 'Reativar') : null)));
+
+    // ---- Lista de unidades (com busca na hora) ----
+    const lista = h('div', { id: 'cx-lista' });
+    const desenharLista = () => {
+      const q = norm(F.busca);
+      const un = d.unidades.filter((u) => !q || norm(u.unidade + ' ' + (u.municipio || '')).includes(q));
+      const vazio = d.geral.length === 0 && !un.length;
+      lista.replaceChildren(...un.map(bloco).concat([
+        d.geral.length && !q ? h('div', { class: 'cartao' }, h('h3', null, 'Geral (sem unidade)'), d.geral.map(card)) : null,
+        vazio ? h('div', { class: 'cartao' }, h('p', { class: 'mudo' }, 'Nenhuma unidade encontrada.')) : null].filter(Boolean)));
+    };
+    const busca = h('input', { type: 'search', id: 'cx-busca', placeholder: 'Buscar unidade ou município…', value: F.busca, 'aria-label': 'Buscar unidade', oninput: (e) => { F.busca = e.target.value; desenharLista(); } });
+    desenharLista();
+
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Caixa de entrada'), h('p', null, d.todas ? 'Tudo que chegou das unidades, por unidade. Você vê todas (sem carteira definida).' : 'Tudo que chegou das unidades da sua carteira, reunido por unidade. Quem divide a unidade com você recebe os mesmos itens; o primeiro que tratar marca para todos.'))),
       h('div', { class: 'cartao cx-resumo', id: 'cx-resumo', style: 'padding:10px 14px' }, h('div', { class: 'linha', style: 'gap:18px;flex-wrap:wrap' },
         faixa('nao_lidos', rs.naoLidos, 'não lidos', rs.naoLidos ? 'atencao' : '', '', 'nao_lidos'), faixa('prazos', rs.prazos_vencidos, 'prazo(s) vencido(s)', rs.prazos_vencidos ? 'alta' : '', 'prazo_vencido'),
         faixa('prazos2', rs.prazos_a_vencer, 'a vencer', rs.prazos_a_vencer ? 'atencao' : '', 'prazo_vencer'), faixa('resp', rs.respostas, 'achado(s) com resposta', rs.respostas ? 'atencao' : '', 'resposta'),
         faixa('semg', rs.sem_gestor, 'unidade(s) sem gestor', rs.sem_gestor ? 'atencao' : '', 'sem_gestor'))),
       h('div', { class: 'filtros cartao' },
-        opc('cx-f-un', 'Unidade', [['', 'Todas']].concat(d.unidades.map((u) => [u.contrato_id, u.unidade])), F.unidade, (v) => { F.unidade = v; caixa(); }),
+        h('div', { class: 'campo filtro' }, h('label', { for: 'cx-busca' }, 'Unidade'), busca),
         opc('cx-f-tipo', 'Tipo', [['', 'Todos']].concat(Object.entries(d.tipos)), F.tipo, (v) => { F.tipo = v; caixa(); }),
-        opc('cx-f-sit', 'Situação', [['pendentes', 'Pendentes'], ['nao_lidos', 'Não lidos'], ['tratados', 'Tratados'], ['', 'Todos']], F.situacao, (v) => { F.situacao = v; caixa(); }),
+        opc('cx-f-sit', 'Situação', SIT, F.situacao === '' ? 'todos' : F.situacao, (v) => { F.situacao = v; caixa(); }),
         d.contagem.naoLidos ? h('button', { class: 'sec', id: 'cx-todos-lidos', onclick: async () => { await api('POST', '/api/caixa/lidos', {}); refazer(); } }, 'Marcar todos como lidos') : null),
-      h('div', { class: 'kpis' }, h('div', { class: 'kpi' + (d.contagem.naoLidos ? ' atencao' : '') }, h('div', { class: 'r' }, 'Não lidos'), h('div', { class: 'num-grande' }, String(d.contagem.naoLidos))), h('div', { class: 'kpi' }, h('div', { class: 'r' }, 'Pendentes'), h('div', { class: 'num-grande' }, String(d.contagem.pendentes)))),
-      h('div', { id: 'cx-lista' }, d.itens.length ? d.itens.map(card) : h('div', { class: 'cartao' }, h('p', { class: 'mudo' }, 'Nada por aqui para este filtro.'))),
-      h('div', { class: 'cartao', id: 'cx-subst' }, h('h2', { style: 'margin-top:0' }, 'Ausência ou substituição'),
-        h('p', { class: 'mudo peq' }, 'Redireciona a caixa para outra pessoa por um período. Os itens novos vão para o substituto, marcados "em substituição de ' + (EU().nome || 'você') + '", e ele(a) passa a abrir as unidades durante o período.'),
-        h('div', { class: 'duas' }, ehSuper ? h('div', { class: 'campo' }, h('label', { for: 'sb-de' }, 'Caixa de'), f.de) : null, h('div', { class: 'campo' }, h('label', { for: 'sb-para' }, 'Substituto'), f.para),
-          h('div', { class: 'campo' }, h('label', { for: 'sb-desde' }, 'De'), f.desde), h('div', { class: 'campo' }, h('label', { for: 'sb-ate' }, 'Até'), f.ate), h('div', { class: 'campo' }, h('label', { for: 'sb-motivo' }, 'Motivo'), f.motivo)),
-        h('button', { id: 'sb-criar', onclick: criarSub }, 'Redirecionar a caixa'),
-        s.substituicoes.length ? tabela([{ t: 'Caixa de' }, { t: 'Substituto' }, { t: 'Período' }, { t: 'Situação' }, { t: '' }], s.substituicoes.map((x) => [x.de_nome, x.para_nome, dataBr(x.desde) + ' a ' + dataBr(x.ate), selo(x.situacao, x.situacao === 'em vigor' ? 'ok' : ''),
-          ['em vigor', 'agendada'].includes(x.situacao) ? h('button', { class: 'leve', onclick: async () => { try { await api('DELETE', '/api/caixa/substituicoes/' + x.subst_id); refazer(); } catch (e) { toast(e.message, true); } } }, 'Cancelar') : ''])) : null));
+      painelAusencia, lista);
     atualizarContador();
   }
 
-  async function minhas() {
-    const d = await api('GET', '/api/caixa/minhas-unidades');
-    const tomPrazo = (s) => (['vencido', 'entregue com atraso'].includes(s) ? 'alta' : (s === 'a vencer' ? 'atencao' : 'ok'));
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Minhas unidades'), h('p', null, d.todas ? 'Você vê todas as unidades (sem carteira definida).' : 'Unidades da sua carteira. Clique para abrir.'))),
-      d.unidades.length ? h('div', { class: 'unidades-grid', id: 'mu-lista' }, d.unidades.map((u) => {
-        const p = u.pior_prazo;
-        return h('a', { class: 'cartao un-card', href: u.link, 'data-contrato': u.contrato_id, style: 'text-decoration:none;color:inherit;display:block' },
-          h('h3', { style: 'margin:0' }, u.unidade), h('p', { class: 'mudo peq' }, [u.tipo, u.municipio].filter(Boolean).join(' · ') || ' '),
-          h('div', null, selo(u.fase, ''), ' ', p ? selo('Prazo ' + p.canal + ' ' + p.situacao, tomPrazo(p.situacao)) : null, ' ', u.sem_gestor ? selo('aguardando gestor', 'atencao') : null),
-          h('p', { class: 'peq' }, 'Pendências na caixa: ', h('strong', null, String(u.pendencias_caixa)), ' · Achados abertos: ', h('strong', null, String(u.achados.abertos)), ' · Divergências abertas: ', h('strong', null, String(u.divergencias_abertas))),
-          h('p', { class: 'mudo peq' }, 'Última entrega: ' + (u.ultima_entrega ? fmt.data(u.ultima_entrega) : 'nenhuma ainda')));
-      })) : h('div', { class: 'cartao' }, h('p', { class: 'mudo' }, 'Nenhuma unidade na sua carteira.')));
-  }
-
-  window.CTAI_CAIXA = { rotas: [['/caixa', caixa], ['/minhas-unidades', minhas]], atualizarContador };
+  window.CTAI_CAIXA = { rotas: [['/caixa', caixa], ['/minhas-unidades', () => { location.replace('#/caixa'); }]], atualizarContador };
 })();

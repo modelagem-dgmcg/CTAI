@@ -306,6 +306,52 @@ function minhasUnidades(db, u) {
   return { unidades, trimestre: p.trimestre, todas: !perm };
 }
 
+// ---------- Visão única: caixa de entrada organizada por unidade ----------
+// Cada unidade da carteira reúne o que chegou (itens), a situação (fase, prazos, achados) e quem a acompanha.
+function visaoUnidades(db, u, f) {
+  f = f || {};
+  const base = minhasUnidades(db, u);
+  const lista = listar(db, u, { tipo: f.tipo, situacao: f.situacao === undefined ? 'pendentes' : f.situacao });
+  const porUn = {}, geral = [];
+  for (const i of lista.itens) { if (i.contrato_id) (porUn[i.contrato_id] = porUn[i.contrato_id] || []).push(i); else geral.push(i); }
+  const meus = CART.doUsuario(db, u.usuario_id);
+  const perm = permitido(db, u);
+  const pessoas = db.all("SELECT usuario_id, nome, login, perfil FROM usuarios WHERE ativo = 1 AND perfil IN ('criador','colega') ORDER BY nome")
+    .map((p) => Object.assign(p, { tem_carteira: CART.doUsuario(db, p.usuario_id).length > 0 }));
+  const unidades = base.unidades.map((x) => {
+    const itens = porUn[x.contrato_id] || [];
+    const equipe = CART.responsaveis(db, x.contrato_id).map((r) => r.usuario_id);
+    return Object.assign({}, x, { itens, nao_lidos: itens.filter((i) => !i.lido && !i.tratado).length, urgencia: itens.reduce((m, i) => Math.max(m, i.urgencia || 0), 0), equipe,
+      pode_compartilhar: ehSuper(u) || !perm || meus.includes(x.contrato_id) });
+  }).sort((a, b) => (b.urgencia - a.urgencia) || (b.pendencias_caixa - a.pendencias_caixa) || a.unidade.localeCompare(b.unidade));
+  return { unidades, geral, contagem: lista.contagem, tipos: lista.tipos, pessoas, todas: base.todas, eu: u.usuario_id };
+}
+
+// Liga ou desliga o compartilhamento de uma unidade com um colega (entra ou sai da carteira dele). Fica na trilha e no histórico da carteira.
+function compartilhar(db, u, contratoId, usuarioId, ligado) {
+  const un = db.get('SELECT contrato_id, unidade FROM contratos WHERE contrato_id = ?', contratoId);
+  if (!un) throw erro(404, 'Unidade não encontrada.');
+  const perm = permitido(db, u);
+  if (!ehSuper(u) && perm && !CART.doUsuario(db, u.usuario_id).includes(contratoId)) throw erro(403, 'Só quem acompanha a unidade pode mudar o compartilhamento dela.');
+  const alvo = db.get('SELECT * FROM usuarios WHERE usuario_id = ? AND ativo = 1', Number(usuarioId));
+  if (!alvo || !CART.ELEGIVEIS.includes(alvo.perfil)) throw erro(400, 'Escolha um criador ou colega ativo da CTAI.');
+  const atuais = CART.doUsuario(db, alvo.usuario_id);
+  if (ligado && !atuais.length) throw erro(400, alvo.nome + ' ainda não tem carteira e vê todas as unidades. Defina a carteira dessa pessoa em Gestão CTAI.');
+  const ja = atuais.includes(contratoId);
+  if (!!ligado === ja) return { ok: true, sem_mudanca: true };
+  if (!ligado && !ehSuper(u) && CART.responsaveis(db, contratoId).length <= 1) throw erro(400, 'A unidade ficaria sem ninguém. Inclua outra pessoa antes de retirar esta.');
+  const novos = ligado ? atuais.concat([contratoId]) : atuais.filter((c) => c !== contratoId);
+  db.tx(() => {
+    CART.definir(db, u.login, alvo.usuario_id, novos, 'Compartilhamento pelo analista (' + u.login + ')');
+    if (ligado) {
+      db.run('INSERT OR IGNORE INTO caixa_destinos (item_id, usuario_id) SELECT item_id, ? FROM caixa_itens WHERE contrato_id = ? AND tratado_por IS NULL', alvo.usuario_id, contratoId);
+      criar(db, { chave: 'compart:' + contratoId + ':' + alvo.usuario_id + ':' + Date.now(), tipo: 'redirecionado', contrato_id: contratoId, titulo: 'Unidade compartilhada com você: ' + un.unidade,
+        texto: u.nome + ' incluiu você no acompanhamento desta unidade. Os itens pendentes dela já estão na sua caixa.', link: '#/caixa', destinos: [{ usuario_id: alvo.usuario_id }] }, u.login);
+    }
+  });
+  return { ok: true };
+}
+
 // ---------- Entregas por carteira (Gestão CTAI) ----------
 const diasNaoLido = (db) => Math.max(1, Number(CART.cfg(db, 'caixa_dias_nao_lido', '3')) || 3);
 function entregas(db, filtro) {
@@ -364,5 +410,5 @@ function tempos(db, usuarioId, de, ate, contrato) {
 // Ponto de extensão (aviso por e-mail): nada é enviado hoje. Para ligar no futuro, registre aqui uma função que receba
 // { item_id, tipo, unidade, titulo, destinatarios:[{login,nome}] } — ela é chamada depois que o item é criado.
 
-module.exports = { TIPOS, PERFIS_CAIXA, criar, eventoEnvio, eventoResposta, eventoMinuta, sincronizar, listar, resumo, contador, detalhe, marcarLido, marcarTodosLidos, tratar, reabrir, redirecionarItem,
+module.exports = { visaoUnidades, compartilhar, TIPOS, PERFIS_CAIXA, criar, eventoEnvio, eventoResposta, eventoMinuta, sincronizar, listar, resumo, contador, detalhe, marcarLido, marcarTodosLidos, tratar, reabrir, redirecionarItem,
   criarSubstituicao, cancelarSubstituicao, listarSubstituicoes, minhasUnidades, entregas, tempos, diasNaoLido, destinatariosDaUnidade, avisos };

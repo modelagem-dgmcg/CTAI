@@ -14,6 +14,8 @@ module.exports = (db) => {
   r.get('/', antes, (req, res) => res.json(CX.listar(db, req.usuario, { unidade: req.query.unidade, tipo: req.query.tipo, situacao: req.query.situacao })));
   r.get('/resumo', antes, (req, res) => res.json(CX.resumo(db, req.usuario)));
   r.get('/contador', antes, (req, res) => res.json(CX.contador(db, req.usuario)));
+  r.get('/unidades', antes, (req, res) => res.json(CX.visaoUnidades(db, req.usuario, { tipo: req.query.tipo, situacao: req.query.situacao })));
+  r.put('/unidades/:contrato/compartilhar/:usuario', (req, res) => res.json(CX.compartilhar(db, req.usuario, req.params.contrato, req.params.usuario, !!(req.body && req.body.ligado))));
   r.get('/minhas-unidades', (req, res) => res.json(CX.minhasUnidades(db, req.usuario)));
   r.get('/substituicoes', (req, res) => res.json({ substituicoes: CX.listarSubstituicoes(db, req.usuario), pessoas: db.all("SELECT usuario_id, nome, login, perfil FROM usuarios WHERE ativo = 1 AND perfil IN ('criador','colega','superintendente','admin') ORDER BY nome") }));
   r.post('/substituicoes', (req, res) => res.json({ subst_id: CX.criarSubstituicao(db, req.usuario, req.body || {}) }));

@@ -560,7 +560,7 @@
     const meta0 = await api('GET', '/api/meta').catch(() => null);
     window.__semPainel = !!(me0 && ['criador', 'colega'].includes(me0.usuario.perfil) && meta0 && !meta0.painelAnalista);
     window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão CTAI' }] : [];
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/minhas-unidades', rotulo: 'Minhas unidades' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
+    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_CAIXA.atualizarContador(); setInterval(() => window.CTAI_CAIXA.atualizarContador(), 60000);

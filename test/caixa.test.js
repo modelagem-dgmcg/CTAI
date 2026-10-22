@@ -201,3 +201,31 @@ test('painel reduzido: /api/meta informa a configuração; resumo da caixa respe
   assert.ok(r.prazos_vencidos >= 1);
   assert.equal((await gestor.get('/api/caixa/resumo')).status, 403);
 });
+
+test('caixa única por unidade: itens agrupados, equipe e compartilhamento ligado/desligado pelo analista', async () => {
+  const v1 = (await colega1.get('/api/caixa/unidades')).json;
+  const demo = v1.unidades.find((u) => u.contrato_id === DEMO);
+  assert.ok(demo, 'a unidade da carteira aparece como bloco');
+  assert.ok(demo.itens.length >= 1 && demo.itens.every((i) => i.contrato_id === DEMO), 'os itens ficam dentro da unidade');
+  assert.deepEqual([...demo.equipe].sort(), [ids.cleuton, ids.colega1].sort());
+  assert.equal(demo.pode_compartilhar, true);
+  assert.equal((await colega2.get('/api/caixa/unidades')).json.unidades.some((u) => u.contrato_id === DEMO), false, 'quem não acompanha não vê o bloco');
+
+  const rota = (c, ligado) => c.put('/api/caixa/unidades/' + DEMO + '/compartilhar/' + ids.colega2, { ligado });
+  assert.equal((await rota(colega2, true)).status, 403, 'quem não acompanha a unidade não mexe no compartilhamento dela');
+  assert.equal((await rota(colega1, true)).status, 200);
+  const dep = (await colega2.get('/api/caixa/unidades')).json;
+  const blocoC2 = dep.unidades.find((u) => u.contrato_id === DEMO);
+  assert.ok(blocoC2 && blocoC2.itens.length >= 1, 'o colega incluído já recebe os itens pendentes');
+  assert.ok(dep.geral.concat(blocoC2.itens).some((i) => /compartilhada com você/i.test(i.titulo)) || (await itens(colega2)).itens.some((i) => /compartilhada com você/i.test(i.titulo)), 'recebe o aviso do compartilhamento');
+  assert.ok(S.db.get("SELECT 1 FROM carteira WHERE usuario_id = ? AND contrato_id = ? AND ate IS NULL AND motivo LIKE 'Compartilhamento pelo analista%'", ids.colega2, DEMO), 'fica no histórico da carteira');
+  assert.equal((await rota(colega1, false)).status, 200);
+  assert.equal((await colega2.get('/api/caixa/unidades')).json.unidades.some((u) => u.contrato_id === DEMO), false, 'desligado, o bloco some');
+
+  // não deixa a unidade sem ninguém, e quem sai perde o controle dela
+  const sai = (c, quem) => c.put('/api/caixa/unidades/' + DEMO + '/compartilhar/' + quem, { ligado: false });
+  assert.equal((await sai(cleuton, ids.colega1)).status, 200);
+  assert.equal((await sai(colega1, ids.cleuton)).status, 403);
+  assert.equal((await sai(cleuton, ids.cleuton)).status, 400, 'a unidade ficaria sem ninguém');
+  assert.equal((await cleuton.put('/api/caixa/unidades/' + DEMO + '/compartilhar/' + ids.colega1, { ligado: true })).status, 200, 'volta ao estado anterior');
+});
