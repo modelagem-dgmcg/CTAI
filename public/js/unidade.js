@@ -146,6 +146,19 @@
         inputs[c.id] = el;
         return h('div', { class: 'campo', id: 'cp-' + c.id }, h('label', { for: 'f-' + c.id }, c.rotulo, c.unidade ? h('span', { class: 'un' }, ' (' + c.unidade + ')') : null), el, c.ajuda ? h('div', { class: 'ajuda' }, c.ajuda) : null, h('div', { class: 'msg-erro' }));
       })))));
+    const arq = h('input', { type: 'file', id: 'fi-arquivo', accept: '.pdf,.txt,.csv,.docx,.xlsx' });
+    const lerArquivo = async () => {
+      const f = arq.files[0]; if (!f) { toast('Escolha um arquivo.', true); return; }
+      if (f.size > 4 * 1024 * 1024) { toast('Arquivo acima de 4 MB.', true); return; }
+      const b64 = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = no; r.readAsDataURL(f); });
+      try {
+        const o = await api('POST', '/api/unidade/competencias/' + p.cid + '/ficha/' + p.setor + '/ler', { nome: f.name, base64: b64 });
+        if (!o.ok) { toast(o.motivo, true); return; }
+        let n = 0, conf = 0;
+        for (const [id, x] of Object.entries(o.campos)) { const el = inputs[id]; if (!el) continue; el.value = x.valor; n++; if (x.verificado) conf++; const cp = document.getElementById('cp-' + id); if (cp) cp.classList.add('proposto'); }
+        toast(n ? n + ' campo(s) preenchido(s) (' + conf + ' com número encontrado no arquivo). Confira e salve.' : 'Não achei dados desta ficha no arquivo.', !n);
+      } catch (e) { toast(e.message, true); }
+    };
     const valoresDoForm = () => { const o = {}; for (const [id, el] of Object.entries(inputs)) o[id] = el.value; return o; };
     const mostrarErros = (erros) => { document.querySelectorAll('.campo.erro').forEach((x) => { x.classList.remove('erro'); x.querySelector('.msg-erro').textContent = ''; }); (erros || []).forEach((e) => { const el = document.getElementById('cp-' + e.campo); if (el) { el.classList.add('erro'); el.querySelector('.msg-erro').textContent = e.mensagem; } }); const prim = document.querySelector('.campo.erro'); if (prim) prim.scrollIntoView({ block: 'center' }); };
     const salvar = async (pronta) => {
@@ -163,6 +176,9 @@
       aviso('atencao', h('strong', null, 'Não escreva dados de paciente. '), 'Nada de nome, CPF, número de prontuário ou data de nascimento, nem nas observações. Para identificar um atendimento, use só o número de protocolo.'),
       f.ficha.status === 'pronta' ? aviso('info', 'Esta ficha está marcada como pronta. Se você salvar uma alteração, ela volta a ser rascunho.') : null,
       bloqueada ? aviso('erro', 'Você não pode editar a ficha de outro setor.') : null,
+      bloqueada ? null : h('div', { class: 'cartao no-print' }, h('h3', null, 'Preencher a partir de um arquivo'),
+        h('p', { class: 'mudo peq' }, 'Anexe o relatório (PDF, Word, Excel, CSV ou TXT). O sistema lê e sugere os valores nos campos; nada é salvo até você conferir e clicar em salvar. O arquivo não fica guardado.'),
+        h('div', { class: 'linha' }, arq, h('button', { type: 'button', class: 'sec', id: 'fi-ler', onclick: lerArquivo }, 'Ler e preencher'))),
       form,
       h('div', { class: 'cartao' }, h('h3', null, 'Como o sistema vai usar estes dados'), tabela([{ t: 'Indicador' }, { t: 'Valor', n: true }, { t: 'Origem' }, { t: 'Pontos', n: true }],
         f.setor.indicadores.map((i) => { const c = d.consolidado[i] || {}; return [i, fmt.valor(c.valor), ({ digitado: 'digitado por você', apoio: 'calculado das contagens', linhas: 'calculado das linhas' })[c.origem] || '—', String(d.pontos.porIndicador[i] ?? 0)]; }),

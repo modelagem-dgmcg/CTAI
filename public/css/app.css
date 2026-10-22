@@ -161,3 +161,4 @@ td .linha{flex-wrap:nowrap;white-space:nowrap}
 .compart{border-top:1px dashed var(--borda);padding-top:10px}
 .interruptores{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:4px}
 label.interruptor{display:inline-block;margin:0;padding:4px 0}
+.campo.proposto input,.campo.proposto select,.campo.proposto textarea{background:#fff8dc}

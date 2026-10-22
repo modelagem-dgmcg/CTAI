@@ -71,6 +71,19 @@ module.exports = (db) => {
     res.json({ setor: st, campos: F.camposDoSetor(st.id), ficha: f, podeEditar: req.usuario.perfil === 'gestor_unidade' || req.usuario.perfil === 'admin' || req.usuario.setor === st.id });
   });
 
+  // Lê PDF/DOCX/XLSX/CSV/TXT e propõe valores para a ficha. Não salva nada; o arquivo não fica guardado.
+  r.post('/competencias/:cid/ficha/:setor/ler', async (req, res) => {
+    const c = comp(req);
+    const st = F.setor(req.params.setor);
+    if (!st) throw erro(404, 'Setor desconhecido.');
+    D.exigirSetor(req.usuario, st.id);
+    const nome = String((req.body && req.body.nome) || 'arquivo').replace(/[\\/\r\n"]/g, '_').slice(0, 120);
+    const ex = await require('../extrair-texto').extrair(nome, Buffer.from(String((req.body && req.body.base64) || ''), 'base64'));
+    const o = await require('../../modules/analista/propor-ficha').propor({ texto: ex.texto, campos: F.camposDoSetor(st.id), mes: c.mes || c.competencia || c.cid });
+    trilha.registrar(db, { usuario: req.usuario.login, tabela: 'fichas', registro: c.cid + '/' + st.id, campo: 'leitura_arquivo', valor_novo: { nome, tipo: ex.tipo, caracteres: ex.texto.length, propostos: Object.keys(o.campos).length } });
+    res.json(Object.assign({ arquivo: nome, caracteres: ex.texto.length }, o));
+  });
+
   r.put('/competencias/:cid/ficha/:setor', (req, res) => {
     const c = comp(req);
     const st = F.setor(req.params.setor);
