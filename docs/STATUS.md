@@ -87,6 +87,6 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 
 ## Mensageiro e ajustes — 22/10/2026
 - Console CTAI: item **Mensageiro** (texto e anexos PDF/Word/Excel/CSV/TXT/PNG/JPG até 4 MB, conversa 1:1 entre a equipe, contador de não lidas). Só a equipe CTAI; a unidade não acessa.
-- **Ligação com os usuários do Analista da diretoria: pendente.** O servidor daquele app (Apps Script) não está no repositório; precisa da URL da API e de uma credencial de serviço, ou de uma lista de usuários.
+- **Ligação com o Analista da diretoria:** pronta, ligada por CTAI_ANALISTA_URL, CTAI_ANALISTA_EMAIL e CTAI_ANALISTA_SENHA (conta de serviço, só no painel da Render). Só texto; a mensagem sai com "[CTAI · nome]". Testada com servidor simulado; falta teste com o Analista real.
 - Quadros 01/02 mostram "Dados de produção não conectados" enquanto vazios; o aviso some quando entram linhas.
 - Título "Sistema CTAI" centralizado na entrada.

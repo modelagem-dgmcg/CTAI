@@ -19,13 +19,28 @@
   const lerBase64 = (arq) => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => no(new Error('Não consegui ler o arquivo.')); r.readAsDataURL(arq); });
 
   async function mensageiro() {
-    const [c] = await Promise.all([api('GET', '/api/mensageiro/contatos')]);
+    const [c, pe] = await Promise.all([api('GET', '/api/mensageiro/contatos'), api('GET', '/api/mensageiro/ponte/estado').catch(() => ({ configurada: false }))]);
+    const ext = { itens: [], erro: null };
+    if (pe.configurada) { try { ext.itens = (await api('GET', '/api/mensageiro/ponte/contatos')).contatos; } catch (e) { ext.erro = e.message; } }
     const col = h('div', { class: 'cartao msg-contatos', id: 'msg-contatos' });
     const painel = h('div', { class: 'cartao', id: 'msg-painel' }, h('p', { class: 'mudo' }, 'Escolha uma pessoa para conversar.'));
     const pintarContatos = () => col.replaceChildren(h('h3', null, 'Equipe'), ...c.contatos.map((p) => h('button', { type: 'button', class: 'ct' + (p.login === ESTADO.login ? ' ativo' : ''), 'data-login': p.login, onclick: () => abrir(p.login) },
       h('span', null, p.nome, h('br'), h('small', null, (PERFIL[p.perfil] || p.perfil) + ' · ' + p.origem)), p.naoLidas ? h('span', { class: 'selo atencao' }, String(p.naoLidas)) : null)),
       c.contatos.length ? null : h('p', { class: 'mudo peq' }, 'Nenhum outro usuário da equipe ainda.'),
-      h('p', { class: 'mudo peq', style: 'margin-top:10px' }, 'Usuários do Analista da diretoria entram aqui quando a ligação entre os dois sistemas for configurada.'));
+      h('h3', { style: 'margin-top:14px' }, 'Analista (diretoria)'),
+      !pe.configurada ? h('p', { class: 'mudo peq' }, 'Ligação com o Analista ainda não configurada.') : ext.erro ? aviso('atencao', 'Não consegui falar com o Analista agora: ' + ext.erro) : null,
+      ...ext.itens.map((p) => h('button', { type: 'button', class: 'ct' + (ESTADO.login === 'analista:' + p.id ? ' ativo' : ''), 'data-externo': p.id, onclick: () => abrirExterno(p) }, h('span', null, p.nome, h('br'), h('small', null, p.grupo ? 'Grupo · Analista' : 'Analista')))));
+    async function abrirExterno(p) {
+      ESTADO.login = 'analista:' + p.id; pintarContatos();
+      let msgs = [];
+      try { msgs = (await api('GET', '/api/mensageiro/ponte/conversa?id=' + encodeURIComponent(p.id))).mensagens; } catch (e) { painel.replaceChildren(h('h3', null, p.nome), aviso('erro', e.message)); return; }
+      const hist = h('div', { class: 'msg-hist', id: 'msg-hist' }, msgs.length ? msgs.map((m) => h('div', { class: 'msg-b' + (m.meu ? ' meu' : '') }, m.texto, h('small', null, (m.meu ? 'CTAI' : m.de) + ' · ' + hora(m.criado_em)))) : h('p', { class: 'mudo' }, 'Sem mensagens ainda.'));
+      const texto = h('textarea', { id: 'msg-texto', rows: 2, placeholder: 'Escreva a mensagem…', 'aria-label': 'Mensagem' });
+      const enviar = async () => { try { await api('POST', '/api/mensageiro/ponte/enviar', { id: p.id, texto: texto.value }); abrirExterno(p); } catch (e) { toast(e.message, true); } };
+      painel.replaceChildren(h('h3', null, p.nome + ' · Analista'), hist, h('div', { class: 'campo' }, texto), h('div', { class: 'linha' }, h('button', { id: 'msg-enviar', onclick: enviar }, 'Enviar')),
+        h('p', { class: 'mudo peq' }, 'A mensagem chega ao Analista com o seu nome (“[CTAI · seu nome]”). Para o Analista, só texto; anexos valem entre a equipe do CTAI.'));
+      hist.scrollTop = hist.scrollHeight;
+    }
     async function abrir(login) {
       ESTADO.login = login;
       const d = await api('GET', '/api/mensageiro/conversa/' + encodeURIComponent(login));
