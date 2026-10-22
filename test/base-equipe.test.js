@@ -41,3 +41,21 @@ test('o analista pode ser convocado para conferir (não o criador)', async () =>
   const outra = S.db.get("SELECT * FROM usuarios WHERE login = 'jussara'");
   assert.throws(() => M.conferir(S.db, vid, outra, 'identificacao', 'ok'), /convocado/);
 });
+
+test('regras: UPA sem regra herda o modelo em lote (só admin), hospital segue sem regra', async () => {
+  const adm = cliente(S.base); await entrar(adm, 'admin');
+  const antes = (await adm.get('/api/ctai/contratos')).json.contratos;
+  const upa = antes.find((c) => /Exemplo Alfa/.test(c.unidade)), hosp = antes.find((c) => /Exemplo Beta/.test(c.unidade));
+  assert.equal(upa.regra.tem, false);
+  const jr = cliente(S.base); await entrar(jr, 'juliana.rocha');
+  assert.equal((await jr.post('/api/ctai/regras/modelo-lote', { tipo: 'UPA', modelo: 'igq_v1' })).status, 403);
+  const r = await adm.post('/api/ctai/regras/modelo-lote', { tipo: 'UPA', modelo: 'igq_v1' });
+  assert.equal(r.status, 200);
+  assert.ok(r.json.aplicadas >= 1);
+  const dep = (await adm.get('/api/ctai/contratos')).json.contratos;
+  const u2 = dep.find((c) => c.contrato_id === upa.contrato_id);
+  assert.equal(u2.regra.tem, true); assert.equal(u2.regra.conferida, false);
+  assert.equal(dep.find((c) => c.contrato_id === hosp.contrato_id).regra.tem, false);
+  const d = (await adm.get('/api/ctai/contratos/' + hosp.contrato_id + '/decisoes')).json;
+  assert.equal(d.semRegras, true);
+});

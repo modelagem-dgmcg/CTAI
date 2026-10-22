@@ -241,14 +241,51 @@
   }
 
   // ---------- Regras e decisões ----------
+  // Visão geral de todas as unidades + detalhe de uma. Nunca fica em branco: quando falta regra, diz o que falta e oferece o caminho.
   async function regras(p) {
     const cs = (await api('GET', '/api/ctai/contratos')).contratos;
-    const id = p.contrato || (cs.find((c) => !c.demo) || cs[0]).contrato_id;
+    const ehSup = eh('superintendente', 'admin');
+    const pode = eh('criador', 'superintendente', 'admin');
+    const id = p.contrato || null;
+    const estadoSelo = (c) => !c.regra.tem ? selo('sem regra', 'alta') : c.regra.conferida ? selo('regra conferida', 'ok') : selo('modelo a conferir', 'atencao');
+    const cabeca = h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Regras e decisões'), h('p', null, 'A regra de cada contrato e as dúvidas de regra que mudam o resultado. Cada decisão diz onde está escrito ou quem decidiu.')));
+    const aplicar = async (cid) => { try { await api('POST', '/api/ctai/contratos/' + cid + '/regras/modelo', { modelo: 'igq_v1' }); toast('Modelo aplicado. Falta conferir com o contrato.'); regras(p); } catch (e) { toast(e.message, true); } };
+
+    // ---- Visão geral ----
+    if (!id) {
+      const reais = cs.filter((c) => !c.demo);
+      const lista = reais.length ? reais : cs;
+      const semUpa = lista.filter((c) => !c.regra.tem && c.tipo === 'UPA').length;
+      const cont = { sem: lista.filter((c) => !c.regra.tem).length, modelo: lista.filter((c) => c.regra.tem && !c.regra.conferida).length, ok: lista.filter((c) => c.regra.conferida).length };
+      return montar(cabeca,
+        h('div', { class: 'kpis' }, kpi('Sem regra', String(cont.sem)), kpi('Modelo a conferir', String(cont.modelo)), kpi('Regra conferida', String(cont.ok)), kpi('Decisões em aberto', String(lista.reduce((n, c) => n + (c.decisoesAbertas || 0), 0)))),
+        aviso('info', h('strong', null, 'Como começar. '), 'Abra uma unidade. Se ela não tiver regra, aplique o modelo do tipo dela (hoje existe o das UPAs) e depois confira contra o contrato e os TAs. As regras de hospitais e UPAE entram quando os contratos forem cadastrados.'),
+        ehSup && semUpa ? h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('div', null, h('strong', null, semUpa + ' UPA(s) sem regra'), h('p', { class: 'mudo peq', style: 'margin:2px 0 0' }, 'Aplica o modelo IGQ (baseado na UPA Olinda) a todas de uma vez. Cada uma fica marcada "modelo a conferir" até alguém conferir com o contrato.')),
+          h('button', { id: 'rg-lote', onclick: async () => { if (!(await confirmar('Aplicar o modelo às UPAs', 'O modelo IGQ será aplicado a ' + semUpa + ' UPA(s) sem regra. Elas ficam marcadas "modelo a conferir".', 'Aplicar'))) return; try { const o = await api('POST', '/api/ctai/regras/modelo-lote', { tipo: 'UPA', modelo: 'igq_v1' }); toast(o.aplicadas + ' unidade(s) com o modelo aplicado.'); regras(p); } catch (e) { toast(e.message, true); } } }, 'Aplicar o modelo às UPAs sem regra'))) : null,
+        h('div', { class: 'cartao' }, tabela([{ t: 'Unidade' }, { t: 'Tipo' }, { t: 'Regra' }, { t: 'Decisões em aberto', n: true }, { t: '' }],
+          lista.map((c) => [h('a', { href: '#/regras/' + c.contrato_id }, c.unidade), c.tipo, estadoSelo(c), String(c.decisoesAbertas || 0), h('a', { class: 'btn sec', href: '#/regras/' + c.contrato_id }, c.regra.tem ? 'Abrir' : 'Cadastrar')]), { vazio: 'Nenhuma unidade na sua carteira.' })));
+    }
+
+    // ---- Uma unidade ----
+    const c = cs.find((x) => x.contrato_id === id);
+    if (!c) return montar(cabeca, aviso('erro', 'Unidade não encontrada na sua carteira.'), h('a', { href: '#/regras' }, 'Voltar à visão geral'));
     const r = await api('GET', '/api/ctai/contratos/' + id + '/decisoes');
+    const voltar = h('p', null, h('a', { href: '#/regras' }, '← Todas as unidades'));
+    const topoUn = h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, c.unidade), estadoSelo(c));
+    if (!r.regra.tem) {
+      return montar(cabeca, voltar, topoUn,
+        aviso('atencao', h('strong', null, 'Esta unidade ainda não tem as regras do contrato. '), 'Sem elas o sistema não recalcula indicadores nem pontos. Escolha um caminho abaixo.'),
+        h('div', { class: 'cartao' }, h('h3', null, 'Usar o modelo do tipo ' + c.tipo),
+          c.tipo === 'UPA' ? [h('p', { class: 'mudo' }, 'Copia o IGQ das UPAs (baseado na UPA Olinda) para esta unidade. Ela fica marcada "modelo a conferir": depois confira metas, pesos e valores contra o contrato e os TAs e marque como conferida.'),
+            pode ? h('button', { id: 'rg-modelo', onclick: () => aplicar(id) }, 'Aplicar o modelo IGQ das UPAs') : h('p', { class: 'mudo peq' }, 'Só quem cria o parecer, a superintendência ou o administrador aplica o modelo.')]
+          : h('p', { class: 'mudo' }, 'Ainda não existe modelo para ' + c.tipo + '. Ele será criado a partir do contrato ou de um parecer desse tipo.')),
+        h('div', { class: 'cartao' }, h('h3', null, 'Alimentar a partir do contrato e dos TAs'), h('p', { class: 'mudo' }, 'Importar o contrato e os termos aditivos (PDF, Word ou TXT) para o sistema propor as regras com a cláusula de onde saiu cada uma. Disponível assim que a base de contratos for carregada.')));
+    }
+    const confere = async () => { try { await api('POST', '/api/ctai/contratos/' + id + '/regras/conferida', {}); toast('Regra marcada como conferida.'); regras(p); } catch (e) { toast(e.message, true); } };
     const tabelaRegra = await api('GET', '/api/regras/' + id);
-    const pode = eh('criador', 'superintendente');
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Regras e decisões'), h('p', null, 'Dúvidas sobre a regra que mudam o resultado. Cada decisão precisa dizer onde está escrito ou quem decidiu.'))),
-      h('div', { class: 'campo', style: 'max-width:420px' }, h('label', { for: 'sel-c' }, 'Contrato'), h('select', { id: 'sel-c', onchange: (e) => { location.hash = '#/regras/' + e.target.value; } }, cs.map((c) => h('option', { value: c.contrato_id, selected: c.contrato_id === id }, c.unidade)))),
+    montar(cabeca, voltar, topoUn,
+      !r.regra.conferida ? aviso('atencao', h('strong', null, 'Modelo a conferir. '), r.regra.nota || 'Confira metas, pesos e valores contra o contrato e os TAs desta unidade.', pode ? h('div', { style: 'margin-top:8px' }, h('button', { id: 'rg-conferida', onclick: confere }, 'Conferi com o contrato: marcar como conferida')) : null)
+        : aviso('info', 'Regra conferida por ' + r.regra.conferida_por + (r.regra.conferida_em ? ' em ' + fmt.data(r.regra.conferida_em) : '') + '.'),
       r.decisoes.map((q) => {
         const sel = q.opcoes ? h('select', { id: 'q-' + q.chave }, [h('option', { value: '' }, '— sem decisão —')].concat(q.opcoes.map((o) => h('option', { value: o.valor, selected: o.valor === q.valor }, o.rotulo)))) : h('textarea', { id: 'q-' + q.chave, rows: 2 }, q.valor || '');
         const just = h('input', { type: 'text', id: 'j-' + q.chave, value: q.justificativa || '', placeholder: 'Onde está escrito ou quem decidiu' });

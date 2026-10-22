@@ -70,6 +70,16 @@
       return h('label', { class: 'ck interruptor' + (bloqueado ? ' mudo' : '') }, i, ' ', p.nome + (p.usuario_id === d.eu ? ' (você)' : ''), !p.tem_carteira ? h('span', { class: 'peq' }, ' · vê todas, sem carteira') : null);
     };
 
+    // Só aparece quando alguém mais acompanha a unidade; do contrário fica um link discreto para compartilhar.
+    const compartilhamento = (u) => {
+      const outros = d.pessoas.filter((p) => u.equipe.includes(p.usuario_id) && p.usuario_id !== d.eu);
+      if (!outros.length && !u.pode_compartilhar) return null;
+      const painel = h('div', { class: 'interruptores' }, d.pessoas.map((p) => interruptor(u, p)));
+      return h('details', { class: 'compart', open: false },
+        h('summary', { class: 'peq' }, outros.length ? 'Compartilhada com ' + outros.map((p) => p.nome).join(', ') + ' · gerenciar' : 'Compartilhar esta unidade com um colega'),
+        painel, u.pode_compartilhar ? null : h('p', { class: 'mudo peq', style: 'margin:4px 0 0' }, 'Só quem acompanha a unidade (ou a superintendência) muda o compartilhamento.'));
+    };
+
     // ---- Bloco de uma unidade ----
     const bloco = (u) => {
       const abertoPadrao = u.nao_lidos > 0;
@@ -83,9 +93,7 @@
           h('div', { class: 'linha espaco' }, h('p', { class: 'mudo peq', style: 'margin:0' }, 'Última entrega: ' + (u.ultima_entrega ? fmt.data(u.ultima_entrega) : 'nenhuma ainda') + ' · Achados abertos: ' + u.achados.abertos + ' · Divergências abertas: ' + u.divergencias_abertas),
             h('a', { class: 'btn sec', href: u.link }, 'Abrir conferência')),
           u.itens.length ? u.itens.map(card) : h('p', { class: 'mudo' }, 'Nada neste filtro para esta unidade.'),
-          h('div', { class: 'compart' }, h('strong', null, 'Quem acompanha esta unidade'),
-            h('div', { class: 'interruptores' }, d.pessoas.map((p) => interruptor(u, p))),
-            u.pode_compartilhar ? null : h('p', { class: 'mudo peq', style: 'margin:4px 0 0' }, 'Só quem acompanha a unidade (ou a superintendência) muda o compartilhamento.'))));
+          compartilhamento(u)));
       if (aberto) det.open = true;
       det.addEventListener('toggle', () => { F.abertas[u.contrato_id] = det.open; });
       return det;

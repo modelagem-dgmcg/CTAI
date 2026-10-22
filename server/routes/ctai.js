@@ -24,6 +24,8 @@ module.exports = (db) => {
   const PZ = require('../prazos');
   const soCriadorOuAdmin = (u) => { if (!['criador', 'admin'].includes(u.perfil)) throw erro(403, 'Esta ação é de quem cria o parecer.'); };
 
+  const RC = require('../regras-contrato');
+
   // ---------- Painel ----------
   r.get('/contratos', (req, res) => {
     const lista = db.all('SELECT * FROM contratos ORDER BY demo, contrato_id').filter((c) => !req.escopo || req.escopo.has(c.contrato_id)).map((c) => {
@@ -34,7 +36,7 @@ module.exports = (db) => {
       });
       let abertas = 0, semRegras = false;
       try { const { regras } = D.regrasDoContrato(db, c.contrato_id); abertas = D.pendenciasDeRegra(db, c.contrato_id, regras).abertas.length; } catch (e) { if (e.status !== 409) throw e; semRegras = true; }
-      return Object.assign(c, { demo: !!c.demo, competencias: comps, decisoesAbertas: abertas, semRegras, semGestor: !db.get("SELECT 1 FROM usuarios WHERE perfil = 'gestor_unidade' AND ativo = 1 AND contrato_id = ?", c.contrato_id) });
+      return Object.assign(c, { tipo: RC.tipoDe(c), regra: RC.estado(db, c.contrato_id), demo: !!c.demo, competencias: comps, decisoesAbertas: abertas, semRegras, semGestor: !db.get("SELECT 1 FROM usuarios WHERE perfil = 'gestor_unidade' AND ativo = 1 AND contrato_id = ?", c.contrato_id) });
     });
     res.json({ contratos: lista, escopo: req.escopo ? 'carteira' : 'todas' });
   });
@@ -127,9 +129,12 @@ module.exports = (db) => {
   // ---------- Regras e decisões ----------
   r.get('/contratos/:id/decisoes', (req, res) => {
     let regras;
-    try { regras = D.regrasDoContrato(db, req.params.id).regras; } catch (e) { if (e.status === 409) return res.json({ decisoes: [], regraPendencias: [], semRegras: true }); throw e; }
-    res.json({ decisoes: Object.values(D.decisoes(db, req.params.id)), regraPendencias: R.pendencias(regras) });
+    try { regras = D.regrasDoContrato(db, req.params.id).regras; } catch (e) { if (e.status === 409) return res.json({ decisoes: [], regraPendencias: [], semRegras: true, regra: { tem: false } }); throw e; }
+    res.json({ decisoes: Object.values(D.decisoes(db, req.params.id)), regraPendencias: R.pendencias(regras), regra: RC.estado(db, req.params.id) });
   });
+  r.post('/contratos/:id/regras/modelo', (req, res) => res.json({ regra: RC.aplicarModelo(db, req.usuario, req.params.id, req.body && req.body.modelo) }));
+  r.post('/contratos/:id/regras/conferida', (req, res) => res.json({ regra: RC.marcarConferida(db, req.usuario, req.params.id) }));
+  r.post('/regras/modelo-lote', (req, res) => res.json(RC.aplicarEmLote(db, req.usuario, req.body && req.body.tipo, req.body && req.body.modelo)));
   r.put('/contratos/:id/decisoes/:chave', (req, res) => {
     if (!['criador', 'superintendente', 'admin'].includes(req.usuario.perfil)) throw erro(403, 'Decisão de regra é de quem cria o parecer ou da superintendência.');
     D.decidir(db, req.params.id, req.params.chave, req.body && req.body.valor, req.body && req.body.justificativa, req.usuario);
