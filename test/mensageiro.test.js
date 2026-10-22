@@ -28,7 +28,7 @@ test('recusa tipo perigoso, arquivo grande, vazio e contato inválido', async ()
   assert.equal((await a.post('/api/mensageiro/enviar', { para: 'gestor.demo', texto: 'x' })).status, 404);
 });
 
-test('ponte com o Analista: login de serviço, contatos, conversa e envio com o nome de quem escreveu (servidor simulado)', async () => {
+test('ponte com o Analista: contatos, conversa e envio pela chave de serviço (servidor simulado)', async () => {
   const http = require('node:http');
   const visto = [];
   const srv = http.createServer((req, res) => {
@@ -36,28 +36,28 @@ test('ponte com o Analista: login de serviço, contatos, conversa e envio com o 
     req.on('end', () => {
       const acao = new URL(req.url, 'http://x').searchParams.get('action'); const j = JSON.parse(b || '{}'); visto.push([acao, j]);
       const ok = (o) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify(o)); };
-      if (acao === 'auth/login') return ok(j.email === 'svc@teste' && /^[0-9a-f]{64}$/.test(j.senha_hash) ? { ok: true, token: 'T1' } : { ok: false, erro: 'x' });
-      if (j.token !== 'T1') return ok({ ok: false, sessao_expirada: true });
-      if (acao === 'mensagens/contatos') return ok({ ok: true, individuais: [{ conversa_id: 'c1', nome: 'Fulana' }], grupos: [{ conversa_id: 'g1', nome: 'Grupo A' }] });
-      if (acao === 'mensagens/listar') return ok({ ok: true, mensagens: [{ de_usuario: 'outra@x', de_nome: 'Fulana', texto: 'oi', enviado_em: '2026-10-22T10:00:00Z' }] });
-      if (acao === 'mensagens/enviar') return ok({ ok: true });
+      if (j.servico_chave !== 'chave-teste') return ok({ ok: false, erro: 'chave inválida' });
+      if (acao === 'servico/contatos') return ok({ ok: true, contatos: [{ nome: 'Fulana', email: 'fulana@x', gerencia: 'GGPCG' }] });
+      if (acao === 'servico/mensagens-listar') return ok({ ok: true, mensagens: [{ id: 1, da_ctai: false, de_nome: 'Fulana', texto: 'oi', enviado_em: '2026-10-22T10:00:00Z' }] });
+      if (acao === 'servico/mensagem-enviar') return ok({ ok: true, mensagem: { id: 2, conversa_id: 'c', enviado_em: '2026-10-22T10:01:00Z' } });
       ok({ ok: false, erro: 'acao?' });
     });
   });
   await new Promise((r) => srv.listen(0, r));
-  process.env.CTAI_ANALISTA_URL = 'http://127.0.0.1:' + srv.address().port + '/exec'; process.env.CTAI_ANALISTA_EMAIL = 'svc@teste'; process.env.CTAI_ANALISTA_SENHA = 'segredo-de-teste';
-  require('../server/ponte-analista')._zerar();
+  process.env.ANALISTA_API_URL = 'http://127.0.0.1:' + srv.address().port + '/exec'; process.env.ANALISTA_SERVICO_CHAVE = 'chave-teste';
   try {
     assert.equal((await a.get('/api/mensageiro/ponte/estado')).json.configurada, true);
     const c = (await a.get('/api/mensageiro/ponte/contatos')).json.contatos;
-    assert.deepEqual(c.map((x) => x.nome), ['Fulana', 'Grupo A']);
-    assert.equal((await a.get('/api/mensageiro/ponte/conversa?id=c1')).json.mensagens[0].texto, 'oi');
-    assert.equal((await a.post('/api/mensageiro/ponte/enviar', { id: 'c1', texto: 'Bom dia' })).status, 200);
-    const env = visto.find((v) => v[0] === 'mensagens/enviar')[1];
-    assert.match(env.texto, /^\[CTAI · .+\] Bom dia$/);
+    assert.deepEqual(c.map((x) => [x.id, x.nome]), [['fulana@x', 'Fulana']]);
+    assert.equal((await a.get('/api/mensageiro/ponte/conversa?id=fulana@x')).json.mensagens[0].texto, 'oi');
+    assert.equal((await a.post('/api/mensageiro/ponte/enviar', { id: 'fulana@x', texto: 'Bom dia' })).status, 200);
+    const env = visto.find((v) => v[0] === 'servico/mensagem-enviar')[1];
+    assert.equal(env.texto, 'Bom dia'); assert.equal(env.para_email, 'fulana@x'); assert.ok(env.de_nome);
     assert.equal((await g.get('/api/mensageiro/ponte/contatos')).status, 403);
-    assert.equal((await a.post('/api/mensageiro/ponte/enviar', { id: 'c1', texto: '' })).status, 400);
-    process.env.CTAI_ANALISTA_SENHA = ''; require('../server/ponte-analista')._zerar();
+    assert.equal((await a.post('/api/mensageiro/ponte/enviar', { id: 'fulana@x', texto: '' })).status, 400);
+    process.env.ANALISTA_SERVICO_CHAVE = 'errada';
+    assert.equal((await a.get('/api/mensageiro/ponte/contatos')).status, 502);
+    process.env.ANALISTA_SERVICO_CHAVE = '';
     assert.equal((await a.get('/api/mensageiro/ponte/contatos')).status, 503);
-  } finally { srv.close(); delete process.env.CTAI_ANALISTA_URL; delete process.env.CTAI_ANALISTA_EMAIL; delete process.env.CTAI_ANALISTA_SENHA; }
+  } finally { srv.close(); delete process.env.ANALISTA_API_URL; delete process.env.ANALISTA_SERVICO_CHAVE; }
 });

@@ -29,7 +29,7 @@
       c.contatos.length ? null : h('p', { class: 'mudo peq' }, 'Nenhum outro usuário da equipe ainda.'),
       h('h3', { style: 'margin-top:14px' }, 'Analista (diretoria)'),
       !pe.configurada ? h('p', { class: 'mudo peq' }, 'Ligação com o Analista ainda não configurada.') : ext.erro ? aviso('atencao', 'Não consegui falar com o Analista agora: ' + ext.erro) : null,
-      ...ext.itens.map((p) => h('button', { type: 'button', class: 'ct' + (ESTADO.login === 'analista:' + p.id ? ' ativo' : ''), 'data-externo': p.id, onclick: () => abrirExterno(p) }, h('span', null, p.nome, h('br'), h('small', null, p.grupo ? 'Grupo · Analista' : 'Analista')))));
+      ...ext.itens.map((p) => h('button', { type: 'button', class: 'ct' + (ESTADO.login === 'analista:' + p.id ? ' ativo' : ''), 'data-externo': p.id, onclick: () => abrirExterno(p) }, h('span', null, p.nome, h('br'), h('small', null, p.gerencia ? 'Analista · ' + p.gerencia : 'Analista')))));
     async function abrirExterno(p) {
       ESTADO.login = 'analista:' + p.id; pintarContatos();
       let msgs = [];
@@ -38,7 +38,7 @@
       const texto = h('textarea', { id: 'msg-texto', rows: 2, placeholder: 'Escreva a mensagem…', 'aria-label': 'Mensagem' });
       const enviar = async () => { try { await api('POST', '/api/mensageiro/ponte/enviar', { id: p.id, texto: texto.value }); abrirExterno(p); } catch (e) { toast(e.message, true); } };
       painel.replaceChildren(h('h3', null, p.nome + ' · Analista'), hist, h('div', { class: 'campo' }, texto), h('div', { class: 'linha' }, h('button', { id: 'msg-enviar', onclick: enviar }, 'Enviar')),
-        h('p', { class: 'mudo peq' }, 'A mensagem chega ao Analista com o seu nome (“[CTAI · seu nome]”). Para o Analista, só texto; anexos valem entre a equipe do CTAI.'));
+        h('p', { class: 'mudo peq' }, 'A mensagem chega ao Analista como “CTAI”, com o seu nome. Para o Analista, só texto; anexos valem entre a equipe do CTAI.'));
       hist.scrollTop = hist.scrollHeight;
     }
     async function abrir(login) {
