@@ -89,6 +89,24 @@
   // Troca o conteúdo de um elemento aceitando listas (replaceChildren não aceita arrays).
   function troca(el, ...c) { el.replaceChildren(); add(el, c); return el; }
   function montar(...c) { const el = document.getElementById('conteudo'); el.replaceChildren(); add(el, c); el.focus && el.focus({ preventScroll: true }); }
+  // Cartões recolhíveis: no primeiro acesso (cada login) ficam todos fechados; o que a pessoa abre fica aberto até o próximo login ou até ela fechar.
+  const CH_ABERTOS = 'ctai_abertos';
+  const lerAbertos = () => { try { return JSON.parse(localStorage.getItem(CH_ABERTOS) || '[]'); } catch (_) { return []; } };
+  const gravarAbertos = (a) => { try { localStorage.setItem(CH_ABERTOS, JSON.stringify(a)); } catch (_) { /* sem armazenamento: segue funcionando */ } };
+  const esquecerAbertos = () => { try { localStorage.removeItem(CH_ABERTOS); } catch (_) { /* nada */ } };
+  function recolher(chave, cabecalho, resumo, conteudo) {
+    const corpo = h('div', { class: 'rec-corpo' }, conteudo);
+    const seta = h('span', { class: 'rec-seta', 'aria-hidden': 'true' }, '▸');
+    const btn = h('button', { type: 'button', class: 'rec-cab', 'aria-expanded': 'false' }, seta, h('span', { class: 'rec-titulo' }, cabecalho), resumo ? h('span', { class: 'rec-resumo' }, resumo) : null);
+    const caixa = h('div', { class: 'cartao rec' }, btn, corpo);
+    const pintar = (aberto) => { caixa.classList.toggle('aberto', aberto); btn.setAttribute('aria-expanded', String(aberto)); corpo.hidden = !aberto; };
+    pintar(lerAbertos().includes(chave));
+    btn.addEventListener('click', () => {
+      const abrir = !caixa.classList.contains('aberto'); pintar(abrir);
+      const a = lerAbertos().filter((x) => x !== chave); if (abrir) a.push(chave); gravarAbertos(a);
+    });
+    return caixa;
+  }
   // Quem chega por /unidade volta para a entrada da unidade, não para a da CTAI.
   const entrada = () => (location.pathname === '/unidade' ? '/?entrar=unidade' : '/');
   async function casca(opc) {
@@ -98,8 +116,8 @@
     if (opc.perfis && !opc.perfis.includes(u.perfil) && u.perfil !== 'admin') { location.href = entrada(); return null; }
     const lat = h('nav', { class: 'lateral', 'aria-label': 'Menu' },
       h('div', { class: 'marca' }, h('span', { class: 'logo', 'aria-hidden': 'true' }, 'C'), h('span', null, opc.titulo, h('small', null, opc.subtitulo))),
-      opc.itens.map((i) => h('a', { class: 'nav', href: i.href, 'data-h': i.href }, i.rotulo)),
-      h('div', { class: 'rodape' }, h('div', null, h('strong', null, u.nome)), h('div', null, u.perfilNome), h('button', { class: 'sec', onclick: async () => { await api('POST', '/api/auth/logout', {}); location.href = '/'; } }, 'Sair')));
+      opc.itens.map((i) => h('a', { class: 'nav' + (i.classe ? ' ' + i.classe : ''), href: i.href, 'data-h': i.href }, i.rotulo)),
+      h('div', { class: 'rodape' }, h('div', null, h('strong', null, u.nome)), h('div', null, u.perfilNome), h('button', { class: 'sec', onclick: async () => { await api('POST', '/api/auth/logout', {}); esquecerAbertos(); location.href = '/'; } }, 'Sair')));
     const main = h('main', { class: 'conteudo', id: 'conteudo', tabindex: '-1' });
     document.getElementById('app').replaceChildren(h('div', { class: 'casca' }, lat, main));
     window.__marcarMenu = (hash) => lat.querySelectorAll('a.nav').forEach((a) => { const alvo = a.getAttribute('data-h').replace('#', ''); const h2 = hash.replace(/^\/[pv]\//, '/pareceres/').replace(/^\/analista/, '/pareceres'); a.classList.toggle('ativo', alvo === '/' ? (hash === '/' || hash.startsWith('/c/')) : h2.startsWith(alvo)); });
@@ -116,5 +134,5 @@
       try { await api('POST', '/api/auth/trocar-senha', { atual: a.value, nova: n.value }); toast('Senha trocada.'); return; } catch (e) { msg.textContent = e.message; }
     }
   }
-  window.CTAI = { h, api, fmt, toast, janela, perguntar, confirmar, selo, seloGrav, aviso, tabela, rotear, montar, troca, casca, trocarSenha, add };
+  window.CTAI = { h, api, fmt, toast, janela, perguntar, confirmar, selo, seloGrav, aviso, tabela, rotear, montar, troca, casca, trocarSenha, add, recolher, esquecerAbertos };
 })();

@@ -15,11 +15,13 @@
     const r = await api('GET', '/api/ctai/contratos');
     const pareceres = await api('GET', '/api/ctai/pareceres');
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Painel da CTAI'), h('p', null, 'Envios recebidos, divergências abertas e pareceres em andamento.'))),
-      r.contratos.map((c) => h('div', { class: 'cartao' },
-        h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null), c.decisoesAbertas ? h('a', { href: '#/regras/' + c.contrato_id }, selo(c.decisoesAbertas + ' dúvida(s) de regra em aberto', 'atencao')) : selo('regras decididas', 'ok')),
-        h('p', { class: 'mudo peq' }, c.oss + ' · ' + (c.numero_cg || '')),
+      r.contratos.map((c) => window.CTAI.recolher('painel:' + c.contrato_id,
+        h('span', null, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null),
+        h('span', null, c.competencias.length + ' mês(es) · ' + c.competencias.reduce((n, k) => n + (k.divergenciasAbertas || 0), 0) + ' divergência(s) aberta(s) ', c.decisoesAbertas ? selo(c.decisoesAbertas + ' dúvida(s) de regra', 'atencao') : null),
+        h('div', null,
+          h('p', { class: 'mudo peq', style: 'margin-top:0' }, c.oss + ' · ' + (c.numero_cg || ''), c.decisoesAbertas ? [' · ', h('a', { href: '#/regras/' + c.contrato_id }, 'ver dúvidas de regra')] : null),
         tabela([{ t: 'Mês' }, { t: 'Situação' }, { t: 'Envio' }, { t: 'Recebido em' }, { t: 'Prazos' }, { t: 'Divergências abertas', n: true }, { t: '' }],
-          c.competencias.map((k) => [fmt.comp(k.competencia_id) + (k.mes_implantacao ? ' (implantação)' : ''), selo(k.status, SITU[k.status] || ''), k.versaoEnvio ? h('span', null, 'v' + k.versaoEnvio, k.seiAlertas ? [' ', h('a', { href: '#/c/' + k.cid + '/envios', title: 'Alerta entre o sistema e o SEI' }, selo('SEI: ' + k.seiAlertas + ' alerta(s)', 'atencao'))] : null) : '—', fmt.data(k.recebido_em), k.prazos ? selo(k.prazos.texto, k.prazos.nivel === 'alta' ? 'alta' : (k.prazos.nivel === 'atencao' ? 'atencao' : (k.prazos.nivel === 'ok' ? 'ok' : ''))) : '—', String(k.divergenciasAbertas), h('a', { href: '#/c/' + k.cid }, 'Abrir')])))),
+          c.competencias.map((k) => [fmt.comp(k.competencia_id) + (k.mes_implantacao ? ' (implantação)' : ''), selo(k.status, SITU[k.status] || ''), k.versaoEnvio ? h('span', null, 'v' + k.versaoEnvio, k.seiAlertas ? [' ', h('a', { href: '#/c/' + k.cid + '/envios', title: 'Alerta entre o sistema e o SEI' }, selo('SEI: ' + k.seiAlertas + ' alerta(s)', 'atencao'))] : null) : '—', fmt.data(k.recebido_em), k.prazos ? selo(k.prazos.texto, k.prazos.nivel === 'alta' ? 'alta' : (k.prazos.nivel === 'atencao' ? 'atencao' : (k.prazos.nivel === 'ok' ? 'ok' : ''))) : '—', String(k.divergenciasAbertas), h('a', { href: '#/c/' + k.cid }, 'Abrir')]))))),
       h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, 'Pareceres'), h('a', { class: 'btn sec', href: '#/pareceres' }, 'Ver todos')),
         tabela([{ t: 'Parecer' }, { t: 'Trimestre' }, { t: 'Criado por' }, { t: 'Situação' }], pareceres.pareceres.slice(0, 5).map((p) => [h('a', { href: '#/p/' + p.parecer_id }, p.titulo), p.trimestre, p.criador_nome, selo(p.status + (p.ultimaVersao ? ' (v' + p.ultimaVersao.numero + ')' : ''), p.status === 'anexado ao SEI' || p.status === 'autorizado' ? 'ok' : 'atencao')]), { vazio: 'Nenhum parecer aberto.' })));
   }
@@ -273,8 +275,8 @@
         aviso('info', h('strong', null, 'Como começar. '), 'Abra uma unidade. Se ela não tiver regra, aplique o modelo do tipo dela (hoje existe o das UPAs) e depois confira contra o contrato e os TAs. As regras de hospitais e UPAE entram quando os contratos forem cadastrados.'),
         ehSup && semUpa ? h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('div', null, h('strong', null, semUpa + ' UPA(s) sem regra'), h('p', { class: 'mudo peq', style: 'margin:2px 0 0' }, 'Aplica o modelo IGQ (baseado na UPA Olinda) a todas de uma vez. Cada uma fica marcada "modelo a conferir" até alguém conferir com o contrato.')),
           h('button', { id: 'rg-lote', onclick: async () => { if (!(await confirmar('Aplicar o modelo às UPAs', 'O modelo IGQ será aplicado a ' + semUpa + ' UPA(s) sem regra. Elas ficam marcadas "modelo a conferir".', 'Aplicar'))) return; try { const o = await api('POST', '/api/ctai/regras/modelo-lote', { tipo: 'UPA', modelo: 'igq_v1' }); toast(o.aplicadas + ' unidade(s) com o modelo aplicado.'); regras(p); } catch (e) { toast(e.message, true); } } }, 'Aplicar o modelo às UPAs sem regra'))) : null,
-        ehSup ? h('div', { class: 'cartao' }, h('h3', null, 'Importar regras dos contratos'), h('p', { class: 'mudo peq' }, 'Arquivo JSON com as regras lidas dos contratos e TAs (várias unidades de uma vez). Cada unidade é encontrada pelo nome; as que não casarem são listadas. Tudo entra como "a conferir".'),
-          h('div', { class: 'linha' }, arqLote, h('button', { class: 'sec', id: 'rg-importar-lote', onclick: importarLote }, 'Importar'))) : null,
+        ehSup ? window.CTAI.recolher('regras:importar', 'Importar regras dos contratos', 'só para a superintendência', h('div', null, h('p', { class: 'mudo peq', style: 'margin-top:0' }, 'Arquivo JSON com as regras lidas dos contratos e TAs (várias unidades de uma vez). Cada unidade é encontrada pelo nome; as que não casarem são listadas. Tudo entra como "a conferir".'),
+          h('div', { class: 'linha' }, arqLote, h('button', { class: 'sec', id: 'rg-importar-lote', onclick: importarLote }, 'Importar')))) : null,
         h('div', { class: 'cartao' }, tabela([{ t: 'Unidade' }, { t: 'Tipo' }, { t: 'Regra' }, { t: 'Decisões em aberto', n: true }, { t: '' }],
           lista.map((c) => [h('a', { href: '#/regras/' + c.contrato_id }, c.unidade), c.tipo, estadoSelo(c), String(c.decisoesAbertas || 0), h('a', { class: 'btn sec', href: '#/regras/' + c.contrato_id }, c.regra.tem ? 'Abrir' : 'Cadastrar')]), { vazio: 'Nenhuma unidade na sua carteira.' })));
     }
@@ -705,7 +707,7 @@
   async function integracoes() {
     const r = await api('GET', '/api/integracoes');
     const cs = (await api('GET', '/api/ctai/contratos')).contratos;
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Integrações'), h('p', null, 'Rack para ligar o sistema da unidade (MV). Aguardando acesso e dicionário de campos.'))),
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Fontes de dados'), h('p', null, 'De onde o sistema pode buscar informações além da digitação no portal. Hoje só a digitação e o arquivo CSV funcionam; as demais ficam prontas para quando houver acesso.'))),
       aviso('info', h('strong', null, 'Como funciona: '), 'o sistema busca as linhas pela API, confere cada uma (dado pessoal é recusado), e guarda como lote pendente. O gestor da unidade confirma. Só então entram no cálculo. As credenciais ficam no .env do servidor, nunca no banco.'),
       await cartaoGaocg(),
       r.tipos.map((t) => h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('strong', null, t.nome), selo(t.estado, t.estado === 'ativa' ? 'ok' : 'atencao')), h('p', { class: 'mudo peq', style: 'margin:4px 0 0' }, t.descricao))),
@@ -781,12 +783,12 @@
     const me0 = await api('GET', '/api/auth/me').catch(() => null);
     const meta0 = await api('GET', '/api/meta').catch(() => null);
     window.__semPainel = !!(me0 && ['criador', 'colega'].includes(me0.usuario.perfil) && meta0 && !meta0.painelAnalista);
-    window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão CTAI' }] : [];
-    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/mensageiro', rotulo: 'Mensageiro' }, { href: '#/pareceres', rotulo: 'Redator CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
+    window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão CTAI' }, { href: '#/integracoes', rotulo: 'Fontes de dados' }] : [];
+    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/pareceres', rotulo: 'Redator CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []).concat([{ href: '#/mensageiro', rotulo: 'Mensageiro', classe: 'fim' }]) });
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); }, 60000);
-    if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), nav); }
+    if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), document.querySelector('.lateral a.nav.fim') || nav); }
     META = await api('GET', '/api/meta');
     rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});

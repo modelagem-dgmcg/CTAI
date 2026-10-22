@@ -25,6 +25,7 @@
     const erro = document.getElementById('erro'); erro.textContent = '';
     try {
       const r = await api('POST', '/api/auth/login', { login: document.getElementById('login').value, senha: document.getElementById('senha').value });
+      try { localStorage.removeItem('ctai_abertos'); } catch (_) { /* nada */ }
       if (naUnidade && !ehUnidade(r.usuario.perfil) && r.usuario.perfil !== 'admin') { aviso('Este usuário é da equipe da CTAI. Esta é a entrada das unidades.'); return; }
       location.href = naUnidade && r.usuario.perfil === 'admin' ? '/unidade' : (r.usuario.perfil === 'admin' ? '/ctai' : destino(r.usuario.perfil));
     } catch (err) { erro.textContent = err.message; }
