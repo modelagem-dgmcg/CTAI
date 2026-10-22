@@ -4,7 +4,9 @@
   "private": true,
   "description": "Sistema da CTAI: Portal da Unidade, Mesa CTAI, vaga do Analista e rack da API do MV",
   "type": "commonjs",
-  "engines": { "node": ">=22.5" },
+  "engines": {
+    "node": ">=22.5"
+  },
   "scripts": {
     "start": "node --no-warnings server/index.js",
     "test": "node --no-warnings --test \"test/*.test.js\"",
@@ -13,7 +15,9 @@
   },
   "dependencies": {
     "express": "^5.1.0",
-    "pdfkit": "^0.17.1"
+    "jszip": "^3.10.2",
+    "pdfkit": "^0.17.1",
+    "unpdf": "^1.9.1"
   },
   "devDependencies": {
     "playwright": "^1.50.0"

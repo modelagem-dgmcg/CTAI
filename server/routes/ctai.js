@@ -155,6 +155,12 @@ module.exports = (db) => {
   });
   r.post('/pareceres/:id/modelo', (req, res) => res.json({ modelo: require('../parecer-modelo').definir(db, req.params.id, req.usuario, req.body && req.body.modo) }));
   r.post('/pareceres/:id/modelo/gaocg', async (req, res) => res.json(await require('../parecer-modelo').preencherPeloGaocg(db, req.params.id, req.usuario)));
+  const RP = require('../relatorios-parecer');
+  r.get('/pareceres/:id/relatorios', (req, res) => res.json({ relatorios: RP.listar(db, req.params.id) }));
+  r.post('/pareceres/:id/relatorios', async (req, res) => res.json(await RP.importar(db, req.params.id, req.usuario, req.body || {})));
+  r.delete('/pareceres/:id/relatorios/:rel', (req, res) => { RP.remover(db, req.params.id, req.usuario, req.params.rel); res.json({ ok: true }); });
+  r.post('/pareceres/:id/relatorios/propor', async (req, res) => res.json(await RP.proporQuadros(db, req.params.id, req.usuario)));
+  r.post('/pareceres/:id/relatorios/aplicar', (req, res) => res.json(RP.aplicar(db, req.params.id, req.usuario, req.body && req.body.quadros)));
   r.put('/pareceres/:id/modelo', (req, res) => { require('../parecer-modelo').salvar(db, req.params.id, req.usuario, req.body || {}); res.json({ ok: true }); });
   r.get('/pareceres-modelo', (req, res) => { const m = require('../parecer-modelo').MODELO; res.json({ secoes: m.secoes.map((s) => ({ id: s.id, titulo: s.titulo })), quadros: m.quadros, titulo: m.titulo }); });
   r.post('/pareceres/:id/adotar', (req, res) => {

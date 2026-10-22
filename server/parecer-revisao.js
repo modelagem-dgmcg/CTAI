@@ -9,6 +9,7 @@ const trilha = require('./trilha');
 const analista = require('../modules/analista');
 const busca = require('../modules/analista/busca-externa');
 const gaocg = require('./gaocg');
+const RP = require('./relatorios-parecer');
 
 const achado = (gravidade, tipo, trecho, risco, sugestao, origem) => ({ gravidade, tipo, trecho, risco, sugestao, origem: origem || 'conferência local' });
 
@@ -56,12 +57,13 @@ async function revisar(db, parecerId, usuario) {
   const ia = texto.trim() ? await analista.analisar({ texto, tipo: 'parecer técnico CTAI', contexto: { competencia: comp ? comp.competencia : null, unidade: c.identificacao.unidade, observacoes: normas.length ? 'Normas vigentes da unidade: ' + normas.map((n) => n.titulo).join('; ') : undefined } }) : { achados: [], provedor: 'nenhum', tentativas: [] };
   const ext = await busca.buscar({ texto, indicadores: comp ? comp.indicadores.map((i) => i.nome) : [] });
   const gc = await gaocg.conferirParecer(db, c, texto, usuario.login);
-  const todos = locais.concat(gc.achados, ia.achados);
+  const rq = RP.conferirQuadros(db, p.parecer_id, c.modelo);
+  const todos = locais.concat(gc.achados, rq.achados, ia.achados);
   const ordem = ['ALTA', 'MÉDIA', 'BAIXA'];
   todos.sort((a, b) => ordem.indexOf(a.gravidade) - ordem.indexOf(b.gravidade));
   const salvos = achadosDb.salvar(db, { origem_tipo: 'minuta', origem_id: p.parecer_id, cid: comp ? comp.cid : null, achados: todos, provedor: 'revisão completa · ' + ia.provedor, usuario: usuario.login });
   trilha.registrar(db, { usuario: usuario.login, tabela: 'pareceres', registro: p.parecer_id, campo: 'revisao_completa', valor_novo: { achados: todos.length, busca_externa: ext.ok } });
-  return { achados: todos, salvos, provedor: ia.provedor, tentativas: ia.tentativas, externa: ext, gaocg: { usado: gc.usado, lido_em: gc.lido_em || null, da_copia: !!gc.da_copia }, normasDaUnidade: normas.length };
+  return { achados: todos, salvos, provedor: ia.provedor, tentativas: ia.tentativas, externa: ext, relatorios: { usado: rq.usado, n: rq.relatorios || 0 }, gaocg: { usado: gc.usado, lido_em: gc.lido_em || null, da_copia: !!gc.da_copia }, normasDaUnidade: normas.length };
 }
 
 module.exports = { revisar, conferenciasLocais };

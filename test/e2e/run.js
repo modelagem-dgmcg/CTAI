@@ -148,6 +148,7 @@ let base;
     await cri.click('#md-revisar'); await cri.waitForSelector('text=Busca externa (normas e jurisprudência)');
     assert.ok(await cri.isVisible('#md-conectar-q1'), 'aviso de dados não conectados no Quadro 01');
     assert.ok(await cri.isVisible('#md-gaocg'), 'botão do GAOCG no parecer');
+    assert.ok(await cri.isVisible('#rel-importar'), 'importação de relatório no Redator');
     log('parecer: modelo padrão preenchido, editado e revisão completa rodada');
     const pid = Number(cri.url().split('#/p/')[1]);
     await cri.click('button:has-text("Ajustar") >> nth=0'); await cri.waitForSelector('dialog[open]');
@@ -208,7 +209,7 @@ let base;
     await ir(cri, '#/regras/DEMO-UPA', '#q-iam_meta');
     await cri.selectOption('#q-iam_meta', '30'); await cri.fill('#j-iam_meta', 'Ficha do contrato, item 6.6.2');
     await cri.locator('div.cartao', { has: cri.locator('#q-iam_meta') }).locator('button:has-text("Registrar decisão")').click(); await cri.waitForSelector('text=Decisão registrada.');
-    try { await ir(cri, '#/c/' + cid06 + '/divergencias', 'select[id^="dv"]', 20000); } catch (e) { console.log('DBGX', (await cri.textContent('#conteudo')).replace(/\s+/g, ' ').slice(0, 500)); throw e; }
+    try { await cri.waitForTimeout(1200); await ir(cri, '#/c/' + cid06 + '/divergencias', 'select[id^="dv"]', 20000); } catch (e) { console.log('DBGX', cri.url(), (await cri.textContent('#conteudo')).replace(/\s+/g, ' ').slice(0, 500)); throw e; }
     await cri.waitForTimeout(800); const dv = cri.locator('select[id^="dv"]').first(); await dv.selectOption('aceita');
     await dv.locator('xpath=ancestor::div[contains(@class,"cartao")]').locator('button:has-text("Registrar")').click();
     await cri.fill('#perg-campo', 'Conferido com a evidência da unidade'); await dialogo(cri, 'Confirmar'); await cri.waitForSelector('text=Registrado.');

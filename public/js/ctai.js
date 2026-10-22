@@ -304,6 +304,36 @@
     const areas = {}, tabs = {};
     const quadros = JSON.parse(JSON.stringify(M.quadros));
     const caixaRev = h('div', { id: 'md-revisao' });
+    const caixaRel = h('div', { id: 'md-relatorios' });
+    const kb2 = (n) => (n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
+    const lerB64 = (arq) => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => no(new Error('Não consegui ler o arquivo.')); r.readAsDataURL(arq); });
+    const propostaBox = h('div', { id: 'md-proposta' });
+    const pintarRel = async () => {
+      let lista = [];
+      try { lista = (await api('GET', base + '/relatorios')).relatorios; } catch (_) { /* segue vazio */ }
+      const arq = h('input', { type: 'file', id: 'rel-arquivo', accept: '.pdf,.docx,.xlsx,.csv,.txt', 'aria-label': 'Importar relatório' });
+      const importar = async () => {
+        const f = arq.files[0]; if (!f) { toast('Escolha um arquivo.', true); return; }
+        try { if (f.size > 4 * 1024 * 1024) throw new Error('Arquivo acima de 4 MB.'); troca(propostaBox, h('p', { class: 'mudo' }, 'Lendo o arquivo…')); const o = await api('POST', base + '/relatorios', { nome: f.name, base64: await lerB64(f) }); troca(propostaBox, aviso('ok', 'Relatório importado (' + o.caracteres.toLocaleString('pt-BR') + ' caracteres' + (o.paginas ? ', ' + o.paginas + ' pág./planilha(s)' : '') + ').')); pintarRel(); } catch (e) { troca(propostaBox, aviso('erro', e.message)); }
+      };
+      const propor = async () => {
+        troca(propostaBox, h('p', { class: 'mudo' }, 'A IA está lendo os relatórios e montando uma proposta… pode levar alguns segundos.'));
+        try {
+          const o = await api('POST', base + '/relatorios/propor', {});
+          if (!o.ok) { troca(propostaBox, aviso('atencao', o.motivo)); return; }
+          const sel = {};
+          const bloco = (q, titulo) => { const l = o.quadros[q]; if (!l.length) return null; sel[q] = l.map((x) => ({ x, on: x.verificada })); return h('div', null, h('h4', null, titulo), h('table', { class: 'tabela peq' }, h('tbody', null, l.map((x, i) => h('tr', null, h('td', null, h('input', { type: 'checkbox', checked: x.verificada, 'aria-label': 'Aplicar linha', onchange: (ev) => { sel[q][i].on = ev.target.checked; } })), x.celulas.map((c) => h('td', null, c)), h('td', null, x.verificada ? selo('números conferidos', 'ok') : selo('conferir no relatório', 'atencao'))))))); };
+          troca(propostaBox, h('p', { class: 'peq mudo' }, 'Proposta de ' + o.provedor + (o.truncado ? ' (relatório longo: só o início foi lido)' : '') + '. Linhas com “números conferidos” têm todos os valores presentes no texto importado; as demais pedem sua conferência. Nada entra sem você aplicar.'),
+            bloco('q1', 'Quadro 01 – Produção valorados'), bloco('q2', 'Quadro 02 – Produção sem valoração'), bloco('q3', 'Quadro 03 – Qualidade'),
+            h('button', { id: 'rel-aplicar', onclick: async () => { try { const corpo = {}; for (const q of Object.keys(sel)) corpo[q] = sel[q].filter((z) => z.on).map((z) => z.x.celulas); const r = await api('POST', base + '/relatorios/aplicar', { quadros: corpo }); toast(r.aplicadas + ' linha(s) aplicada(s) nos quadros.'); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Aplicar as linhas marcadas'));
+        } catch (e) { troca(propostaBox, aviso('erro', e.message)); }
+      };
+      caixaRel.replaceChildren(h('h4', null, 'Relatórios da unidade importados (' + lista.length + ')'),
+        lista.length ? h('ul', { class: 'peq' }, lista.map((r) => h('li', null, r.nome + ' · ' + r.tipo.toUpperCase() + ' · ' + kb2(r.tamanho) + (r.paginas ? ' · ' + r.paginas + ' pág.' : ''), editavel ? [' ', h('button', { class: 'leve', onclick: async () => { try { await api('DELETE', base + '/relatorios/' + r.rel_id); pintarRel(); } catch (e) { toast(e.message, true); } } }, 'Remover')] : null))) : h('p', { class: 'peq mudo' }, 'Nenhum relatório importado ainda. Importe o relatório assistencial da unidade (PDF com texto, Word, Excel, CSV ou TXT, até 4 MB). Só o texto fica guardado; o original continua no SEI.'),
+        editavel ? h('div', { class: 'linha' }, arq, h('button', { class: 'sec', id: 'rel-importar', onclick: importar }, 'Importar relatório'), lista.length ? h('button', { class: 'sec', id: 'rel-propor', onclick: propor }, 'Ler com a IA e propor os quadros') : null) : null,
+        propostaBox);
+    };
+    pintarRel();
     const lerTudo = () => ({ secoes: Object.fromEntries(Object.entries(areas).map(([k, el]) => [k, el.value])), quadros });
     const gravar = async () => { try { await api('PUT', base + '/modelo', lerTudo()); toast('Parecer salvo.'); recarregar(); } catch (e) { toast(e.message, true); } };
     const quadro = (q) => {
@@ -330,7 +360,7 @@
         await api('PUT', base + '/modelo', lerTudo());
         const o = await api('POST', '/api/analista/pareceres/' + P.parecer_id + '/revisao-completa', {});
         const ex = o.externa || {};
-        troca(caixaRev, h('p', { class: 'peq mudo' }, o.achados.length + ' achado(s) · ' + o.provedor + (o.gaocg && o.gaocg.usado ? ' · conferido com o GAOCG (' + (o.gaocg.da_copia ? 'cópia de ' : 'lido às ') + new Date(o.gaocg.lido_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + (o.normasDaUnidade ? ' · ' + o.normasDaUnidade + ' norma(s) da unidade consideradas' : '')),
+        troca(caixaRev, h('p', { class: 'peq mudo' }, o.achados.length + ' achado(s) · ' + o.provedor + (o.relatorios && o.relatorios.usado ? ' · quadros conferidos com ' + o.relatorios.n + ' relatório(s) importado(s)' : '') + (o.gaocg && o.gaocg.usado ? ' · conferido com o GAOCG (' + (o.gaocg.da_copia ? 'cópia de ' : 'lido às ') + new Date(o.gaocg.lido_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + (o.normasDaUnidade ? ' · ' + o.normasDaUnidade + ' norma(s) da unidade consideradas' : '')),
           o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'Nenhum achado nas conferências locais e no Analista.'),
           h('h4', null, 'Busca externa (normas e jurisprudência)'),
           ex.ok ? [ex.aviso ? h('p', { class: 'peq mudo' }, ex.aviso) : h('p', { class: 'peq', style: 'white-space:pre-wrap' }, ex.resposta || ''), ex.fontes && ex.fontes.length ? h('ul', { class: 'peq' }, ex.fontes.map((f) => h('li', null, h('a', { href: f.url, target: '_blank', rel: 'noopener noreferrer' }, f.titulo)))) : null]
@@ -340,6 +370,7 @@
     };
     return h('div', { class: 'cartao', id: 'md-cartao' }, h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, '3. Parecer CTAI' + (M.modo === 'branco' ? ' · em branco' : ' · modelo padrão')),
         editavel ? h('div', { class: 'linha' }, h('button', { class: 'sec', onclick: async () => { if (!(await confirmar('Refazer o texto', 'Isto substitui as seções pelo texto-padrão atual (com os dados do período). Edições feitas serão perdidas.', 'Refazer'))) return; try { await api('POST', base + '/modelo', { modo: 'padrao' }); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Refazer com os dados'), h('button', { class: 'sec', onclick: async () => { if (!(await confirmar('Esvaziar o parecer', 'Todas as seções ficam em branco.', 'Esvaziar'))) return; try { await api('POST', base + '/modelo', { modo: 'branco' }); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Deixar em branco')) : null),
+      caixaRel,
       h('p', { class: 'peq mudo' }, 'Título: ' + def.titulo.replace('{numero}', c.identificacao.numero_parecer || 'xxx') + '. Edite cada seção; os quadros entram no PDF depois da seção 5.'),
       SEC.map((sc) => { areas[sc.id] = h('textarea', { id: 'md-' + sc.id, rows: Math.min(14, Math.max(3, Math.ceil((M.secoes[sc.id] || '').length / 90))) }, M.secoes[sc.id] || ''); if (!editavel) areas[sc.id].setAttribute('disabled', ''); return h('div', { class: 'campo' }, h('label', { for: 'md-' + sc.id }, sc.titulo), areas[sc.id], sc.id === 'analise' ? def.quadros.map(quadro) : null); }),
       editavel ? h('div', { class: 'linha' }, h('button', { id: 'md-salvar', onclick: gravar }, 'Salvar o parecer'), h('button', { class: 'sec', id: 'md-gaocg', onclick: preencherGaocg }, 'Preencher identificação pelo GAOCG'), h('button', { class: 'sec', id: 'md-revisar', onclick: revisar }, 'Revisão completa')) : h('button', { class: 'sec', onclick: revisar }, 'Revisão completa'),
@@ -363,7 +394,7 @@
         h('p', { class: 'peq mudo' }, 'Documento: Parecer Técnico CTAI. O texto-padrão já vem preenchido com os dados da unidade e do período.'), h('label', { style: 'font-weight:400' }, branco, ' Começar em branco (preenchimento manual)'),
         h('button', { onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres', { contrato_id: sel.value, trimestre: tri.value, numero_parecer: num.value, competencias: [...comps.querySelectorAll('input:checked')].map((x) => x.value) }); await api('POST', '/api/ctai/pareceres/' + o.parecer_id + '/modelo', { modo: branco.checked ? 'branco' : 'padrao' }); location.hash = '#/p/' + o.parecer_id; } catch (e) { toast(e.message, true); } } }, 'Criar a minuta'));
     };
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Pareceres'), h('p', null, 'Quem cria monta e congela; os colegas conferem; a superintendente autoriza; quem criou anexa no SEI.'))),
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Redator CTAI'), h('p', null, 'Aqui o parecer é redigido. Quem cria monta e congela; os colegas conferem; a superintendente autoriza; quem criou anexa no SEI.'))),
       podeCriar || ehAdmin() ? formNovo() : aviso('info', 'Só o perfil criador abre uma minuta nova.'),
       h('div', { class: 'cartao' }, tabela([{ t: 'Parecer' }, { t: 'Unidade' }, { t: 'Trimestre' }, { t: 'Criado por' }, { t: 'Versão' }, { t: 'Situação' }], lista.pareceres.map((p) => [h('a', { href: '#/p/' + p.parecer_id }, p.titulo), p.unidade + (p.demo ? ' (demo)' : ''), p.trimestre, p.criador_nome, p.ultimaVersao ? 'v' + p.ultimaVersao.numero + ' · ' + p.ultimaVersao.status : '—', selo(p.status, p.status === 'anexado ao SEI' ? 'ok' : 'atencao')]), { vazio: 'Nenhum parecer ainda.' })));
   }
@@ -380,7 +411,7 @@
     const marcados = nCol.map((u) => h('input', { type: 'checkbox', value: u.usuario_id, checked: true, id: 'cv-' + u.usuario_id }));
     const motivo = h('textarea', { id: 'cv-motivo', rows: 2, placeholder: ult ? 'O que mudou desde a versão ' + ult.numero + '?' : 'Opcional na primeira versão' });
     const achadosMin = h('div');
-    montar(demo(P.demo), migalha(h('a', { href: '#/pareceres' }, 'Pareceres'), P.titulo),
+    montar(demo(P.demo), migalha(h('a', { href: '#/pareceres' }, 'Redator CTAI'), P.titulo),
       h('div', { class: 'topo' }, h('div', null, h('h1', null, P.titulo), h('p', null, P.unidade + ' · ' + P.trimestre + (P.numero_parecer ? ' · parecer ' + P.numero_parecer : ''))), h('div', { class: 'linha' }, selo(P.status, P.status === 'anexado ao SEI' || P.status === 'autorizado' ? 'ok' : 'atencao'), ult ? h('a', { class: 'btn', href: '#/v/' + ult.versao_id }, 'Abrir a mesa (v' + ult.numero + ')') : null)),
       d.alteradoDesdeCongelamento && ult && !travado ? aviso('atencao', h('strong', null, 'A minuta mudou desde a versão ' + ult.numero + '. '), 'Para os colegas conferirem a mudança, congele uma nova versão com o motivo.') : null,
       !eCriador ? aviso('info', 'Você vê esta minuta, mas só quem a criou altera. Para conferir, abra a mesa.') : null,
@@ -431,7 +462,7 @@
     const minhas = (it) => it.registros.find((r) => r.usuario_id === EU.usuario_id);
     const marcar = async (item, status) => { let comentario = null; if (status === 'reparo') { comentario = await perguntar('Reparo: ' + item.titulo, 'O que precisa mudar?', { longo: true, botao: 'Registrar reparo' }); if (!comentario) return; } try { await api('POST', '/api/ctai/versoes/' + V.versao_id + '/conferir', { item: item.id, status, comentario }); mesa(p); } catch (e) { toast(e.message, true); } };
     const todosOkMeus = v.itens.every((i) => { const m = minhas(i); return m && m.status === 'ok'; });
-    montar(demo(c.identificacao.demo), migalha(h('a', { href: '#/pareceres' }, 'Pareceres'), h('a', { href: '#/p/' + V.parecer_id }, c.identificacao.titulo), 'Mesa v' + V.numero),
+    montar(demo(c.identificacao.demo), migalha(h('a', { href: '#/pareceres' }, 'Redator CTAI'), h('a', { href: '#/p/' + V.parecer_id }, c.identificacao.titulo), 'Mesa v' + V.numero),
       h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Mesa de conferência · versão ' + V.numero), h('p', null, c.identificacao.unidade + ' · ' + c.identificacao.trimestre + ' · criada por ' + V.criada_por_nome + ' em ' + fmt.data(V.criada_em))), selo(V.status, V.status === 'autorizada' ? 'ok' : (V.status === 'com reparo' ? 'alta' : 'atencao'))),
       aviso('info', h('strong', null, 'O OK da mesa é controle interno, não é assinatura. '), 'A assinatura é feita no SEI. Ninguém confere nem autoriza o próprio trabalho. Código de integridade desta versão: ', h('code', null, V.hash.slice(0, 16))),
       V.motivo ? h('p', { class: 'peq' }, h('strong', null, 'Motivo desta versão: '), V.motivo) : null,
@@ -640,7 +671,7 @@
     const meta0 = await api('GET', '/api/meta').catch(() => null);
     window.__semPainel = !!(me0 && ['criador', 'colega'].includes(me0.usuario.perfil) && meta0 && !meta0.painelAnalista);
     window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão CTAI' }] : [];
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/mensageiro', rotulo: 'Mensageiro' }, { href: '#/pareceres', rotulo: 'Pareceres' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
+    EU = await casca({ titulo: 'CTAI', subtitulo: 'Console da comissão', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Painel' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/mensageiro', rotulo: 'Mensageiro' }, { href: '#/pareceres', rotulo: 'Redator CTAI' }, { href: '#/analista', rotulo: 'Analista CTAI' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Integrações' }, { href: '#/trilha', rotulo: 'Trilha' }]).concat(window.__soGestao || []) });
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); }, 60000);

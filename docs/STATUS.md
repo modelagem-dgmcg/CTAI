@@ -101,3 +101,10 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 ## Base da equipe — 22/10/2026
 - CTAI_SEMENTE=equipe (banco novo): admin, nathalia, juliana.rocha, cecilia, juliana.ludmila, jussara; senha = CTAI_SENHA_TEMPORARIA. Mantém só o contrato UPA Olinda (carga/). A carteira (45 unidades) entra por Gestão CTAI > Importar com o CSV (fora do repositório).
 - O analista (perfil criador, "Analista CTAI (cria e confere)") também pode ser convocado para conferir o parecer de outra pessoa; nunca o próprio.
+
+## Redator CTAI e importação de relatórios — 22/10/2026
+- A ferramenta de redigir o parecer passou a se chamar **Redator CTAI** (menu e títulos; o endereço #/pareceres continua).
+- **Importar relatório** no Redator: PDF com texto, Word (.docx), Excel (.xlsx), CSV ou TXT, até 4 MB. Só o texto extraído fica guardado (o original segue no SEI). PDF escaneado é recusado (sem OCR).
+- **Ler com a IA e propor os quadros**: a IA (rack de chaves, texto mascarado) propõe as linhas dos Quadros 01/02/03; linhas com todos os números presentes no texto importado vêm marcadas “números conferidos”; a pessoa marca e aplica. Nada entra sozinho.
+- A revisão completa passou a acusar números dos quadros que não aparecem nos relatórios importados.
+- Novas dependências: unpdf (PDF) e jszip (Word/Excel).

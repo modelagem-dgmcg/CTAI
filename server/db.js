@@ -176,6 +176,10 @@ CREATE TABLE IF NOT EXISTS ia_chaves (
 CREATE TABLE IF NOT EXISTS ia_chave_uso (
   chave_id INTEGER NOT NULL, mes TEXT NOT NULL, chamadas INTEGER NOT NULL DEFAULT 0, falhas INTEGER NOT NULL DEFAULT 0, ultimo_uso TEXT, PRIMARY KEY (chave_id, mes)
 );
+CREATE TABLE IF NOT EXISTS parecer_relatorios (
+  rel_id INTEGER PRIMARY KEY AUTOINCREMENT, parecer_id INTEGER NOT NULL, nome TEXT NOT NULL, tipo TEXT NOT NULL, tamanho INTEGER NOT NULL, paginas INTEGER, texto TEXT NOT NULL, hash TEXT NOT NULL, criado_por TEXT NOT NULL, criado_em TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_parec_rel ON parecer_relatorios (parecer_id);
 CREATE TABLE IF NOT EXISTS gaocg_cache (
   chave TEXT PRIMARY KEY, endpoint TEXT NOT NULL, filtros TEXT, linhas TEXT NOT NULL, total INTEGER NOT NULL, ms INTEGER, lido_em TEXT NOT NULL
 );
