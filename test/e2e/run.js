@@ -153,7 +153,7 @@ let base;
     log('prazos informados pela unidade e checklist de recebimento editado pela CTAI');
     for (const [k, v] of [['desconto_modo', 'faixa'], ['vermelho', 'faixa']]) await api(cri, 'PUT', '/api/ctai/contratos/DEMO-UPA/decisoes/' + k, { valor: v, justificativa: 'Teste ponta a ponta' });
     await ir(cri, '#/pareceres', '#np-c');
-    await cri.selectOption('#np-c', 'DEMO-UPA'); await cri.fill('#np-t', '2026-T2'); await cri.fill('#np-n', '1/2026');
+    await cri.selectOption('#np-c', 'DEMO-UPA'); await cri.selectOption('#np-a', '2026'); await cri.selectOption('#np-t', '2'); await cri.fill('#np-n', '1/2026');
     await cri.click('text=Criar a minuta'); await cri.waitForSelector('#md-salvar');
     assert.match(await cri.inputValue('#md-introducao'), /Contrato de Gestão n\.º/);
     await cri.fill('#md-financeiro', 'Informações financeiras acostadas ao processo (demonstração).'); await cri.click('#md-salvar'); await cri.waitForSelector('#md-salvar'); await cri.waitForTimeout(500);

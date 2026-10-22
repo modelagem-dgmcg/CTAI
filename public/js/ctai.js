@@ -383,16 +383,23 @@
     const formNovo = () => {
       const sel = h('select', { id: 'np-c' }, cs.contratos.map((c) => h('option', { value: c.contrato_id }, c.unidade)));
       const comps = h('div', { class: 'linha' });
-      const pintar = () => { const c = cs.contratos.find((x) => x.contrato_id === sel.value); comps.replaceChildren(...c.competencias.map((k) => h('label', { style: 'font-weight:400;margin:0' }, h('input', { type: 'checkbox', value: k.competencia_id, checked: true }), ' ' + k.competencia_id))); };
-      const tri = h('input', { type: 'text', id: 'np-t', placeholder: '2026-T2' });
-      const sugerirTri = () => { const m = comps.querySelector('input:checked'); if (m && !tri.dataset.manual) { const [a, mm] = m.value.split('-'); tri.value = a + '-T' + Math.ceil(Number(mm) / 3); } };
-      tri.addEventListener('input', () => { tri.dataset.manual = '1'; });
-      sel.addEventListener('change', () => { pintar(); sugerirTri(); }); pintar(); sugerirTri();
+      const hoje = new Date();
+      let aD = hoje.getFullYear(), tD = Math.ceil((hoje.getMonth() + 1) / 3) - 1; // trimestre anterior (já fechado)
+      if (tD < 1) { tD = 4; aD -= 1; }
+      const selAno = h('select', { id: 'np-a' }, [aD + 1, aD, aD - 1, aD - 2].map((a) => h('option', { value: a, selected: a === aD }, String(a))));
+      const selTri = h('select', { id: 'np-t' }, [1, 2, 3, 4].map((t) => h('option', { value: t, selected: t === tD }, t + 'º trimestre')));
+      const triVal = () => selAno.value + '-T' + selTri.value;
+      const pintar = () => {
+        const c = cs.contratos.find((x) => x.contrato_id === sel.value);
+        const doTri = (id) => { const [a, m] = id.split('-'); return a + '-T' + Math.ceil(Number(m) / 3) === triVal(); };
+        comps.replaceChildren(...c.competencias.map((k) => h('label', { style: 'font-weight:400;margin:0' }, h('input', { type: 'checkbox', value: k.competencia_id, checked: doTri(k.competencia_id) }), ' ' + k.competencia_id)));
+      };
+      sel.addEventListener('change', pintar); selAno.addEventListener('change', pintar); selTri.addEventListener('change', pintar); pintar();
       const branco = h('input', { type: 'checkbox', id: 'np-b' });
       const num = h('input', { type: 'text', id: 'np-n', placeholder: 'ex.: 204/2026' });
-      return h('div', { class: 'cartao' }, h('h3', null, 'Novo parecer'), h('div', { class: 'duas' }, h('div', { class: 'campo' }, h('label', { for: 'np-c' }, 'Contrato'), sel), h('div', { class: 'campo' }, h('label', { for: 'np-t' }, 'Trimestre'), tri), h('div', { class: 'campo' }, h('label', null, 'Competências'), comps), h('div', { class: 'campo' }, h('label', { for: 'np-n' }, 'Número do parecer (se já tiver)'), num)),
+      return h('div', { class: 'cartao' }, h('h3', null, 'Novo parecer'), h('div', { class: 'duas' }, h('div', { class: 'campo' }, h('label', { for: 'np-c' }, 'Contrato'), sel), h('div', { class: 'campo' }, h('label', { for: 'np-a' }, 'Ano'), selAno), h('div', { class: 'campo' }, h('label', { for: 'np-t' }, 'Trimestre'), selTri), h('div', { class: 'campo' }, h('label', null, 'Competências'), comps), h('div', { class: 'campo' }, h('label', { for: 'np-n' }, 'Número do parecer (se já tiver)'), num)),
         h('p', { class: 'peq mudo' }, 'Documento: Parecer Técnico CTAI. O texto-padrão já vem preenchido com os dados da unidade e do período.'), h('label', { style: 'font-weight:400' }, branco, ' Começar em branco (preenchimento manual)'),
-        h('button', { onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres', { contrato_id: sel.value, trimestre: tri.value, numero_parecer: num.value, competencias: [...comps.querySelectorAll('input:checked')].map((x) => x.value) }); await api('POST', '/api/ctai/pareceres/' + o.parecer_id + '/modelo', { modo: branco.checked ? 'branco' : 'padrao' }); location.hash = '#/p/' + o.parecer_id; } catch (e) { toast(e.message, true); } } }, 'Criar a minuta'));
+        h('button', { onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres', { contrato_id: sel.value, trimestre: triVal(), numero_parecer: num.value, competencias: [...comps.querySelectorAll('input:checked')].map((x) => x.value) }); await api('POST', '/api/ctai/pareceres/' + o.parecer_id + '/modelo', { modo: branco.checked ? 'branco' : 'padrao' }); location.hash = '#/p/' + o.parecer_id; } catch (e) { toast(e.message, true); } } }, 'Criar a minuta'));
     };
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Redator CTAI'), h('p', null, 'Aqui o parecer é redigido. Quem cria monta e congela; os colegas conferem; a superintendente autoriza; quem criou anexa no SEI.'))), abasRedator('pareceres'),
       podeCriar || ehAdmin() ? formNovo() : aviso('info', 'Só o perfil criador abre uma minuta nova.'),
