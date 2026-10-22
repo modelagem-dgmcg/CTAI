@@ -86,4 +86,4 @@ test/          testes automáticos e E2E
 
 ## Autoria
 
-Criado por Antonio Cleuton Eufrasio Vieira, Analista Administrativo (SES-PE). Colaboração: Juliana Rocha. Os direitos econômicos pertencem à SES-PE; a paternidade da autoria é preservada (Lei nº 9.609/98, art. 2º, §1º; Lei nº 9.610/98, art. 24, I).
+Criado por Cleuton Vieira, Analista Administrativo (SES-PE). Colaboração: Juliana Rocha. Os direitos econômicos pertencem à SES-PE; a paternidade da autoria é preservada (Lei nº 9.609/98, art. 2º, §1º; Lei nº 9.610/98, art. 24, I).
