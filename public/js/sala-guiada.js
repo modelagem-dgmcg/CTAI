@@ -14,8 +14,10 @@
   const medidores = new Map();    // id -> { an, buf }
   const tentativas = new Map();   // id -> número de refações
   let ctx = null, timerFala = null;
-  let apontador = true, seguir = false, ultimo = null, voando = false, pendMover = null, dialogosAbertos = 0;
+  let apontador = true, seguir = true, ultimo = null, voando = false, pendMover = null, dialogosAbertos = 0;
   let devEntrada = '', devSaida = '', confirmando = false;
+  let saindoDaPagina = false;     // a página está sendo trocada ou recarregada: não é queda da sala
+  window.addEventListener('pagehide', () => { saindoDaPagina = true; }); window.addEventListener('beforeunload', () => { saindoDaPagina = true; });
   let tela = null;                // minha tela, quando estou compartilhando
   let quemMostra = '';            // nome de quem está compartilhando comigo
   const ui = {};
@@ -41,7 +43,7 @@
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { aviso('Este navegador não deixa usar o microfone nesta página. Você só vai ouvir.', true); return; }
     try {
       stream = await navigator.mediaDevices.getUserMedia(restricoes(devEntrada));
-      stream.getAudioTracks().forEach((t) => { t.enabled = !mudo; });
+      stream.getAudioTracks().forEach((t) => { t.enabled = !mudo; try { t.contentHint = 'speech'; } catch (_) { /* ok */ } });
     } catch (e) { stream = null; aviso('Sem acesso ao microfone (' + (e.name === 'NotAllowedError' ? 'permissão negada' : 'não encontrado') + '). Você só vai ouvir.', true); }
   }
 
@@ -118,7 +120,7 @@
   }
   async function ligar(id) {
     const { pc } = criarPc(id, true);
-    try { await pc.setLocalDescription(await pc.createOffer()); sinalar(id, { tipo: 'oferta', sdp: pc.localDescription }); } catch (_) { fecharPc(id); }
+    try { await pc.setLocalDescription(afinar(await pc.createOffer())); sinalar(id, { tipo: 'oferta', sdp: pc.localDescription }); } catch (_) { fecharPc(id); }
   }
   async function aoReceberSinal(de, d) {
     if (!est || !d) return;
@@ -131,7 +133,7 @@
         if (d.reneg && velho && velho.pc.signalingState !== 'closed') { pc = velho.pc; if (pc.signalingState !== 'stable') await pc.setLocalDescription({ type: 'rollback' }).catch(() => {}); }
         else pc = criarPc(de, false).pc;
         await pc.setRemoteDescription(d.sdp); await esvaziar(de, pc);
-        await pc.setLocalDescription(await pc.createAnswer());
+        await pc.setLocalDescription(afinar(await pc.createAnswer()));
         sinalar(de, { tipo: 'resposta', sdp: pc.localDescription });
       } else if (d.tipo === 'resposta') {
         const r = pcs.get(de); if (r) { await r.pc.setRemoteDescription(d.sdp); await esvaziar(de, r.pc); }
@@ -142,9 +144,15 @@
       }
     } catch (_) { fecharPc(de); }
   }
+  // Voz mais clara: Opus em mono, 64 kbps, com correção de perda de pacotes.
+  function afinar(d) {
+    if (!d || !d.sdp) return d;
+    const sdp = d.sdp.replace(/a=fmtp:(\d+) ([^\r\n]*useinbandfec[^\r\n]*)/g, (m, pt, par) => (/maxaveragebitrate/.test(par) ? m : 'a=fmtp:' + pt + ' ' + par + ';maxaveragebitrate=64000;stereo=0;sprop-stereo=0'));
+    return { type: d.type, sdp };
+  }
   async function renegociar(id) {
     const r = pcs.get(id); if (!r || r.pc.signalingState !== 'stable') return;
-    try { await r.pc.setLocalDescription(await r.pc.createOffer()); sinalar(id, { tipo: 'oferta', reneg: true, sdp: r.pc.localDescription }); } catch (_) { /* tenta na próxima mudança */ }
+    try { await r.pc.setLocalDescription(afinar(await r.pc.createOffer())); sinalar(id, { tipo: 'oferta', reneg: true, sdp: r.pc.localDescription }); } catch (_) { /* tenta na próxima mudança */ }
   }
   // ---------- compartilhar a tela ----------
   async function compartilharTela() {
@@ -178,6 +186,7 @@
   function alternarMicrofone(valor) {
     mudo = valor === undefined ? !mudo : !!valor;
     if (stream) stream.getAudioTracks().forEach((t) => { t.enabled = !mudo; });
+    try { sessionStorage.setItem('ctai_sala_mic', mudo ? '0' : '1'); } catch (_) { /* ok */ }
     if (est) api('POST', '/api/sala/mudo', { codigo: est.codigo, eu: est.eu, mudo }).catch(() => {});
     desenhar();
   }
@@ -215,7 +224,7 @@
     });
     es.addEventListener('silenciar', () => { if (!mudo) { alternarMicrofone(true); aviso('Quem conduz silenciou a sala. Ligue seu microfone para falar.'); } });
     es.addEventListener('encerrada', (e) => { const m = ler(e).motivo; sairLocal(); aviso(m || 'A sala foi encerrada.'); });
-    es.onerror = () => { if (es && es.readyState === 2) { sairLocal(); aviso('A conexão com a sala caiu e não voltou. Entre de novo com o código.', true); } };
+    es.onerror = () => { if (saindoDaPagina) return; if (es && es.readyState === 2) { sairLocal(); aviso('A conexão com a sala caiu e não voltou. Entre de novo com o código.', true); } };
     ouvirFala(); instalarEmissor();
     ui.botao.classList.add('sg-ativo');
   }
@@ -385,7 +394,7 @@
       const det = el('details', 'sg-disp'); det.appendChild(el('summary', null, 'Microfone e fone'));
       det.addEventListener('toggle', () => { if (det.open) preencherDispositivos(det); });
       p.appendChild(det);
-      ui.sair = el('button', 'sg-sair', est.condutor ? 'Encerrar sala' : 'Sair da sala'); ui.sair.onclick = sair; p.appendChild(ui.sair);
+      ui.sair = el('button', 'sg-sair', est.condutor ? 'Encerrar sala' : 'Sair da sala'); ui.sair.onclick = sair; p.appendChild(ui.sair); { const aj = el('a', 'sg-ajuda', 'Como funciona (manual com imagens)'); aj.href = '/ajuda/sala-guiada.html'; aj.target = '_blank'; aj.rel = 'noopener'; aj.style.cssText = 'display:block;margin-top:8px;font-size:13px;color:#d97706;text-align:center'; p.appendChild(aj); }
     }
     ui.msg = el('div', 'sg-msg' + (ultimaMsg.ruim ? ' sg-ruim' : ''), ultimaMsg.t); p.appendChild(ui.msg);
   }
@@ -450,7 +459,13 @@
     setTimeout(verConvites, 1500);
     const antes = lembrado();
     if (antes) { // voltou de outra página: retoma a mesma sala
-      try { const info = await api('GET', '/api/sala/retomar?codigo=' + encodeURIComponent(antes.codigo) + '&eu=' + encodeURIComponent(antes.eu)); await abrir(info); ui.som.hidden = false; } catch (_) { guardar(null); }
+      try {
+        const info = await api('GET', '/api/sala/retomar?codigo=' + encodeURIComponent(antes.codigo) + '&eu=' + encodeURIComponent(antes.eu));
+        let micAberto = false; try { micAberto = sessionStorage.getItem('ctai_sala_mic') === '1'; } catch (_) { /* ok */ }
+        await abrir(info);
+        if (micAberto && stream) alternarMicrofone(false); // voltou para a sala com o microfone como estava
+        ui.som.hidden = false; ui.painel.hidden = false; aviso('Você voltou para a sala. Toque em "ativar o som" para voltar a ouvir.');
+      } catch (_) { guardar(null); }
     }
   }
   /* ---------- convites ---------- */

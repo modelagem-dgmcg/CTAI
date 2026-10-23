@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Como usar a Sala guiada</title>
+<style>
+:root{--grafite:#1a1d20;--ambar:#d97706;--bordo:#8e1628;--fundo:#f1f2f5;--cinza:#6b7280}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fundo);color:#212529;font:16px/1.5 "Segoe UI",system-ui,sans-serif}
+header{background:var(--grafite);color:#fff;padding:28px 20px}
+header div,main{max-width:900px;margin:0 auto}
+header h1{margin:0 0 4px;font-size:28px}
+header p{margin:0;color:#ced4da}
+header .barra{width:48px;height:4px;background:var(--ambar);margin:10px 0 0;border-radius:2px}
+main{padding:20px}
+h2{margin:30px 0 10px;font-size:21px}
+h2 small{display:block;font-weight:400;color:var(--cinza);font-size:14px}
+.passo{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.12);padding:16px;margin:12px 0;display:grid;grid-template-columns:44px 1fr;gap:14px}
+.passo .n{width:38px;height:38px;border-radius:50%;background:var(--ambar);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:18px}
+.passo h3{margin:2px 0 6px;font-size:18px}
+.passo p{margin:4px 0}
+.passo img{display:block;max-width:100%;height:auto;margin-top:10px;border:1px solid #dee2e6;border-radius:8px}
+.lado{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.lado img{max-width:340px}
+.dica{background:#fff8db;border-left:5px solid var(--ambar);padding:10px 14px;border-radius:6px;margin:12px 0}
+.aviso{background:#fdecee;border-left:5px solid var(--bordo);padding:10px 14px;border-radius:6px;margin:12px 0}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+th,td{padding:10px 12px;text-align:left;vertical-align:top;border-bottom:1px solid #e9ecef}
+th{background:var(--grafite);color:#fff;font-size:13px;text-transform:uppercase;letter-spacing:.04em}
+svg{max-width:100%;height:auto;margin-top:10px}
+footer{color:var(--cinza);text-align:center;padding:24px 0 40px;font-size:13px}
+@media print{body{background:#fff}.passo,table{box-shadow:none;border:1px solid #dee2e6;break-inside:avoid}header{-webkit-print-color-adjust:exact;print-color-adjust:exact}.passo .n,th{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media(max-width:600px){.passo{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div><h1>Como usar a Sala guiada</h1><p>Falar, mostrar e acompanhar a tela de outra pessoa, sem sair do sistema.</p><div class="barra"></div></div></header>
+<main>
+<p>A Sala guiada serve para treinamentos e para mostrar o sistema a alguém. Uma pessoa <strong>conduz</strong> (fala e mostra) e as outras <strong>acompanham</strong> (ouvem e veem). Qualquer pessoa com login pode criar uma sala. Nada é gravado.</p>
+
+<h2>Quem conduz <small>cria a sala, chama as pessoas e mostra</small></h2>
+
+<div class="passo"><div class="n">1</div><div><h3>Ache o botão "Sala guiada"</h3><p>Ele fica no canto de baixo, à direita, em todas as telas do sistema.</p><img src="img/1-botao.png" alt="Botão Sala guiada" style="max-width:360px"></div></div>
+
+<div class="passo"><div class="n">2</div><div><h3>Abra e clique em "Criar sala (eu conduzo)"</h3><p>O painel abre. Se você só vai acompanhar alguém, digite o código no campo e clique em "Entrar".</p><img src="img/2-painel-fechado.png" alt="Painel antes de criar a sala" style="max-width:360px"></div></div>
+
+<div class="passo"><div class="n">3</div><div><h3>Chame as pessoas</h3><p>A sala ganha um código de 5 letras. Escolha quem convidar e clique em <strong>Convidar</strong>: quem estiver com o sistema aberto recebe um aviso na tela, e a equipe da CTAI recebe também uma mensagem em "Falar com a equipe". Também dá para passar o código por telefone ou mensagem.</p>
+<div class="lado"><img src="img/3-sala-criada.png" alt="Sala criada com código e botão Convidar"><div><p><strong>No painel você tem:</strong></p><ul><li><strong>Ligar microfone</strong>: ele começa desligado.</li><li><strong>Apontador</strong>: a bolinha que mostra onde você está.</li><li><strong>Silenciar todos</strong>: desliga o microfone de todos.</li><li><strong>Convidar</strong>: chama as pessoas.</li><li><strong>Compartilhar minha tela</strong>: veja o passo 4.</li></ul></div></div></div></div>
+
+<div class="passo"><div class="n">4</div><div><h3>Mostre o sistema: bolinha ou tela inteira</h3>
+<p><strong>Apontador (bolinha):</strong> quem acompanha vê uma bolinha com o seu nome onde você move o mouse, e acompanha você de uma tela do sistema para outra. Funciona dentro do sistema.</p>
+<p><strong>Compartilhar minha tela:</strong> todos veem a sua tela de verdade. Escolha <strong>"Tela inteira"</strong> na janela do navegador para poder trocar de janela, de menu e até de programa.</p>
+<svg viewBox="0 0 560 190" role="img" aria-label="Esquema de compartilhamento de tela"><rect x="10" y="20" width="200" height="130" rx="8" fill="#fff" stroke="#adb5bd"/><rect x="10" y="20" width="200" height="22" rx="8" fill="#1a1d20"/><text x="22" y="36" font-size="12" fill="#fff" font-family="Segoe UI">Sua tela (quem conduz)</text><rect x="24" y="56" width="110" height="10" fill="#dee2e6"/><rect x="24" y="74" width="160" height="10" fill="#dee2e6"/><rect x="24" y="92" width="90" height="10" fill="#dee2e6"/><circle cx="150" cy="112" r="8" fill="#d97706" opacity=".4" stroke="#d97706" stroke-width="3"/><text x="105" y="170" font-size="12" fill="#6b7280" font-family="Segoe UI" text-anchor="middle">Você mostra e fala</text><path d="M222 85h96" stroke="#d97706" stroke-width="4" marker-end="url(#a)"/><defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8z" fill="#d97706"/></marker></defs><text x="270" y="72" font-size="12" fill="#6b7280" font-family="Segoe UI" text-anchor="middle">tela + voz</text><rect x="330" y="20" width="220" height="130" rx="8" fill="#fff" stroke="#adb5bd"/><rect x="342" y="52" width="196" height="88" rx="6" fill="#1a1d20"/><text x="352" y="68" font-size="11" fill="#fff" font-family="Segoe UI" font-weight="600">Tela de Fulano</text><rect x="352" y="78" width="120" height="8" fill="#495057"/><rect x="352" y="94" width="160" height="8" fill="#495057"/><rect x="352" y="110" width="90" height="8" fill="#495057"/><text x="440" y="170" font-size="12" fill="#6b7280" font-family="Segoe UI" text-anchor="middle">Quem acompanha vê no quadro</text></svg>
+<div class="dica">Se outra pessoa começar a compartilhar, a sua tela para sozinha: só uma tela é mostrada de cada vez.</div></div></div>
+
+<h2>Quem acompanha <small>ouve, vê e, se quiser, fala</small></h2>
+
+<div class="passo"><div class="n">5</div><div><h3>Aceite o convite</h3><p>Um aviso aparece no alto da tela. Clique em <strong>Entrar agora</strong>. Se não puder agora, clique em "Agora não": o aviso não volta para aquela sala. Dá para entrar depois digitando o código no botão "Sala guiada".</p><img src="img/4-convite.png" alt="Aviso de convite para a sala" style="max-width:500px"></div></div>
+
+<div class="passo"><div class="n">6</div><div><h3>Acompanhe e fale quando precisar</h3><p>Seu microfone começa <strong>desligado</strong>. Clique em "Ligar microfone" para falar. Quem fala fica destacado na lista.</p>
+<div class="lado"><img src="img/5-participante.png" alt="Painel de quem acompanha"><div><p><strong>Quando quem conduz mexe o mouse</strong>, você vê a bolinha com o nome dele:</p><img src="img/6-apontador.png" alt="Bolinha do apontador" style="max-width:340px"><p>Se ele estiver em <strong>outra tela do sistema</strong>, você é levado até lá automaticamente (marcação "Acompanhar a tela de quem conduz"). Se compartilhar a tela, ela aparece num quadro no canto, com os botões <strong>Tela cheia</strong> e <strong>Esconder</strong>.</p></div></div></div></div>
+
+<div class="passo"><div class="n">7</div><div><h3>Assumir a condução e sair</h3><p><strong>Assumir a condução:</strong> qualquer pessoa na sala pode clicar nesse botão para passar a conduzir (a bolinha dela passa a valer e quem conduzia vira participante).</p><p><strong>Sair da sala:</strong> quem acompanha só sai. Se quem criou a sala clicar em "Encerrar sala" (dois cliques, para não encerrar por engano), a sala fecha para todos. A sala fecha sozinha depois de 4 horas.</p></div></div>
+
+<h2>Dicas para a voz ficar boa</h2>
+<div class="dica"><ul style="margin:0;padding-left:20px"><li><strong>Use fone de ouvido.</strong> Sem fone, o som da caixa volta para o microfone e vira eco e chiado.</li><li>Fique perto do microfone e em local sem barulho.</li><li>Quem não está falando deve deixar o microfone desligado.</li><li>Em "Microfone e fone", dentro do painel, dá para escolher outro microfone ou fone.</li><li>Use o Chrome ou o Edge atualizados.</li></ul></div>
+
+<h2>Se algo não funcionar</h2>
+<table><thead><tr><th>O que aconteceu</th><th>O que fazer</th></tr></thead><tbody>
+<tr><td>Mudei de página e parei de ouvir</td><td>A sala volta sozinha. Abra o painel e toque em <strong>"ativar o som"</strong>: o navegador exige um clique para liberar o som. Seu microfone volta como estava.</td></tr>
+<tr><td>Não vejo a bolinha</td><td>Ela só aparece quando você está na mesma tela de quem conduz. Deixe marcada a opção "Acompanhar a tela de quem conduz" ou clique em "Ir para lá" no aviso do alto.</td></tr>
+<tr><td>Não vejo a tela compartilhada</td><td>Confira se o quadro não foi escondido. Peça a quem compartilha para clicar em "Compartilhar minha tela" de novo e escolher "Tela inteira".</td></tr>
+<tr><td>Não ouço ninguém</td><td>Toque em "ativar o som". Veja se o fone certo está escolhido em "Microfone e fone" e se o volume do computador está alto.</td></tr>
+<tr><td>Ninguém me ouve</td><td>O microfone começa desligado: clique em "Ligar microfone". Se aparecer "Sem acesso ao microfone", libere o microfone para este site no navegador (cadeado ao lado do endereço).</td></tr>
+<tr><td>Fica pior com mais gente</td><td>A voz vai direto de computador a computador; com muitas pessoas a internet pesa. Use no máximo 10 pessoas e peça para os demais deixarem o microfone desligado.</td></tr>
+<tr><td>Não conecta (redes com bloqueio)</td><td>Algumas redes bloqueiam esse tipo de conexão. Teste em outra rede ou avise o suporte: um servidor de apoio da ATI resolve.</td></tr>
+</tbody></table>
+</main>
+<footer>Analista CTAI · Sala guiada · nada é gravado</footer>
+</body>
+</html>
