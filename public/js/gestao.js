@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  // Gestão CTAI: painel da superintendente, produção, carteira, usuários e IA. Só superintendente e administrador.
+  // Gestão: painel da superintendente, produção, carteira, usuários e IA. Só superintendente e administrador.
   const { h, api, fmt, toast, janela, confirmar, selo, aviso, tabela, montar } = window.CTAI;
   const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['entregas', 'Entregas por carteira'], ['importar', 'Importar'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
   const kpi = (r, v, nota, tom) => h('div', { class: 'kpi' + (tom ? ' ' + tom : '') }, h('div', { class: 'r' }, r), h('div', { class: 'num-grande' }, String(v)), nota ? h('div', { class: 'r' }, nota) : null);
@@ -14,7 +14,7 @@
   const tomEnvio = { recebido: 'ok', incompleto: 'atencao', pendente: 'alta' };
 
   function cabecalho(aba) {
-    return [h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Gestão CTAI'), h('p', null, 'Equipe, carteira de unidades, IA e acompanhamento da superintendência. Só a superintendente e o administrador veem esta área.'))),
+    return [h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Gestão'), h('p', null, 'Equipe, carteira de unidades, IA e acompanhamento da superintendência. Só a superintendente e o administrador veem esta área.'))),
       h('div', { class: 'abas' }, ABAS.map(([k, r]) => h('a', { href: '#/gestao' + (k ? '/' + k : ''), class: aba === k ? 'ativo' : '' }, r)))];
   }
   const seletor = (id, rotulo, opcoes, valor, aoMudar) => h('div', { class: 'campo filtro' }, h('label', { for: id }, rotulo),

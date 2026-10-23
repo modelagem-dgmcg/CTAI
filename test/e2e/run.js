@@ -107,7 +107,7 @@ let base;
     // 2b. Analista CTAI: fila, encaminhar à unidade, resposta, normas, acervo e relatório trimestral
     await api(cri, 'POST', '/api/analista/analisar', { cid: cid06, salvar: true, texto: 'O valor foi R$ 1.000,00 (dois mil reais). Foram 63 de 100 (70%) casos no tempo de espera do atendimento vermelho.' });
     await ir(cri, '#/analista', 'text=O que pede ação');
-    assert.match(await cri.textContent('#conteudo'), /Redator CTAI/); assert.equal(await cri.locator('#abas-redator a').count(), 6, 'abas unificadas do Redator');
+    assert.match(await cri.textContent('#conteudo'), /Editor de Documentos/); assert.equal(await cri.locator('#abas-redator a').count(), 6, 'abas unificadas do Redator');
     assert.equal(await cri.locator('.lateral a.nav', { hasText: 'Analista CTAI' }).count(), 0, 'sem item Analista CTAI no menu');
     await ir(cri, '#/analista/ler', '#an-importar'); await ir(cri, '#/analista', 'text=O que pede ação');
     await cri.setViewportSize({ width: 1280, height: 1300 }); await limpa(cri); await cri.screenshot({ path: path.join(CAP, '10-analista-fila.png') });
@@ -149,7 +149,7 @@ let base;
     await cri.selectOption('#ck-v', 'com divergências'); await cri.fill('#ck-o', 'Relatório da comissão chegou sem a ata da revisão.');
     await dialogo(cri, 'Salvar'); await cri.waitForSelector('text=decidido por cleuton', { timeout: 6000 });
     await cri.setViewportSize({ width: 1280, height: 1500 }); await cri.evaluate(() => window.scrollTo(0, 0)); await limpa(cri); await cri.screenshot({ path: path.join(CAP, '17-ctai-checklist.png' ) }); await cri.setViewportSize({ width: 1280, height: 860 });
-    await ir(cri, '#/', 'text=Painel da CTAI'); assert.equal(await cri.locator('.rec.aberto').count(), 0, 'cartões do Painel começam fechados'); await cri.click('.rec-cab >> nth=0'); assert.ok(await cri.locator('.rec.aberto').count() >= 1); assert.match(await cri.textContent('#conteudo'), /Prazos/);
+    await ir(cri, '#/', 'text=Unidades'); assert.equal(await cri.locator('.rec.aberto').count(), 0, 'cartões do Painel começam fechados'); await cri.click('.rec-cab >> nth=0'); assert.ok(await cri.locator('.rec.aberto').count() >= 1); assert.match(await cri.textContent('#conteudo'), /Prazos/);
     log('prazos informados pela unidade e checklist de recebimento editado pela CTAI');
     for (const [k, v] of [['desconto_modo', 'faixa'], ['vermelho', 'faixa']]) await api(cri, 'PUT', '/api/ctai/contratos/DEMO-UPA/decisoes/' + k, { valor: v, justificativa: 'Teste ponta a ponta' });
     await ir(cri, '#/pareceres', '#np-c');
@@ -237,7 +237,7 @@ let base;
     await cri.waitForSelector('text=Nova versão no sistema depois do SEI');
     await limpa(cri); await cri.screenshot({ path: path.join(CAP, '8-ctai-alerta-sei.png') });
     await ir(cri, '#/c/' + cid06, 'text=Recálculo'); assert.match(await cri.textContent('#conteudo'), /Sistema × SEI/);
-    await ir(cri, '#/', 'text=Painel da CTAI'); assert.ok(await cri.locator('.rec.aberto').count() >= 1, 'o que foi aberto continua aberto'); await cri.evaluate(() => document.querySelectorAll('.rec:not(.aberto) .rec-cab').forEach((b) => b.click())); await cri.waitForSelector('text=SEI: 1 alerta(s)');
+    await ir(cri, '#/', 'text=Unidades'); assert.ok(await cri.locator('.rec.aberto').count() >= 1, 'o que foi aberto continua aberto'); await cri.evaluate(() => document.querySelectorAll('.rec:not(.aberto) .rec-cab').forEach((b) => b.click())); await cri.waitForSelector('text=SEI: 1 alerta(s)');
     await gest.evaluate((c) => { location.hash = '#/c/' + c; }, cid06); await gest.waitForSelector('text=Você enviou a v2 depois de registrar o SEI da v1');
     log('nova versão depois do SEI gerou o alerta na CTAI e o aviso na unidade');
 
@@ -265,7 +265,7 @@ let base;
 
     // 6. Gestão CTAI (superintendente): carteira, painel, produção, usuários, IA e PDF do painel
     const sup = await entrar(browser, 'nathalia', 1280, true); paginas.push(sup);
-    await sup.waitForSelector('a.nav:has-text("Gestão CTAI")');
+    await sup.waitForSelector('a.nav:has-text("Gestão")');
     await ir(sup, '#/gestao/carteira', 'text=Quem acompanha cada unidade');
     await sup.click('#cart-ed-colega1'); await sup.waitForSelector('dialog[open] #ck-DEMO-UPA'); await sup.check('#ck-DEMO-UPA'); await sup.fill('#ck-motivo', 'Distribuição inicial'); await dialogo(sup, 'Salvar carteira'); await sup.waitForSelector('text=Carteira atualizada.');
     await sup.click('#cart-ed-cleuton'); await sup.waitForSelector('dialog[open] #ck-UPA-OLINDA'); await sup.check('#ck-UPA-OLINDA'); await sup.check('#ck-DEMO-UPA'); await dialogo(sup, 'Salvar carteira'); await sup.waitForSelector('text=Carteira atualizada.');
@@ -290,7 +290,7 @@ let base;
     assert.doesNotMatch(await sup.content(), /sk-demo-NAO-REAL/, 'a chave nunca aparece na tela');
     await sup.setViewportSize({ width: 1280, height: 1500 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '22-gestao-ia.png') });
     const colegaCart = await entrar(browser, 'colega1', 1280, true); paginas.push(colegaCart);
-    await colegaCart.waitForSelector('#conteudo h1'); assert.doesNotMatch(await colegaCart.textContent('#conteudo'), /Olinda/); assert.equal(await colegaCart.locator('a.nav:has-text("Gestão CTAI")').count(), 0);
+    await colegaCart.waitForSelector('#conteudo h1'); assert.doesNotMatch(await colegaCart.textContent('#conteudo'), /Olinda/); assert.equal(await colegaCart.locator('a.nav:has-text("Gestão")').count(), 0);
     log('Gestão CTAI: carteira, painel com filtros, PDF, produção, usuários e IA; o colega só vê a carteira dele');
 
     // 7. Portal da Unidade: o gestor cuida da equipe; Gestão CTAI: aba Acessos
@@ -349,15 +349,15 @@ let base;
     const an = await entrar(browser, 'colega1', 1280, true); paginas.push(an);
     await an.waitForSelector('#cx-resumo', { timeout: 8000 });
     assert.match(an.url(), /#\/caixa$/, 'analista começa na Caixa de entrada');
-    assert.equal(await an.locator('a.nav:text-is("Painel")').count(), 0, 'sem item Painel para o analista');
+    assert.equal(await an.locator('a.nav:text-is("Unidades")').count(), 0, 'sem item Painel para o analista');
     assert.ok(await an.locator('#cx-resumo a').count() >= 4, 'faixa de resumo com atalhos');
     await an.setViewportSize({ width: 1280, height: 900 }); await limpa(an); await an.screenshot({ path: path.join(CAP, '30-inicio-analista-caixa.png') });
     await an.goto(base + '/ctai#/'); await an.waitForSelector('#cx-resumo', { timeout: 8000 }); assert.match(an.url(), /#\/caixa$/, 'link antigo do Painel redireciona sem erro');
     const sup2 = await entrar(browser, 'nathalia', 1280, true); paginas.push(sup2);
-    await sup2.waitForSelector('#conteudo h1', { timeout: 8000 }); assert.match(await sup2.textContent('#conteudo h1'), /Painel/, 'inicio superintendente: ' + sup2.url()); assert.equal(await sup2.locator('a.nav:text-is("Painel")').count(), 1, 'superintendente mantém o Painel');
+    await sup2.waitForSelector('#conteudo h1', { timeout: 8000 }); assert.match(await sup2.textContent('#conteudo h1'), /Unidades/, 'inicio superintendente: ' + sup2.url()); assert.equal(await sup2.locator('a.nav:text-is("Unidades")').count(), 1, 'superintendente mantém o Painel');
     CFG.painelAnalista = true;
-    await an.goto(base + '/ctai?v=2#/'); await an.waitForSelector('#conteudo h1', { timeout: 8000 }); assert.match(await an.textContent('#conteudo h1'), /Painel/, 'painel de volta: ' + an.url());
-    assert.equal(await an.locator('a.nav:text-is("Painel")').count(), 1, 'configuração devolve o Painel ao analista');
+    await an.goto(base + '/ctai?v=2#/'); await an.waitForSelector('#conteudo h1', { timeout: 8000 }); assert.match(await an.textContent('#conteudo h1'), /Unidades/, 'painel de volta: ' + an.url());
+    assert.equal(await an.locator('a.nav:text-is("Unidades")').count(), 1, 'configuração devolve o Painel ao analista');
     CFG.painelAnalista = false;
     log('tela inicial por perfil: analista na Caixa de entrada, superintendente no Painel, configuração de volta');
     for (const p of paginas) assert.deepEqual(p.erros, [], 'erros de JavaScript na tela: ' + p.erros.join(' | '));

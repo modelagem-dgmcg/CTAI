@@ -179,3 +179,9 @@ button:not(.sec):not(.leve):hover,.btn:not(.sec):hover{background:var(--acento-h
 .rec-corpo{padding:4px 18px 18px;border-top:1px solid #e9ecef}
 .lateral a.nav.fim{margin-top:10px;border-top:1px solid rgba(255,255,255,.1);border-radius:0 0 8px 8px;padding-top:12px}
 @media (max-width:760px){.rec-cab{flex-wrap:wrap}.rec-resumo{margin-left:24px;text-align:left;flex-basis:100%}.lateral a.nav.fim{border-top:0;margin-top:0}}
+.busca-un{margin:0 0 14px}
+.busca-un input{width:100%;max-width:420px;padding:10px 14px;border:1px solid var(--borda);border-radius:var(--r);background:#fff;font:inherit}
+.busca-un input:focus{outline:2px solid var(--ambar);outline-offset:1px}
+.grupo-un{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--cinza);margin:22px 0 10px;font-weight:600}
+.grupo-un .peq{text-transform:none;letter-spacing:0;margin-left:6px}
+[hidden]{display:none!important}

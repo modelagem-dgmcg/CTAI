@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // Formulário único de "Novo usuário": primeiro escolhe CTAI ou Unidade, depois mostra só o que cabe a cada um.
-  // Usado na Administração e na Gestão CTAI.
+  // Usado na Administração e na Gestão.
   const { h, api, toast } = window.CTAI;
   const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -65,7 +65,7 @@
         if (['criador', 'colega'].includes(E.perfil)) {
           partes.push(h('div', { class: 'campo' }, h('label', null, 'Unidades que acompanha (carteira)'),
             pickCarteira || (pickCarteira = seletorUnidades({ contratos: opcoes.contratos, multi: true, aoMudar: (l) => { E.unidades = l; } })),
-            h('div', { class: 'ajuda' }, 'Sem nenhuma marcada, a pessoa vê todas as unidades. Dá para ajustar depois em Gestão CTAI > Carteira.')));
+            h('div', { class: 'ajuda' }, 'Sem nenhuma marcada, a pessoa vê todas as unidades. Dá para ajustar depois em Gestão > Carteira.')));
         } else {
           partes.push(h('p', { class: 'mudo peq' }, 'Este perfil enxerga todas as unidades; não precisa de carteira.'));
         }

@@ -33,7 +33,7 @@ test('lista de obrigatórios cobre os itens oficiais e mantém transferências e
 });
 
 let S, gestor, setorQ, cleuton, colega, admin, cid06, envio1;
-const agora = new Date().toISOString().slice(0, 10);
+const agora = require('../server/prazos').dataLocal();
 
 test.before(async () => {
   S = await iniciar();
@@ -62,7 +62,7 @@ test('prazos aparecem no portal da unidade e o SIMAS é informado pelo gestor, c
   assert.equal(lista.prazos.sei.prazo, '2026-07-20');
   assert.equal(lista.prazos.simas.prazo, '2026-07-25');
   assert.equal(lista.prazos.sei.situacao, 'vencido', 'sem envio e depois do prazo');
-  const amanha = new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10);
+  const amanha = new Date(Date.parse(agora + 'T12:00:00Z') + 2 * 86400000).toISOString().slice(0, 10);
   assert.equal((await gestor.post('/api/unidade/competencias/' + cid06 + '/simas', { data: amanha })).status, 400, 'data futura');
   assert.equal((await gestor.post('/api/unidade/competencias/' + cid06 + '/simas', { data: '31/07/2026' })).status, 400, 'formato');
   const ok = await gestor.post('/api/unidade/competencias/' + cid06 + '/simas', { data: '2026-07-24' });

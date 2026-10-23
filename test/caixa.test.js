@@ -105,7 +105,8 @@ test('resposta da unidade a achado chega à caixa; minuta aguardando conferênci
 
 test('substituição: itens novos vão ao substituto marcados "em substituição de"; validações; trilha; fim do período', async () => {
   const hoje = require('../server/prazos').dataLocal();
-  const amanha = new Date(Date.now() + 864e5).toISOString().slice(0, 10), ontem = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
+  const dia = (n) => new Date(Date.parse(hoje + 'T12:00:00Z') + n * 864e5).toISOString().slice(0, 10); // a partir da data local, para não depender do fuso
+  const amanha = dia(1), ontem = dia(-1);
   // colega2 sai de licença: caixa vai para cleuton (que não tem a Olinda)
   assert.equal((await colega1.post('/api/caixa/substituicoes', { de_usuario_id: ids.colega2, para_usuario_id: ids.cleuton, desde: hoje, ate: amanha })).status, 403, 'colega não redireciona a caixa de outra pessoa');
   assert.equal((await nath.post('/api/caixa/substituicoes', { de_usuario_id: ids.colega2, para_usuario_id: ids.colega2, desde: hoje, ate: amanha })).status, 400);

@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // Rack de chaves de IA: chaves ilimitadas, todas valem para todos os usuários; a ordem define a tentativa.
-  // Usado na Administração e na Gestão CTAI > IA. A chave nunca volta para a tela: só os 4 últimos caracteres.
+  // Usado na Administração e na Gestão > IA. A chave nunca volta para a tela: só os 4 últimos caracteres.
   const { h, api, fmt, toast, janela, confirmar, selo, aviso, tabela } = window.CTAI;
 
   function rack() {

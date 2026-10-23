@@ -379,7 +379,7 @@
   async function iniciar() {
     const me0 = await api('GET', '/api/auth/me').catch(() => null);
     const extra = me0 && me0.usuario.perfil === 'gestor_unidade' ? [{ href: '#/equipe', rotulo: 'Equipe da unidade' }] : [];
-    EU = await casca({ titulo: 'CTAI', subtitulo: 'Portal da Unidade', perfis: ['gestor_unidade', 'setor_unidade'], itens: [{ href: '#/', rotulo: 'Meses' }, { href: '#/esclarecimentos', rotulo: 'Esclarecimentos' }, { href: '#/regras', rotulo: 'Regras de pontuação' }].concat(extra) });
+    EU = await casca({ titulo: 'Portal da Unidade', subtitulo: '', perfis: ['gestor_unidade', 'setor_unidade'], itens: [{ href: '#/', rotulo: 'Meses' }, { href: '#/esclarecimentos', rotulo: 'Esclarecimentos' }, { href: '#/regras', rotulo: 'Regras de pontuação' }].concat(extra) });
     if (!EU) return;
     try { const m = await api('GET', '/api/meta'); Object.entries(m.fontes).forEach(([k, v]) => { NOMES_FONTES[k] = v.nome; }); } catch (_) { /* segue */ }
     rotear([['/', inicio], ['/c/:cid', competencia], ['/c/:cid/enviar', enviar], ['/c/:cid/envios', envios], ['/c/:cid/ficha/:setor', ficha], ['/c/:cid/lista/:fonte', lista], ['/esclarecimentos', esclarecimentos], ['/regras', regras], ['/integracao', integracao]].concat(me0 && me0.usuario.perfil === 'gestor_unidade' ? [['/equipe', equipe]] : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
