@@ -121,7 +121,7 @@
     const main = h('main', { class: 'conteudo', id: 'conteudo', tabindex: '-1' });
     document.getElementById('app').replaceChildren(h('div', { class: 'casca' }, lat, main));
     window.__marcarMenu = (hash) => lat.querySelectorAll('a.nav').forEach((a) => { const alvo = a.getAttribute('data-h').replace('#', ''); const h2 = hash.replace(/^\/[pv]\//, '/pareceres/').replace(/^\/analista/, '/pareceres'); a.classList.toggle('ativo', alvo === '/' ? (hash === '/' || hash.startsWith('/c/')) : h2.startsWith(alvo)); });
-    if (u.trocar_senha) await trocarSenha(true);
+    if (u.trocar_senha) { await trocarSenha(true); if (window.SalaGuiada) window.SalaGuiada.iniciar(); } // a Sala guiada só liga depois da troca da senha provisória
     return u;
   }
   async function trocarSenha(obrigatoria) {

@@ -35,6 +35,7 @@ function criarApp(db) {
   app.use('/api/caixa', require('./routes/caixa')(db));
   app.use('/api/gaocg', require('./routes/gaocg')(db));
   app.use('/api/mensageiro', require('./routes/mensageiro')(db));
+  app.use('/api/sala', require('./sala-guiada')(db));
   app.use('/api/analista', require('./routes/analista')(db));
   app.use('/api/integracoes', require('./routes/integracoes')(db));
   app.use('/api/admin', require('./routes/admin')(db));
