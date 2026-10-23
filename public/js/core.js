@@ -115,6 +115,9 @@
   if (/^ctai-\//.test(window.name || '')) document.documentElement.classList.add('janela-propria');
   // Quem chega por /unidade volta para a entrada da unidade, não para a da CTAI.
   const entrada = () => (location.pathname === '/unidade' ? '/?entrar=unidade' : '/');
+  // Ícones do menu (traço simples, herdam a cor do texto).
+  const ICONES = { conversa: '<path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-9l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="M8 10h8M8 13h5"/>' };
+  function iconeSvg(nome) { const sp = document.createElement('span'); sp.className = 'nav-ico'; sp.setAttribute('aria-hidden', 'true'); sp.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (ICONES[nome] || '') + '</svg>'; return sp; }
   async function casca(opc) {
     const me = await api('GET', '/api/auth/me').catch(() => null);
     if (!me) { location.href = entrada(); return null; }
@@ -123,7 +126,7 @@
     const lat = h('nav', { class: 'lateral', 'aria-label': 'Menu' },
       h('div', { class: 'marca' }, h('span', { class: 'logo', 'aria-hidden': 'true' }, 'C'), h('span', null, opc.titulo, h('small', null, opc.subtitulo))),
       opc.itens.map((i) => h('div', { class: 'nav-linha' + (i.classe ? ' ' + i.classe : '') },
-        h('a', { class: 'nav' + (i.classe ? ' ' + i.classe : ''), href: i.href, 'data-h': i.href, onclick: (ev) => { if (menuEmJanela() && !ev.ctrlKey && !ev.metaKey && !ev.shiftKey) { ev.preventDefault(); abrirAba(i.href); } } }, i.rotulo),
+        h('a', { class: 'nav' + (i.classe ? ' ' + i.classe : ''), href: i.href, 'data-h': i.href, onclick: (ev) => { if (menuEmJanela() && !ev.ctrlKey && !ev.metaKey && !ev.shiftKey) { ev.preventDefault(); abrirAba(i.href); } }, 'aria-label': i.rotulo, title: i.icone ? i.rotulo : null }, i.icone ? [iconeSvg(i.icone), h('span', { class: 'nav-rot' }, i.rotulo)] : i.rotulo),
         h('button', { type: 'button', class: 'nav-nova', title: 'Abrir em nova janela', 'aria-label': 'Abrir ' + i.rotulo + ' em nova janela', onclick: () => abrirAba(i.href) }, '⧉'))),
       h('div', { class: 'rodape' }, h('div', null, h('strong', null, u.nome)), h('div', null, u.perfilNome), h('label', { class: 'rod-opcao' }, h('input', { type: 'checkbox', checked: menuEmJanela(), onchange: (ev) => { try { localStorage.setItem('ctai_menu_janela', ev.target.checked ? '1' : '0'); } catch (_) { /* ok */ } } }), ' Abrir menus em nova janela'), h('button', { class: 'sec', onclick: async () => { await api('POST', '/api/auth/logout', {}); esquecerAbertos(); location.href = '/'; } }, 'Sair')));
     const main = h('main', { class: 'conteudo', id: 'conteudo', tabindex: '-1' });

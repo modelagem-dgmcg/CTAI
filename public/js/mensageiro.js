@@ -84,7 +84,7 @@
       hist.scrollTop = hist.scrollHeight;
     }
     pintarContatos();
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Mensageiro'), h('p', null, 'Conversa com a equipe, com texto e documentos anexos.'))), h('div', { class: 'msg-grade' }, col, painel));
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Falar com a equipe'), h('p', null, 'Conversa com a equipe, com texto e documentos anexos.'))), h('div', { class: 'msg-grade' }, col, painel));
     atualizarContador();
   }
   window.CTAI_MENSAGEIRO = { rotas: [['/mensageiro', mensageiro]], atualizarContador };

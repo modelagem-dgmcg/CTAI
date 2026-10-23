@@ -259,3 +259,10 @@ button:not(.sec):not(.leve):hover,.btn:not(.sec):hover{background:var(--acento-h
 .ponto.ausente { background: var(--acento, #d97706); }
 .msg-todos { width: 100%; margin-bottom: 10px; }
 .grupo-tag { display: block; font-weight: 600; color: var(--acento, #d97706); margin-bottom: 2px; }
+
+/* Item de menu só com ícone: o nome aparece ao passar o mouse, ao focar ou quando é a tela aberta */
+.lateral a.nav .nav-ico{display:inline-flex;vertical-align:middle}
+.lateral a.nav .nav-rot{display:inline-block;vertical-align:middle;max-width:0;overflow:hidden;white-space:nowrap;margin-left:0;opacity:0;transition:max-width .2s,opacity .2s,margin .2s}
+.lateral a.nav:hover .nav-rot,.lateral a.nav:focus-visible .nav-rot,.lateral a.nav.ativo .nav-rot{max-width:200px;margin-left:10px;opacity:1}
+.lateral a.nav .contador{margin-left:8px}
+@media (max-width:760px){.lateral a.nav .nav-rot{max-width:200px;margin-left:8px;opacity:1}}
