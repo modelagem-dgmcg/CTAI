@@ -47,7 +47,8 @@
     };
     // Quadro de resumo: frases completas, explicação ao passar o mouse, só o que tem algo a fazer, e cada item leva à lista daquilo.
     const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
-    const faixa = (id, n, texto, ajuda, tom, tipo, sit) => (n ? h('a', { href: '#/caixa', id: 'cx-rs-' + id, class: 'cx-faixa ' + (tom || ''), title: ajuda, onclick: (e) => { e.preventDefault(); F.tipo = tipo || ''; F.situacao = sit || 'pendentes'; caixa(); } }, h('strong', { class: 'num-grande', style: 'font-size:20px' }, String(n)), ' ', h('span', { class: 'peq' }, texto)) : null);
+    const ativa = (tipo, sit) => (F.tipo || '') === (tipo || '') && (F.situacao === '' ? 'todos' : F.situacao) === (sit || 'pendentes');
+    const faixa = (id, n, texto, ajuda, tom, tipo, sit) => ((n || ativa(tipo, sit)) ? h('a', { href: '#/caixa', id: 'cx-rs-' + id, class: 'cx-faixa ' + (tom || '') + (ativa(tipo, sit) ? ' ativa' : ''), title: ajuda, 'aria-pressed': String(ativa(tipo, sit)), onclick: (e) => { e.preventDefault(); const ja = ativa(tipo, sit); F.tipo = ja ? '' : (tipo || ''); F.situacao = ja ? 'pendentes' : (sit || 'pendentes'); caixa(); } }, h('strong', { class: 'num-grande', style: 'font-size:20px' }, String(n)), ' ', h('span', { class: 'peq' }, texto)) : null);
     const card = (i) => h('div', { class: 'cartao cx-item' + (i.lido || i.tratado ? '' : ' nao-lido'), 'data-item': i.item_id },
       h('div', { class: 'linha espaco' }, h('div', null, selo(i.tipo_rotulo, tomTipo[i.tipo] || ''), ' ', i.em_substituicao_de ? selo('em substituição de ' + i.em_substituicao_de, 'atencao') : null, ' ', !i.lido && !i.tratado ? selo('não lido', 'alta') : null, ' ', i.tratado ? selo('tratado', 'ok') : selo('pendente', 'atencao')), h('span', { class: 'mudo peq' }, fmt.data(i.criado_em))),
       h('h3', { style: 'margin:6px 0 2px' }, i.titulo),
@@ -84,7 +85,7 @@
 
     // ---- Bloco de uma unidade ----
     const bloco = (u) => {
-      const abertoPadrao = u.nao_lidos > 0;
+      const abertoPadrao = u.nao_lidos > 0 || !!F.tipo || F.situacao === 'nao_lidos'; // com um filtro ligado, mostra os itens sem precisar abrir cada unidade
       const aberto = F.abertas[u.contrato_id] === undefined ? abertoPadrao : F.abertas[u.contrato_id];
       const pz = u.pior_prazo;
       const det = h('details', { class: 'cartao un-bloco', 'data-contrato': u.contrato_id },
@@ -136,25 +137,25 @@
       const vazio = d.geral.length === 0 && !un.length;
       lista.replaceChildren(...un.map(bloco).concat([
         d.geral.length && !q ? h('div', { class: 'cartao' }, h('h3', null, 'Geral (sem unidade)'), d.geral.map(card)) : null,
-        vazio ? h('div', { class: 'cartao' }, h('p', { class: 'mudo' }, 'Nenhuma unidade encontrada.')) : null].filter(Boolean)));
+        vazio ? h('div', { class: 'cartao' }, h('p', { class: 'mudo' }, (F.tipo || F.situacao !== 'pendentes' || q) ? 'Nada encontrado com esse filtro. Clique de novo no quadro marcado, acima, para voltar a tudo.' : 'Nada pendente na sua caixa. Tudo em dia.')) : null].filter(Boolean)));
     };
     const busca = h('input', { type: 'search', id: 'cx-busca', placeholder: 'Buscar unidade ou município…', value: F.busca, 'aria-label': 'Buscar unidade', oninput: (e) => { F.busca = e.target.value; desenharLista(); } });
     desenharLista();
 
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Caixa de entrada'), h('p', null, d.todas ? 'Tudo que chegou das unidades, por unidade. Você vê todas (sem carteira definida).' : 'Tudo que chegou das unidades da sua carteira, reunido por unidade. Quem divide a unidade com você recebe os mesmos itens; o primeiro que tratar marca para todos.'))),
       window.CTAI_COMECE ? window.CTAI_COMECE.cartao() : null,
-      h('div', { class: 'cartao cx-resumo', id: 'cx-resumo', style: 'padding:10px 14px' }, h('div', { class: 'linha', style: 'gap:18px;flex-wrap:wrap' },
-        faixa('nao_lidos', rs.naoLidos, rs.naoLidos === 1 ? 'aviso novo, ainda não aberto' : 'avisos novos, ainda não abertos', 'Avisos da sua caixa que você ainda não abriu.', 'atencao', '', 'nao_lidos'),
-        faixa('prazos', rs.prazos_vencidos, rs.prazos_vencidos === 1 ? 'aviso de prazo vencido' : 'avisos de prazo vencido', 'A unidade passou do prazo de entrega no SEI ou no SIMAS.', 'alta', 'prazo_vencido'),
-        faixa('prazos2', rs.prazos_a_vencer, rs.prazos_a_vencer === 1 ? 'aviso de prazo a vencer' : 'avisos de prazo a vencer', 'O prazo de entrega da unidade está chegando.', 'atencao', 'prazo_vencer'),
-        faixa('resp', rs.respostas, rs.respostas === 1 ? 'achado respondido pela unidade' : 'achados respondidos pelas unidades', 'Pontos que a CTAI encaminhou à unidade e que ela já respondeu.', 'atencao', 'resposta'),
-        faixa('semg', rs.sem_gestor, rs.sem_gestor === 1 ? 'unidade ainda sem gestor cadastrado' : 'unidades ainda sem gestor cadastrado', 'Sem o administrador da unidade no Portal, ninguém da unidade consegue enviar os dados. Cadastre em Gestão > Usuários.', 'atencao', 'sem_gestor'),
-        (rs.naoLidos || rs.prazos_vencidos || rs.prazos_a_vencer || rs.respostas || rs.sem_gestor) ? null : h('span', { class: 'mudo' }, 'Tudo em dia: nada pendente na sua caixa.'))),
-      h('div', { class: 'filtros cartao' },
-        h('div', { class: 'campo filtro' }, h('label', { for: 'cx-busca' }, 'Unidade'), busca),
-        opc('cx-f-tipo', 'Tipo', [['', 'Todos']].concat(Object.entries(d.tipos)), F.tipo, (v) => { F.tipo = v; caixa(); }),
-        opc('cx-f-sit', 'Situação', SIT, F.situacao === '' ? 'todos' : F.situacao, (v) => { F.situacao = v; caixa(); }),
-        d.contagem.naoLidos ? h('button', { class: 'sec', id: 'cx-todos-lidos', onclick: async () => { await api('POST', '/api/caixa/lidos', {}); refazer(); } }, 'Marcar todos como lidos') : null),
+      h('div', { class: 'cartao cx-resumo', id: 'cx-resumo', style: 'padding:12px 14px' },
+        h('div', { class: 'linha', style: 'gap:10px;flex-wrap:wrap' },
+          faixa('pend', d.contagem.pendentes, d.contagem.pendentes === 1 ? 'pendente no total' : 'pendentes no total', 'Tudo o que ainda não foi tratado.', '', '', 'pendentes'),
+          faixa('nao_lidos', rs.naoLidos, rs.naoLidos === 1 ? 'aviso novo, ainda não aberto' : 'avisos novos, ainda não abertos', 'Avisos da sua caixa que você ainda não abriu.', 'atencao', '', 'nao_lidos'),
+          faixa('prazos', rs.prazos_vencidos, rs.prazos_vencidos === 1 ? 'aviso de prazo vencido' : 'avisos de prazo vencido', 'A unidade passou do prazo de entrega no SEI ou no SIMAS.', 'alta', 'prazo_vencido'),
+          faixa('prazos2', rs.prazos_a_vencer, rs.prazos_a_vencer === 1 ? 'aviso de prazo a vencer' : 'avisos de prazo a vencer', 'O prazo de entrega da unidade está chegando.', 'atencao', 'prazo_vencer'),
+          faixa('resp', rs.respostas, rs.respostas === 1 ? 'achado respondido pela unidade' : 'achados respondidos pelas unidades', 'Pontos que a CTAI encaminhou à unidade e que ela já respondeu.', 'atencao', 'resposta'),
+          faixa('semg', rs.sem_gestor, rs.sem_gestor === 1 ? 'unidade ainda sem gestor cadastrado' : 'unidades ainda sem gestor cadastrado', 'Sem o administrador da unidade no Portal, ninguém da unidade consegue enviar os dados. Cadastre em Gestão > Usuários.', 'atencao', 'sem_gestor')),
+        h('div', { class: 'linha cx-ferramentas', style: 'gap:14px;flex-wrap:wrap;margin-top:12px' },
+          busca,
+          h('label', { class: 'ck', style: 'margin:0' }, h('input', Object.assign({ type: 'checkbox', id: 'cx-tratados', onchange: (e) => { F.tipo = ''; F.situacao = e.target.checked ? 'todos' : 'pendentes'; caixa(); } }, F.situacao === 'todos' ? { checked: true } : {})), ' Mostrar também o que já foi tratado'),
+          d.contagem.naoLidos ? h('button', { class: 'sec', id: 'cx-todos-lidos', onclick: async () => { await api('POST', '/api/caixa/lidos', {}); refazer(); } }, 'Marcar todos como lidos') : null)),
       painelAusencia, lista);
     atualizarContador();
   }
