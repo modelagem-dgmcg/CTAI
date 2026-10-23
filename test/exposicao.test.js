@@ -36,6 +36,9 @@ test('origem externa: só o Portal da Unidade; o resto é 404', async () => {
   assert.equal((await externoGestor.post('/api/auth/login', { login: 'gestor.demo', senha: 'Senha@12345' })).status, 200);
   assert.equal((await externoGestor.get('/api/unidade/competencias')).status, 200);
   assert.equal((await externoGestor.get('/api/ctai/contratos')).status, 404);
+  assert.equal((await externoGestor.get('/api/sala/estado')).status, 200, 'unidade alcança a Sala guiada de fora');
+  assert.equal((await externoGestor.get('/api/sala/estado')).json.podeCriar, false, 'unidade entra na sala, mas não conduz');
+  assert.equal((await fetch(S.base + '/js/sala-guiada.js', { headers: TUNEL })).status, 200);
   const n = await externoNath.post('/api/auth/login', { login: 'nathalia', senha: 'Senha@12345' });
   assert.equal(n.status, 401); assert.equal(n.json.erro, 'Usuário ou senha incorretos.');
   assert.equal((await externoAdmin.post('/api/auth/login', { login: 'admin', senha: 'Senha@12345' })).status, 401);

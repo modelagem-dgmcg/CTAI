@@ -111,8 +111,8 @@ function ipDe(req) {
 const agenteDe = (req) => String(req.headers['user-agent'] || '').slice(0, 160) || null;
 
 const ABERTOS_EXTERNOS = [
-  /^\/$/, /^\/unidade(\.html)?$/, /^\/index(\.html)?$/, /^\/api\/unidade(\/|$)/, /^\/api\/auth(\/|$)/, /^\/api\/meta$/, /^\/api\/regras\//, /^\/api\/saude$/, /^\/saude$/, /^\/api\/origem$/,
-  /^\/css\//, /^\/icons\//, /^\/js\/(core|login|unidade)\.js$/, /^\/sw\.js$/, /^\/manifest\.webmanifest$/, /^\/favicon\.ico$/, /^\/fontes\//, /^\/fonts\//,
+  /^\/$/, /^\/unidade(\.html)?$/, /^\/index(\.html)?$/, /^\/api\/unidade(\/|$)/, /^\/api\/auth(\/|$)/, /^\/api\/meta$/, /^\/api\/regras\//, /^\/api\/sala(\/|$)/, /^\/api\/sala(\/|$)/, /^\/api\/saude$/, /^\/saude$/, /^\/api\/origem$/,
+  /^\/css\//, /^\/icons\//, /^\/js\/(core|login|unidade|sala-guiada)\.js$/, /^\/sw\.js$/, /^\/manifest\.webmanifest$/, /^\/favicon\.ico$/, /^\/fontes\//, /^\/fonts\//,
 ];
 
 // Primeira peça da cadeia: marca a origem e, se for externa, deixa passar só o Portal da Unidade.
