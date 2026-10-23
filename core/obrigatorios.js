@@ -25,6 +25,12 @@ const ITENS = [
   { id: 'pessoal', titulo: 'Pessoal e escalas (complementar)', grupo: 'Complementar', complementar: true, indicadores: [], campos: ['gasto_pessoal_pct'], docs: ['i_rh_anexo'] },
 ];
 
+// Indicadores 2.1 a 2.9 de tempo e retorno: quando o valor é só digitado, a unidade deve informar também numerador e denominador.
+const BASES = {
+  '2.1': ['i2_1_soma', 'i2_1_n'], '2.2': ['i2_2_soma', 'i2_2_n'], '2.3': ['i2_3_soma', 'i2_3_n'], '2.4': ['i2_4_retornos', 'i2_4_saidas'],
+  '2.6': ['i2_6_soma', 'i2_6_n'], '2.7': ['i2_7_soma', 'iam_casos'], '2.8': ['i2_8_soma', 'i2_8_n'], '2.9': ['i2_9_soma', 'i2_9_n'],
+};
+
 const preenchido = (v) => v !== undefined && v !== null && String(v).trim() !== '';
 
 // Situação sugerida pelo que a unidade informou. Nunca devolve "não aplicável" (essa é decisão de pessoa).
@@ -35,7 +41,8 @@ function situacaoSugerida(item, flat, indicadores, resumoLinhas) {
     return c && c.valor !== null && c.valor !== undefined && c.valor !== '';
   });
   const temValor = item.indicadores.length ? valores.some(Boolean) : (item.campos || []).some((c) => preenchido(flat[c])) || (item.fonte && resumoLinhas && resumoLinhas[item.fonte] && resumoLinhas[item.fonte].n > 0);
-  const valorCompleto = item.indicadores.length ? valores.every(Boolean) : (item.campos || []).every((c) => preenchido(flat[c])) || !!(item.fonte && resumoLinhas && resumoLinhas[item.fonte] && resumoLinhas[item.fonte].n > 0);
+  const semBase = (id) => { const c = (indicadores || {})[id]; return !!BASES[id] && !!c && c.origem === 'digitado' && !BASES[id].every((f) => preenchido(flat[f])); };
+  const valorCompleto = item.indicadores.length ? valores.every(Boolean) && !item.indicadores.some(semBase) : (item.campos || []).every((c) => preenchido(flat[c])) || !!(item.fonte && resumoLinhas && resumoLinhas[item.fonte] && resumoLinhas[item.fonte].n > 0);
   const docsOk = (item.docs || []).filter((d) => preenchido(flat[d])).length;
   const docsTotal = (item.docs || []).length;
   if (!temValor && docsOk === 0) return 'pendente';
@@ -47,11 +54,13 @@ function situacaoSugerida(item, flat, indicadores, resumoLinhas) {
 function faltas(item, flat, indicadores, resumoLinhas) {
   const f = [];
   const valores = item.indicadores.filter((id) => { const c = (indicadores || {})[id]; return !(c && c.valor !== null && c.valor !== undefined && c.valor !== ''); });
+  const semBase = item.indicadores.filter((id) => { const c = (indicadores || {})[id]; return !!BASES[id] && !!c && c.origem === 'digitado' && !BASES[id].every((x) => preenchido(flat[x])); });
   if (valores.length) f.push('sem valor: ' + valores.join(', '));
+  if (semBase.length) f.push('sem numerador e denominador: ' + semBase.join(', '));
   else if (!item.indicadores.length && (item.campos || []).some((c) => !preenchido(flat[c])) && !(item.fonte && resumoLinhas && resumoLinhas[item.fonte] && resumoLinhas[item.fonte].n > 0)) f.push('sem o total do mês');
   const semDoc = (item.docs || []).filter((d) => !preenchido(flat[d]));
   if (semDoc.length) f.push('sem comprovação (' + semDoc.length + ' de ' + item.docs.length + ')');
   return f;
 }
 
-module.exports = { ITENS, STATUS, VALIDACOES, situacaoSugerida, faltas, preenchido };
+module.exports = { BASES, ITENS, STATUS, VALIDACOES, situacaoSugerida, faltas, preenchido };

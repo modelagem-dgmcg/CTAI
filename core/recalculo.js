@@ -116,6 +116,7 @@ function recalcular(entrada) {
   };
   const bidCor = { verde: pegar(decl, 'bid_verdes'), amarelo: pegar(decl, 'bid_amarelos'), vermelho: pegar(decl, 'bid_vermelhos') };
 
+  const BASES_TEMPO = { '2.1': ['i2_1_soma', 'i2_1_n'], '2.2': ['i2_2_soma', 'i2_2_n'], '2.3': ['i2_3_soma', 'i2_3_n'], '2.6': ['i2_6_soma', 'i2_6_n'], '2.7': ['i2_7_soma', 'iam_casos'], '2.8': ['i2_8_soma', 'i2_8_n'], '2.9': ['i2_9_soma', 'i2_9_n'] };
   function indicadorTempo(id, linhasDoIndicador, campo, extra) {
     const def = porId[id];
     const declarado = U.numero(pegar(decl, campo));
@@ -131,9 +132,18 @@ function recalcular(entrada) {
       if (lim !== null) r.alertas.push({ codigo: 'PERTO_DO_LIMITE', gravidade: 'média', mensagem: 'A média (' + U.formatarNumero(r.valor) + ') está a menos de 5% do limite de ' + lim + '. Confira mediana e extremos.' });
       if (invalidas) r.alertas.push({ codigo: 'LINHAS_INVALIDAS', gravidade: 'baixa', mensagem: invalidas + ' linha(s) sem tempo válido foram deixadas de fora.' });
     } else {
-      r.valor = declarado; r.base = 'declarado'; r.fonteCalculo = 'valor declarado (sem linhas)';
-      r.n = 0;
-      r.alertas.push({ codigo: 'SEM_LINHAS', gravidade: 'média', mensagem: 'Sem linhas brutas: o valor declarado não pôde ser recalculado.' });
+      const bs = BASES_TEMPO[id], so = bs ? U.numero(pegar(decl, bs[0])) : null, nn = bs ? U.numero(pegar(decl, bs[1])) : null;
+      if (so !== null && nn > 0) {
+        r.valor = U.arred(so / nn, 2); r.base = 'apoio'; r.fonteCalculo = 'soma ÷ número de pacientes da ficha'; r.n = nn; r.soma = so;
+        if (declarado !== null && Math.abs(declarado - r.valor) / Math.max(Math.abs(r.valor), 1e-9) > 0.01) r.alertas.push({ codigo: 'RESULTADO_NAO_BATE', gravidade: 'média', mensagem: 'A ficha diz resultado de ' + U.formatarNumero(declarado) + ', mas ' + U.formatarNumero(so) + ' ÷ ' + nn + ' dá ' + U.formatarNumero(r.valor) + '.' });
+        if (nn < 10) r.alertas.push({ codigo: 'AMOSTRA_PEQUENA', gravidade: 'média', mensagem: 'Só ' + nn + ' caso(s). Com menos de 10 casos a média não é confiável.' });
+        r.alertas.push({ codigo: 'SEM_LINHAS', gravidade: 'baixa', mensagem: 'Sem linhas brutas: o cálculo usou a soma e o número de pacientes da ficha, que a CTAI não consegue conferir caso a caso.' });
+      } else {
+        r.valor = declarado; r.base = 'declarado'; r.fonteCalculo = 'valor declarado (sem linhas)';
+        r.n = 0;
+        r.alertas.push({ codigo: 'SEM_LINHAS', gravidade: 'média', mensagem: 'Sem linhas brutas: o valor declarado não pôde ser recalculado.' });
+        if (declarado !== null) r.alertas.push({ codigo: 'SEM_NUMERADOR_DENOMINADOR', gravidade: 'média', mensagem: 'A unidade informou só o resultado. Faltam a soma dos tempos e o número de pacientes.' });
+      }
     }
     return r;
   }
@@ -162,8 +172,16 @@ function recalcular(entrada) {
       const lim = pertoDoLimite(porId['2.4'], r.valor);
       if (lim !== null) r.alertas.push({ codigo: 'PERTO_DO_LIMITE', gravidade: 'média', mensagem: 'A taxa (' + U.formatarNumero(r.valor) + '%) está a menos de 5% do limite de ' + lim + '%.' });
     } else {
-      r.valor = declarado; r.base = 'declarado'; r.fonteCalculo = 'valor declarado (sem linhas)'; r.n = 0;
-      r.alertas.push({ codigo: 'SEM_LINHAS', gravidade: 'média', mensagem: 'Sem linhas brutas: o valor declarado não pôde ser recalculado.' });
+      const ret = U.numero(pegar(decl, 'i2_4_retornos')), sai = U.numero(pegar(decl, 'i2_4_saidas'));
+      if (ret !== null && sai > 0) {
+        r.valor = U.arred((ret / sai) * 100, 2); r.base = 'apoio'; r.fonteCalculo = 'retornos ÷ atendimentos da ficha'; r.n = sai; r.retornos = ret;
+        if (declarado !== null && Math.abs(declarado - r.valor) / Math.max(Math.abs(r.valor), 1e-9) > 0.01) r.alertas.push({ codigo: 'RESULTADO_NAO_BATE', gravidade: 'média', mensagem: 'A ficha diz ' + U.formatarNumero(declarado) + '%, mas ' + ret + ' ÷ ' + sai + ' dá ' + U.formatarNumero(r.valor) + '%.' });
+        r.alertas.push({ codigo: 'SEM_LINHAS', gravidade: 'baixa', mensagem: 'Sem linhas brutas: o cálculo usou os totais da ficha.' });
+      } else {
+        r.valor = declarado; r.base = 'declarado'; r.fonteCalculo = 'valor declarado (sem linhas)'; r.n = 0;
+        r.alertas.push({ codigo: 'SEM_LINHAS', gravidade: 'média', mensagem: 'Sem linhas brutas: o valor declarado não pôde ser recalculado.' });
+        if (declarado !== null) r.alertas.push({ codigo: 'SEM_NUMERADOR_DENOMINADOR', gravidade: 'média', mensagem: 'A unidade informou só o resultado. Faltam o número de retornos e o total de atendimentos.' });
+      }
     }
     registrar('2.4', r);
   }
@@ -316,23 +334,23 @@ function recalcular(entrada) {
     const participacoes = part.filter((l) => l.dados && l.dados.participou === 'sim').length;
     const ativosQuadro = new Set(quadro.map((l) => l.protocolo)).size;
     const capDecl = U.numero(pegar(decl, campoCap));
-    const atvDecl = U.numero(pegar(decl, campoAtv)) ?? U.numero(pegar(decl, campoRh));
+    const atvDecl = U.numero(pegar(decl, campoAtv)); // denominador: pessoas convocadas no mês (orientação da CTAI), nunca o quadro ativo
     let cap = null, atv = null;
     if (part.length) { cap = capacitadosLinhas.size; r.participacoes = participacoes; r.base = 'linhas'; }
     else if (capDecl !== null) { cap = capDecl; r.base = 'apoio'; r.fonteCalculo = 'contagens da ficha (sem linhas)'; }
     if (ativosQuadro) atv = ativosQuadro; else if (atvDecl !== null) atv = atvDecl;
     if (ativosQuadro && atvDecl !== null && Math.abs(ativosQuadro - atvDecl) / Math.max(atvDecl, 1) > 0.05) {
-      r.alertas.push({ codigo: 'DENOMINADOR_DIVERGENTE', gravidade: 'média', mensagem: 'O quadro de pessoal tem ' + ativosQuadro + ' pessoa(s) ativa(s) nesta área; a ficha usa ' + atvDecl + '.' });
+      r.alertas.push({ codigo: 'DENOMINADOR_DIVERGENTE', gravidade: 'média', mensagem: 'A lista de pessoas convocadas tem ' + ativosQuadro + ' pessoa(s) nesta área; a ficha usa ' + atvDecl + '.' });
     }
     if (cap !== null && atv) {
       r.capacitados = cap; r.ativos = atv;
       r.valor = U.arred((cap / atv) * 100, 1);
       if (participacoes && atv) r.pctPorParticipacoes = U.arred((participacoes / atv) * 100, 1);
-      if (r.pctPorParticipacoes !== undefined && r.pctPorParticipacoes > r.valor + 0.5) r.alertas.push({ codigo: 'SOMA_DE_PARTICIPACOES', gravidade: 'média', mensagem: 'Somar participações daria ' + U.formatarNumero(r.pctPorParticipacoes, 1) + '%; por pessoas únicas dá ' + U.formatarNumero(r.valor, 1) + '%. A regra adotada é pessoas únicas (a confirmar com a CTAI).' });
+      if (r.pctPorParticipacoes !== undefined && r.pctPorParticipacoes > r.valor + 0.5) r.alertas.push({ codigo: 'SOMA_DE_PARTICIPACOES', gravidade: 'média', mensagem: 'Somar participações daria ' + U.formatarNumero(r.pctPorParticipacoes, 1) + '%; por pessoas únicas dá ' + U.formatarNumero(r.valor, 1) + '%. A regra adotada é pessoas únicas.' });
     } else {
-      r.valor = declarado; r.base = 'declarado'; r.fonteCalculo = 'valor declarado'; r.alertas.push({ codigo: 'SEM_DADOS', gravidade: 'média', mensagem: 'Sem pessoas capacitadas e ativas para recalcular.' });
+      r.valor = declarado; r.base = 'declarado'; r.fonteCalculo = 'valor declarado'; r.alertas.push({ codigo: 'SEM_DADOS', gravidade: 'média', mensagem: 'Sem pessoas capacitadas e convocadas no mês para recalcular.' });
     }
-    r.alertas.push({ codigo: 'REGRA_PENDENTE', gravidade: 'baixa', mensagem: 'Regra de pessoas únicas e denominador (ativos ou esperados) pendente de confirmação da CTAI.' });
+    r.alertas.push({ codigo: 'REGRA_PENDENTE', gravidade: 'baixa', mensagem: 'Regra orientada pela CTAI: pessoas únicas capacitadas ÷ pessoas convocadas no mês (e não o quadro ativo). Falta só o registro formal da decisão.' });
     registrar(id, r);
   }
 

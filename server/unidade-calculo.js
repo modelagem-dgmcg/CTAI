@@ -5,15 +5,15 @@ const R = require('../core/regras');
 const U = require('../core/util');
 
 const SPEC = {
-  '2.1': { campo: 'i2_1_valor', tipo: 'tempo', fonte: 'classificacao', cor: 'verde' },
-  '2.2': { campo: 'i2_2_valor', tipo: 'tempo', fonte: 'classificacao', cor: 'amarelo' },
-  '2.3': { campo: 'i2_3_valor', tipo: 'tempo', fonte: 'classificacao', cor: 'vermelho' },
-  '2.4': { campo: 'i2_4_valor', tipo: 'retorno' },
+  '2.1': { campo: 'i2_1_valor', tipo: 'tempo', soma: 'i2_1_soma', n: 'i2_1_n', fonte: 'classificacao', cor: 'verde' },
+  '2.2': { campo: 'i2_2_valor', tipo: 'tempo', soma: 'i2_2_soma', n: 'i2_2_n', fonte: 'classificacao', cor: 'amarelo' },
+  '2.3': { campo: 'i2_3_valor', tipo: 'tempo', soma: 'i2_3_soma', n: 'i2_3_n', fonte: 'classificacao', cor: 'vermelho' },
+  '2.4': { campo: 'i2_4_valor', tipo: 'retorno', soma: 'i2_4_retornos', n: 'i2_4_saidas' },
   '2.5': { campo: 'i2_5_valor', tipo: 'simnao' },
-  '2.6': { campo: 'i2_6_valor', tipo: 'tempo', fonte: 'dor_toracica' },
-  '2.7': { campo: 'i2_7_valor', tipo: 'tempo', fonte: 'iamcsst' },
-  '2.8': { campo: 'i2_8_valor', tipo: 'tempo', fonte: 'ave' },
-  '2.9': { campo: 'i2_9_valor', tipo: 'tempo', fonte: 'sepse' },
+  '2.6': { campo: 'i2_6_valor', tipo: 'tempo', soma: 'i2_6_soma', n: 'i2_6_n', fonte: 'dor_toracica' },
+  '2.7': { campo: 'i2_7_valor', tipo: 'tempo', soma: 'i2_7_soma', n: 'iam_casos', fonte: 'iamcsst' },
+  '2.8': { campo: 'i2_8_valor', tipo: 'tempo', soma: 'i2_8_soma', n: 'i2_8_n', fonte: 'ave' },
+  '2.9': { campo: 'i2_9_valor', tipo: 'tempo', soma: 'i2_9_soma', n: 'i2_9_n', fonte: 'sepse' },
   '2.10': { campo: 'i2_10_valor', tipo: 'obitos' },
   '2.11': { campo: 'i2_11_valor', tipo: 'razao', num: 'satisfacao_satisfeitos', den: 'satisfacao_respondentes' },
   '2.12': { campo: 'i2_12_valor', tipo: 'razao', num: 'queixas_aceitas', den: 'queixas_identificadas' },
@@ -43,6 +43,8 @@ function consolidarDeclarados(flat, linhas) {
     if (temDigitado) {
       valor = s.tipo === 'simnao' ? (U.simNao(digitado)) : (s.tipo === 'texto' ? String(digitado) : U.numero(digitado));
       origem = 'digitado';
+    } else if ((s.tipo === 'tempo' || s.tipo === 'retorno') && U.numero(flat[s.soma]) !== null && U.numero(flat[s.n]) > 0) {
+      valor = U.arred((U.numero(flat[s.soma]) / U.numero(flat[s.n])) * (s.tipo === 'retorno' ? 100 : 1), 2); origem = 'apoio'; n = U.numero(flat[s.n]);
     } else if (s.tipo === 'tempo') {
       let ls = (linhas[s.fonte] || []);
       if (s.cor) ls = ls.filter((l) => l.categoria === s.cor);
@@ -90,6 +92,15 @@ function conferirAntesDoEnvio(flat, linhas, consolidado) {
   for (const [id, s] of Object.entries(SPEC)) {
     const c = consolidado[id];
     if (!c || c.valor === null || c.valor === undefined) { avisos.push({ nivel: 'atencao', indicador: id, mensagem: 'Indicador ' + id + ' sem valor. Preencha a ficha ou suba as linhas.' }); continue; }
+    if (s.soma) {
+      const so = U.numero(flat[s.soma]), nn = U.numero(flat[s.n]);
+      const rot = s.tipo === 'retorno' ? ['numerador (pacientes que retornaram)', 'denominador (total de atendimentos)'] : ['numerador (soma dos tempos)', 'denominador (número de pacientes)'];
+      if (c.origem === 'digitado' && (so === null || !nn)) avisos.push({ nivel: 'atencao', indicador: id, mensagem: 'Indicador ' + id + ': informe também o ' + rot[0] + ' e o ' + rot[1] + ', e não só o resultado. A CTAI marca o item como incompleto sem eles.' });
+      if (so !== null && nn && c.valor !== null && c.valor !== undefined) {
+        const conta = (so / nn) * (s.tipo === 'retorno' ? 100 : 1);
+        if (Math.abs(conta - c.valor) / Math.max(Math.abs(c.valor), 1e-9) > 0.01) avisos.push({ nivel: 'atencao', indicador: id, mensagem: 'Indicador ' + id + ': o resultado (' + U.formatarNumero(c.valor) + ') não bate com a conta do numerador ÷ denominador (' + U.formatarNumero(conta) + '). Confira antes de enviar.' });
+      }
+    }
     if (s.tipo === 'tempo' || s.tipo === 'retorno') {
       const doCalc = (() => {
         let ls = (linhas[s.fonte || 'retorno'] || []);
