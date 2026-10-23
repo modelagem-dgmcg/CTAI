@@ -100,4 +100,4 @@ function aplicarSementes(db) {
   return { aplicadas };
 }
 
-module.exports = { aplicarSementes, ler, importar, importarLote, marcarConferida, normalizar, semAcento };
+module.exports = { aplicarSementes, ler, gravar, importar, importarLote, marcarConferida, normalizar, semAcento };

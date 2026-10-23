@@ -1,0 +1,180 @@
+(function () {
+  'use strict';
+  // Página da unidade: uma tela corrida, em sequência (linha de montagem), que abre em aba própria.
+  // Receber → Conferir → Decidir → Produzir → Conferir novamente → Registrar no SEI.
+  // Tudo é calculado dos dados que já existem; o sistema marca sozinho cada etapa como feita.
+  const { h, api, fmt, toast, janela, perguntar, selo, aviso, tabela, montar } = window.CTAI;
+  const EU = () => window.__eu || {};
+
+  const triDe = (comp) => { const [a, m] = String(comp).split('-'); return a + '-T' + Math.ceil(Number(m) / 3); };
+  const mesesDe = (t) => { const [a, q] = t.split('-T'); const n = Number(q); return [0, 1, 2].map((i) => a + '-' + String(3 * (n - 1) + 1 + i).padStart(2, '0')); };
+  const triAtual = () => { const d = new Date(); return d.getFullYear() + '-T' + Math.ceil((d.getMonth() + 1) / 3); };
+  const guardaTri = (id, v) => { try { if (v) sessionStorage.setItem('ctai_tri_' + id, v); return sessionStorage.getItem('ctai_tri_' + id); } catch (_) { return null; } };
+
+  // Nova janela (editor flutuante): o mesmo nome reaproveita a janela já aberta daquele documento.
+  function janelaNova(hash, nome) {
+    const url = location.pathname + '#' + hash.replace(/^#/, '');
+    const w = window.open(url, nome || ('ctai-' + hash), 'popup=yes,width=1180,height=860,resizable=yes,scrollbars=yes');
+    if (!w) { location.hash = hash; return null; }
+    try { w.focus(); } catch (_) { /* ok */ }
+    return w;
+  }
+
+  // Aviso quando a mesma unidade está aberta em outra aba (uma sobrescreveria a outra).
+  const aba = Math.random().toString(36).slice(2);
+  const canal = 'BroadcastChannel' in window ? new BroadcastChannel('ctai-unidade') : null;
+  let atual = null;
+  if (canal) canal.onmessage = (m) => {
+    const d = m.data || {};
+    if (!atual || d.id !== atual.id || d.aba === aba) return;
+    if (d.t === 'ola') canal.postMessage({ t: 'aqui', id: atual.id, aba });
+    if (d.t === 'aqui' && atual.aviso) atual.aviso.hidden = false;
+  };
+  window.addEventListener('hashchange', () => { if (!location.hash.startsWith('#/u/')) { atual = null; document.title = 'Analista CTAI'; } });
+
+  // ---------- Configurações (regra do contrato, com senha e motivo) ----------
+  async function configuracoes(contratoId, aoSalvar) {
+    const d = await api('GET', '/api/ctai/contratos/' + encodeURIComponent(contratoId) + '/decisoes');
+    const base = (d.contratoRegras && d.contratoRegras.conteudo) || { indicadores: [], observacoes: [] };
+    const campo = (rot, el) => h('div', { class: 'campo' }, h('label', null, rot), el);
+    const inp = (v, ph) => h('input', { type: 'text', value: v === null || v === undefined ? '' : String(v), placeholder: ph || '' });
+    const area = (v, linhas) => h('textarea', { rows: linhas || 2 }, v || '');
+    const topo = { contrato_numero: inp(base.contrato_numero), oss: inp(base.oss), valor_mensal: inp(base.valor_mensal), fixa_pct: inp(base.fixa_pct), variavel_pct: inp(base.variavel_pct) };
+    const lista = h('div', { class: 'cfg-lista' });
+    const linhas = [];
+    const novaLinha = (i) => {
+      const f = { tipo: h('select', null, [['producao', 'Produção'], ['qualidade', 'Qualidade'], ['monitoramento', 'Monitoramento']].map(([v, r]) => h('option', Object.assign({ value: v }, v === (i.tipo || 'qualidade') ? { selected: true } : {}), r))), nome: inp(i.nome), pt: inp(i.peso_pct_total), pv: inp(i.peso_pct_variavel), meta: area(i.meta), esp: area(i.especificacao), fonte: inp(i.fonte), clausula: inp(i.clausula) };
+      const caixa = h('fieldset', { class: 'cfg-ind' },
+        h('div', { class: 'cfg-ind-topo' }, h('strong', null, 'Indicador'), h('button', { type: 'button', class: 'sec', onclick: () => { caixa.remove(); linhas.splice(linhas.indexOf(f), 1); } }, 'Remover')),
+        campo('Nome', f.nome), h('div', { class: 'cfg-duplo' }, campo('Tipo', f.tipo), campo('Cláusula', f.clausula)),
+        h('div', { class: 'cfg-duplo' }, campo('Peso no total (%)', f.pt), campo('Peso na parte variável (%)', f.pv)),
+        campo('Meta', f.meta), campo('Como é medido', f.esp), campo('Fonte do dado', f.fonte));
+      linhas.push(f); lista.appendChild(caixa);
+    };
+    (base.indicadores || []).forEach(novaLinha);
+    const obs = area((base.observacoes || []).join('\n'), 4);
+    const motivo = h('textarea', { rows: 2, placeholder: 'Ex.: o 3º Termo Aditivo mudou a meta do indicador X' });
+    const senha = h('input', { type: 'password', autocomplete: 'current-password' });
+    const msg = h('div', { class: 'msg-erro' });
+    const corpo = h('div', { class: 'cfg' },
+      aviso('info', 'Aqui fica a regra como está escrita no contrato e nos termos aditivos. Alterações pedem o motivo e a sua senha, e ficam registradas. Depois de alterar, a regra volta a "a conferir".'),
+      d.regra && d.regra.tem && !d.regra.descritiva ? aviso('atencao', 'As regras de cálculo automático desta unidade não mudam por aqui. Esta tela ajusta só o texto da regra do contrato.') : null,
+      h('div', { class: 'cfg-duplo' }, campo('Número do contrato', topo.contrato_numero), campo('OSS', topo.oss)),
+      h('div', { class: 'cfg-trio' }, campo('Valor mensal', topo.valor_mensal), campo('Parte fixa (%)', topo.fixa_pct), campo('Parte variável (%)', topo.variavel_pct)),
+      h('h3', null, 'Indicadores'), lista,
+      h('button', { type: 'button', class: 'sec', onclick: () => novaLinha({}) }, '+ Adicionar indicador'),
+      campo('Observações (uma por linha)', obs),
+      h('h3', null, 'Confirmar a alteração'), campo('Motivo (uma linha basta)', motivo), campo('Sua senha', senha), msg);
+    const r = await janela('Configurações · regra do contrato', corpo, [{ rotulo: 'Cancelar', valor: null, sec: true }, {
+      rotulo: 'Salvar alteração', valor: 'ok', validar: async () => {
+        msg.textContent = '';
+        if (motivo.value.trim().length < 5) { msg.textContent = 'Escreva o motivo da alteração.'; return false; }
+        if (!senha.value) { msg.textContent = 'Confirme com a sua senha.'; return false; }
+        const conteudo = {
+          unidade: base.unidade, contrato_numero: topo.contrato_numero.value, oss: topo.oss.value, valor_mensal: topo.valor_mensal.value, fixa_pct: topo.fixa_pct.value, variavel_pct: topo.variavel_pct.value,
+          cobertura: base.cobertura, fonte_arquivo: base.fonte_arquivo, tas_no_arquivo: base.tas_no_arquivo,
+          indicadores: linhas.map((f) => ({ tipo: f.tipo.value, nome: f.nome.value, peso_pct_total: f.pt.value, peso_pct_variavel: f.pv.value, meta: f.meta.value, especificacao: f.esp.value, fonte: f.fonte.value, clausula: f.clausula.value })),
+          observacoes: obs.value.split('\n').map((x) => x.trim()).filter(Boolean),
+        };
+        try { await api('PUT', '/api/ctai/configuracao/' + encodeURIComponent(contratoId) + '/regras', { conteudo, motivo: motivo.value, senha: senha.value }); return true; } catch (e) { msg.textContent = e.message; return false; }
+      },
+    }]);
+    if (r === 'ok') { toast('Regra atualizada e registrada.'); if (aoSalvar) aoSalvar(); }
+  }
+
+  // ---------- A página ----------
+  async function pagina(p) {
+    const id = p.id;
+    const [rc, rp] = await Promise.all([api('GET', '/api/ctai/contratos'), api('GET', '/api/ctai/pareceres')]);
+    const c = rc.contratos.find((x) => x.contrato_id === id);
+    if (!c) { montar(aviso('erro', 'Unidade não encontrada, ou fora da sua carteira.')); return; }
+    document.title = c.unidade + ' · Analista CTAI';
+    const avDup = h('div', { id: 'un-dup', hidden: true }, aviso('atencao', h('strong', null, 'Esta unidade já está aberta em outra aba. '), 'Edite só em uma delas, para uma não sobrescrever a outra.'));
+    atual = { id, aviso: avDup };
+    if (canal) canal.postMessage({ t: 'ola', id, aba });
+
+    const pareceres = rp.pareceres.filter((x) => x.contrato_id === id);
+    const comDados = [...new Set(c.competencias.map((k) => triDe(k.competencia_id)).concat(pareceres.map((x) => x.trimestre)))].sort().reverse();
+    const tris = [...new Set(comDados.concat([triAtual()]))].sort().reverse();
+    const T = (tris.includes(guardaTri(id)) ? guardaTri(id) : (comDados[0] || triAtual())); // começa no trimestre mais recente que tem dados
+    const K = c.competencias.filter((k) => triDe(k.competencia_id) === T);
+    const Pa = pareceres.find((x) => x.trimestre === T) || null;
+    const V = Pa && Pa.ultimaVersao;
+    const euCriador = Pa && Pa.criador_id === EU().usuario_id;
+    const recarregar = () => pagina(p);
+
+    const div = K.reduce((n, k) => n + (k.divergenciasAbertas || 0), 0);
+    const recebido = K.length > 0 && K.every((k) => k.versaoEnvio);
+    const alertasSei = K.reduce((n, k) => n + (k.seiAlertas || 0), 0);
+    const conferido = recebido && div === 0 && alertasSei === 0;
+    const decidido = !c.semRegras && !c.decisoesAbertas;
+    const produzido = !!(Pa && V);
+    const revisado = !!(V && V.status === 'autorizada');
+    const noSei = !!(Pa && Pa.status === 'anexado ao SEI');
+    const feitas = [recebido, conferido, decidido, produzido, revisado, noSei];
+    const atualIdx = feitas.indexOf(false);
+
+    const txtEstado = (i) => (feitas[i] ? 'feita' : (i === atualIdx ? 'agora' : 'depois'));
+    const seloEtapa = (i) => selo(txtEstado(i) === 'feita' ? '✔ feita' : (txtEstado(i) === 'agora' ? 'a fazer agora' : 'mais adiante'), txtEstado(i) === 'feita' ? 'ok' : (txtEstado(i) === 'agora' ? 'atencao' : ''));
+    const link = (hash, rot, cls) => h('a', { class: cls || '', href: '#' + hash }, rot);
+    const botaoNovaJanela = (hash, rot) => h('button', { type: 'button', onclick: () => janelaNova(hash) }, rot);
+
+    const conteudos = [
+      // 1. Receber
+      () => [K.length ? tabela([{ t: 'Mês' }, { t: 'Situação' }, { t: 'Envio' }, { t: 'Recebido em' }, { t: 'Prazos' }, { t: '' }],
+        K.map((k) => [fmt.comp(k.competencia_id) + (k.mes_implantacao ? ' (implantação)' : ''), selo(k.status), k.versaoEnvio ? 'v' + k.versaoEnvio : h('span', { class: 'mudo' }, 'não enviou'), fmt.data(k.recebido_em),
+          k.prazos ? selo(k.prazos.texto, k.prazos.nivel === 'alta' ? 'alta' : (k.prazos.nivel === 'atencao' ? 'atencao' : (k.prazos.nivel === 'ok' ? 'ok' : ''))) : '—', link('/c/' + k.cid, 'Abrir o mês')]))
+        : aviso('info', 'A unidade ainda não abriu nenhum mês deste trimestre.'),
+      recebido ? null : h('p', { class: 'mudo peq' }, 'Esta etapa fica feita quando todos os meses do trimestre tiverem envio recebido.')],
+      // 2. Conferir
+      () => [K.length ? tabela([{ t: 'Mês' }, { t: 'Divergências abertas', n: true }, { t: 'Sistema × SEI' }, { t: '' }], K.map((k) => [fmt.comp(k.competencia_id), String(k.divergenciasAbertas || 0), k.seiAlertas ? h('a', { href: '#/c/' + k.cid + '/envios', title: 'Alerta entre o sistema e o SEI' }, selo('SEI: ' + k.seiAlertas + ' alerta(s)', 'atencao')) : '—', link('/c/' + k.cid, 'Conferir')])) : aviso('info', 'Sem meses para conferir ainda.'),
+        h('p', { class: 'mudo peq' }, 'Fica feita quando não houver divergência aberta nem alerta entre o sistema e o SEI nos meses do trimestre.')],
+      // 3. Decidir
+      () => [h('div', { class: 'linha espaco' }, h('div', null, c.semRegras ? selo('sem regra cadastrada', 'atencao') : (c.regra && c.regra.conferida ? selo('regra conferida', 'ok') : selo('regra a conferir', 'atencao')), ' ', c.decisoesAbertas ? selo(c.decisoesAbertas + ' dúvida(s) de regra em aberto', 'atencao') : selo('sem dúvidas em aberto', 'ok')),
+        h('div', { class: 'linha' }, link('/regras/' + id, c.decisoesAbertas ? 'Decidir as dúvidas' : 'Ver regras e decisões', 'btn sec'), h('button', { type: 'button', class: 'sec', onclick: () => configuracoes(id, recarregar).catch((e) => toast(e.message, true)) }, 'Configurações'))),
+        h('p', { class: 'mudo peq' }, 'As regras do contrato já estão carregadas. Aqui ficam só as dúvidas que mudam o resultado, cada uma com a decisão e quem decidiu.')],
+      // 4. Produzir
+      () => {
+        if (Pa) return [h('div', { class: 'linha espaco' }, h('div', null, h('strong', null, Pa.titulo), h('div', { class: 'mudo peq' }, 'Criado por ' + Pa.criador_nome + ' · ' + (V ? 'versão ' + V.numero + ' congelada' : 'rascunho, ainda não foi para a conferência'))), botaoNovaJanela('/p/' + Pa.parecer_id, 'Abrir o documento em janela própria')),
+          (recebido && conferido && decidido) ? null : aviso('atencao', 'Ainda há etapas anteriores sem terminar. Dá para redigir, mas confira antes de enviar para a conferência.')];
+        const posso = ['criador', 'admin'].includes(EU().perfil);
+        return [posso ? h('div', { class: 'linha espaco' }, h('span', null, 'Nenhum documento deste trimestre ainda. O parecer abre já com os meses ' + mesesDe(T).map((m) => fmt.comp(m)).join(', ') + '.'),
+          h('button', { type: 'button', onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres', { contrato_id: id, trimestre: T, competencias: mesesDe(T) }); toast('Parecer criado.'); await recarregar(); janelaNova('/p/' + o.parecer_id); } catch (e) { toast(e.message, true); } } }, 'Começar o parecer de ' + T))
+          : aviso('info', 'O documento deste trimestre é aberto por quem tem o perfil de criação de pareceres.'),
+          h('p', { class: 'mudo peq' }, 'Parecer é o primeiro modelo. Ofício e despacho entram aqui quando os modelos forem cadastrados.')];
+      },
+      // 5. Conferir novamente
+      () => {
+        if (!V) return [h('p', { class: 'mudo' }, 'Quando o documento for congelado no editor, ele segue para a conferência dos colegas e a autorização da superintendência.')];
+        return [h('div', { class: 'linha espaco' }, h('div', null, 'Versão ' + V.numero + ' · ', selo(V.status, V.status === 'autorizada' ? 'ok' : 'atencao')),
+          h('div', { class: 'linha' }, link('/v/' + V.versao_id, 'Abrir a conferência', 'btn sec'), V.status === 'autorizada' ? h('a', { class: 'btn', href: '/api/ctai/versoes/' + V.versao_id + '/pdf', target: '_blank', rel: 'noopener' }, 'Gerar o PDF') : null)),
+          V.status === 'autorizada' ? null : h('p', { class: 'mudo peq' }, 'O PDF é liberado depois da conferência e da autorização. O OK da conferência é controle interno; a assinatura é feita no SEI.')];
+      },
+      // 6. Registrar no SEI
+      () => {
+        if (noSei) return [aviso('ok', h('strong', null, 'Registrado no SEI. '), 'Documento ' + Pa.sei_numero + (Pa.sei_anexado_em ? ' · ' + fmt.data(Pa.sei_anexado_em) : '') + '. Esta unidade está concluída neste trimestre.')];
+        if (!revisado) return [h('p', { class: 'mudo' }, 'Depois que o documento estiver autorizado, você leva o PDF ao SEI, assina e envia. O SEI gera o número do documento. Volte aqui, cole o número e finalize.')];
+        return [h('div', { class: 'linha espaco' }, h('span', null, 'Levou ao SEI? Cole aqui o número que o SEI gerou.'),
+          euCriador ? h('button', { type: 'button', onclick: async () => { const n = await perguntar('Registrar no SEI', 'Número do documento no SEI', { botao: 'Finalizar' }); if (!n) return; try { await api('POST', '/api/ctai/pareceres/' + Pa.parecer_id + '/sei', { numero: n }); toast('Registrado. Unidade concluída.'); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Registrar o número e finalizar')
+            : h('span', { class: 'mudo peq' }, 'Quem registra é quem criou o documento.'))];
+      },
+    ];
+    const NOMES = ['Receber', 'Conferir', 'Decidir', 'Produzir', 'Conferir novamente', 'Registrar no SEI'];
+    const secoes = NOMES.map((nome, i) => {
+      const aberta = i === atualIdx || (atualIdx === -1 && i === 5);
+      const det = h('details', Object.assign({ class: 'etapa ' + txtEstado(i), id: 'etapa-' + i }, aberta ? { open: true } : {}),
+        h('summary', null, h('span', { class: 'etapa-n' }, feitas[i] ? '✔' : String(i + 1)), h('span', { class: 'etapa-t' }, nome), h('span', { class: 'etapa-s' }, seloEtapa(i))),
+        h('div', { class: 'etapa-corpo' }, conteudos[i]()));
+      return det;
+    });
+    const barra = h('nav', { class: 'etapas', 'aria-label': 'Etapas desta unidade' }, NOMES.map((nome, i) => h('button', { type: 'button', class: 'etapa-chip ' + txtEstado(i), title: nome, onclick: () => { secoes[i].open = true; secoes[i].scrollIntoView({ behavior: 'smooth', block: 'start' }); } },
+      h('span', { class: 'chip-n' }, feitas[i] ? '✔' : String(i + 1)), h('span', { class: 'chip-t' }, nome))));
+    const seletor = h('select', { id: 'un-tri', 'aria-label': 'Trimestre', onchange: (e) => { guardaTri(id, e.target.value); recarregar(); } }, tris.map((t) => h('option', Object.assign({ value: t }, t === T ? { selected: true } : {}), t)));
+    montar(avDup,
+      h('div', { class: 'topo' }, h('div', null, h('h1', null, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null), h('p', null, [c.tipo, c.oss, c.numero_cg].filter(Boolean).join(' · '))),
+        h('div', { class: 'linha' }, h('label', { for: 'un-tri', class: 'mudo peq', style: 'margin:0' }, 'Trimestre'), seletor, h('button', { type: 'button', class: 'sec', onclick: () => configuracoes(id, recarregar).catch((e) => toast(e.message, true)) }, 'Configurações'))),
+      barra, secoes);
+  }
+
+  window.CTAI_UNIDADE = { pagina, configuracoes, janelaNova, rotas: [['/u/:id', pagina]] };
+})();

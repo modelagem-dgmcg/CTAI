@@ -38,7 +38,7 @@ function obter(db, id) {
 
 function listar(db) {
   return db.all('SELECT p.*, c.unidade, c.demo, u.nome AS criador_nome FROM pareceres p JOIN contratos c ON c.contrato_id = p.contrato_id JOIN usuarios u ON u.usuario_id = p.criador_id ORDER BY p.parecer_id DESC').map((p) => {
-    const v = db.get('SELECT numero, status FROM versoes_minuta WHERE parecer_id = ? ORDER BY numero DESC LIMIT 1', p.parecer_id);
+    const v = db.get('SELECT versao_id, numero, status FROM versoes_minuta WHERE parecer_id = ? ORDER BY numero DESC LIMIT 1', p.parecer_id);
     return Object.assign(p, { competencias: D.json(p.competencias, []), blocos: undefined, ultimaVersao: v || null, demo: !!p.demo });
   });
 }

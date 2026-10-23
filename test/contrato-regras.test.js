@@ -53,3 +53,21 @@ test('regras que acompanham o sistema entram sozinhas ao importar a carteira, se
     assert.equal(c.numero_cg, '001/2020', 'número do contrato preenchido onde estava vazio');
   } finally { fs.unlinkSync(arq); }
 });
+
+test('configuração na unidade: analista da carteira altera a regra com senha e motivo; sem eles ou fora da carteira, não', async () => {
+  const cec = cliente(S.base); assert.equal((await cec.post('/api/auth/login', { login: 'cecilia', senha: '123' })).status, 200);
+  const jul = cliente(S.base); assert.equal((await jul.post('/api/auth/login', { login: 'juliana.rocha', senha: '123' })).status, 200);
+  const delta = (await adm.get('/api/ctai/contratos')).json.contratos.find((c) => /Delta/.test(c.unidade) && c.tipo === 'HOSPITAL');
+  assert.ok(delta);
+  const url = '/api/ctai/configuracao/' + delta.contrato_id + '/regras';
+  const regra = { unidade: delta.unidade, indicadores: [{ tipo: 'qualidade', nome: 'Indicador de teste', meta: '90%' }], observacoes: ['linha 1'] };
+  assert.equal((await cec.put(url, { conteudo: regra, motivo: 'TA 03 mudou a meta', senha: '123' })).status, 200);
+  assert.equal((await cec.put(url, { conteudo: regra, motivo: '', senha: '123' })).status, 400, 'motivo obrigatório');
+  assert.equal((await cec.put(url, { conteudo: regra, motivo: 'TA 03 mudou a meta' })).status, 400, 'senha obrigatória');
+  assert.equal((await cec.put(url, { conteudo: regra, motivo: 'TA 03 mudou a meta', senha: 'errada' })).status, 401, 'senha errada');
+  assert.ok([403, 404].includes((await jul.put(url, { conteudo: regra, motivo: 'TA 03 mudou a meta', senha: '123' })).status), 'fora da carteira não altera');
+  const lido = (await cec.get('/api/ctai/contratos/' + delta.contrato_id + '/decisoes')).json;
+  assert.equal(lido.contratoRegras.conteudo.indicadores[0].nome, 'Indicador de teste');
+  assert.equal(lido.contratoRegras.conferida, false, 'depois de alterar, volta a "a conferir"');
+  assert.ok(S.db.all("SELECT motivo FROM trilha_auditoria WHERE tabela = 'contrato_regras' AND campo = 'configuração'").some((x) => x.motivo === 'TA 03 mudou a meta'), 'motivo na trilha');
+});

@@ -185,3 +185,40 @@ button:not(.sec):not(.leve):hover,.btn:not(.sec):hover{background:var(--acento-h
 .grupo-un{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--cinza);margin:22px 0 10px;font-weight:600}
 .grupo-un .peq{text-transform:none;letter-spacing:0;margin-left:6px}
 [hidden]{display:none!important}
+
+/* Unidades: linhas que abrem a unidade em aba própria */
+.un-linha{display:flex;align-items:center;gap:16px;text-decoration:none;color:var(--texto);padding:14px 18px;margin-bottom:10px}
+.un-linha:hover{background:#f8f9fa;box-shadow:var(--sombra),inset 3px 0 0 var(--ambar)}
+.un-nome{font-weight:600;display:flex;flex-direction:column;gap:2px}
+.un-nome small{font-weight:400;font-size:12.5px}
+.un-resumo{margin-left:auto;font-size:13px;color:var(--cinza);text-align:right}
+.un-seta{color:var(--cinza);font-size:18px}
+/* Página da unidade: linha de montagem */
+.etapas{position:sticky;top:0;z-index:20;display:flex;gap:6px;flex-wrap:wrap;background:var(--claro);padding:10px 0 12px;margin-bottom:6px}
+.etapa-chip{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid var(--borda);background:#fff;font-size:13px;font-weight:600;color:#495057;cursor:pointer}
+.etapa-chip:hover{border-color:#adb5bd}
+.etapa-chip:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+.etapa-chip .chip-n{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:#e9ecef;font-size:12px}
+.etapa-chip.feita{color:var(--ok)}.etapa-chip.feita .chip-n{background:#d1e7dd;color:var(--ok)}
+.etapa-chip.agora{border-color:var(--ambar);color:#7a4a05}.etapa-chip.agora .chip-n{background:var(--ambar);color:#fff}
+.etapa-chip.depois{opacity:.75}
+.etapa{background:var(--papel);border:1px solid var(--borda);border-radius:var(--r);box-shadow:var(--sombra);margin-bottom:12px;scroll-margin-top:70px}
+.etapa.agora{border-color:var(--ambar)}
+.etapa>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 18px}
+.etapa>summary::-webkit-details-marker{display:none}
+.etapa>summary:focus-visible{outline:2px solid var(--ambar);outline-offset:-2px}
+.etapa-n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#e9ecef;font-weight:700;font-size:13px}
+.etapa.feita .etapa-n{background:#d1e7dd;color:var(--ok)}
+.etapa.agora .etapa-n{background:var(--ambar);color:#fff}
+.etapa-t{font-weight:600;font-size:16px}
+.etapa-s{margin-left:auto}
+.etapa-corpo{padding:2px 18px 18px;border-top:1px solid #e9ecef}
+.etapa-corpo .rolagem{margin-top:10px}
+/* Configurações */
+.cfg{max-height:62vh;overflow:auto;padding-right:6px;min-width:min(720px,80vw)}
+.cfg-duplo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cfg-trio{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}
+.cfg-ind{border:1px solid var(--borda);border-radius:8px;padding:10px 14px;margin:0 0 12px}
+.cfg-ind-topo{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.cfg textarea,.cfg input,.cfg select{width:100%}
+@media (max-width:760px){.cfg-duplo,.cfg-trio{grid-template-columns:1fr}.un-linha{flex-wrap:wrap}.un-resumo{margin-left:0;text-align:left}}

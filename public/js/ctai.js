@@ -11,13 +11,10 @@
   const pdfLink = (url, rotulo) => h('a', { href: url, target: '_blank', rel: 'noopener' }, rotulo || 'Abrir PDF');
 
   // ---------- Painel ----------
-  const cartaoUnidade = (c) => window.CTAI.recolher('painel:' + c.contrato_id,
-        h('span', null, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null),
-        h('span', null, c.competencias.length + ' mês(es) · ' + c.competencias.reduce((n, k) => n + (k.divergenciasAbertas || 0), 0) + ' divergência(s) aberta(s) ', c.decisoesAbertas ? selo(c.decisoesAbertas + ' dúvida(s) de regra', 'atencao') : null),
-        h('div', null,
-          h('p', { class: 'mudo peq', style: 'margin-top:0' }, c.oss + ' · ' + (c.numero_cg || ''), c.decisoesAbertas ? [' · ', h('a', { href: '#/regras/' + c.contrato_id }, 'ver dúvidas de regra')] : null),
-        tabela([{ t: 'Mês' }, { t: 'Situação' }, { t: 'Envio' }, { t: 'Recebido em' }, { t: 'Prazos' }, { t: 'Divergências abertas', n: true }, { t: '' }],
-          c.competencias.map((k) => [fmt.comp(k.competencia_id) + (k.mes_implantacao ? ' (implantação)' : ''), selo(k.status, SITU[k.status] || ''), k.versaoEnvio ? h('span', null, 'v' + k.versaoEnvio, k.seiAlertas ? [' ', h('a', { href: '#/c/' + k.cid + '/envios', title: 'Alerta entre o sistema e o SEI' }, selo('SEI: ' + k.seiAlertas + ' alerta(s)', 'atencao'))] : null) : '—', fmt.data(k.recebido_em), k.prazos ? selo(k.prazos.texto, k.prazos.nivel === 'alta' ? 'alta' : (k.prazos.nivel === 'atencao' ? 'atencao' : (k.prazos.nivel === 'ok' ? 'ok' : ''))) : '—', String(k.divergenciasAbertas), h('a', { href: '#/c/' + k.cid }, 'Abrir')]))));
+  const cartaoUnidade = (c) => h('a', { class: 'cartao un-linha', href: location.pathname + '#/u/' + encodeURIComponent(c.contrato_id), target: '_blank', rel: 'noopener', title: 'Abre a unidade em uma nova aba' },
+    h('span', { class: 'un-nome' }, h('span', null, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null), h('small', { class: 'mudo' }, [c.oss, c.numero_cg].filter(Boolean).join(' · '))),
+    h('span', { class: 'un-resumo' }, c.competencias.reduce((n, k) => n + (k.divergenciasAbertas || 0), 0) + ' divergência(s) aberta(s) ', c.decisoesAbertas ? selo(c.decisoesAbertas + ' dúvida(s) de regra', 'atencao') : null),
+    h('span', { class: 'un-seta', 'aria-hidden': 'true' }, '↗'));
   const TIPOS = [['HOSPITAL', 'Hospitais'], ['UPA', 'UPAs'], ['UPAE', 'UPAEs']];
   const semAcento = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   // Unidades agrupadas por tipo, em ordem alfabética, com busca por nome.
@@ -42,7 +39,7 @@
     const pareceres = await api('GET', '/api/ctai/pareceres');
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Unidades'), h('p', null, 'Escolha uma unidade para ver os envios, as divergências e os documentos dela.'))),
       listaUnidades(r.contratos, cartaoUnidade),
-      h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, 'Pareceres'), h('a', { class: 'btn sec', href: '#/pareceres' }, 'Ver todos')),
+      h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, 'Documentos em andamento'), h('a', { class: 'btn sec', href: '#/pareceres' }, 'Ver todos')),
         tabela([{ t: 'Parecer' }, { t: 'Trimestre' }, { t: 'Criado por' }, { t: 'Situação' }], pareceres.pareceres.slice(0, 5).map((p) => [h('a', { href: '#/p/' + p.parecer_id }, p.titulo), p.trimestre, p.criador_nome, selo(p.status + (p.ultimaVersao ? ' (v' + p.ultimaVersao.numero + ')' : ''), p.status === 'anexado ao SEI' || p.status === 'autorizado' ? 'ok' : 'atencao')]), { vazio: 'Nenhum parecer aberto.' })));
   }
 
@@ -519,7 +516,7 @@
     const motivo = h('textarea', { id: 'cv-motivo', rows: 2, placeholder: ult ? 'O que mudou desde a versão ' + ult.numero + '?' : 'Opcional na primeira versão' });
     const achadosMin = h('div');
     montar(demo(P.demo), migalha(h('a', { href: '#/pareceres' }, 'Editor de Documentos'), P.titulo),
-      h('div', { class: 'topo' }, h('div', null, h('h1', null, P.titulo), h('p', null, P.unidade + ' · ' + P.trimestre + (P.numero_parecer ? ' · parecer ' + P.numero_parecer : ''))), h('div', { class: 'linha' }, selo(P.status, P.status === 'anexado ao SEI' || P.status === 'autorizado' ? 'ok' : 'atencao'), ult ? h('a', { class: 'btn', href: '#/v/' + ult.versao_id }, 'Abrir a mesa (v' + ult.numero + ')') : null)),
+      h('div', { class: 'topo' }, h('div', null, h('h1', null, P.titulo), h('p', null, P.unidade + ' · ' + P.trimestre + (P.numero_parecer ? ' · parecer ' + P.numero_parecer : ''))), h('div', { class: 'linha' }, selo(P.status, P.status === 'anexado ao SEI' || P.status === 'autorizado' ? 'ok' : 'atencao'), ult ? h('a', { class: 'btn', href: '#/v/' + ult.versao_id }, 'Abrir a mesa (v' + ult.numero + ')') : null, h('button', { type: 'button', class: 'sec', onclick: () => window.CTAI_UNIDADE.configuracoes(P.contrato_id, () => parecer(p)).catch((e) => toast(e.message, true)) }, 'Configurações'))),
       d.alteradoDesdeCongelamento && ult && !travado ? aviso('atencao', h('strong', null, 'A minuta mudou desde a versão ' + ult.numero + '. '), 'Para os colegas conferirem a mudança, congele uma nova versão com o motivo.') : null,
       !eCriador ? aviso('info', 'Você vê esta minuta, mas só quem a criou altera. Para conferir, abra a mesa.') : null,
       h('div', { class: 'cartao' }, h('h2', null, '1. Indicadores e pontos'), h('p', { class: 'mudo peq' }, 'O ponto adotado começa igual ao recálculo. Para mudar, use "Ajustar" e explique: o motivo fica na trilha e na mesa.'), c.indicadores.competencias.map((k) => h('div', { style: 'margin-bottom:14px' },
@@ -810,7 +807,7 @@
     window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); }, 60000);
     if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), document.querySelector('.lateral a.nav.fim') || nav); }
     META = await api('GET', '/api/meta');
-    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();

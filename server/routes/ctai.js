@@ -61,6 +61,23 @@ module.exports = (db) => {
     });
   });
 
+  // ---------- Configurações da unidade (regras lidas do contrato) ----------
+  // Qualquer analista com a unidade na carteira pode ajustar a regra descritiva, sempre com a senha de quem altera e um motivo (fica na trilha).
+  r.put('/configuracao/:id/regras', (req, res) => {
+    const b = req.body || {};
+    if (!['criador', 'colega', 'superintendente', 'admin'].includes(req.usuario.perfil)) throw erro(403, 'Seu perfil não altera regras.');
+    const motivo = String(b.motivo || '').trim();
+    if (motivo.length < 5) throw erro(400, 'Escreva o motivo da alteração (uma linha basta).');
+    if (!b.senha) throw erro(400, 'Confirme com a sua senha.');
+    const conf = A.entrar(db, req.usuario.login, String(b.senha));
+    if (conf.erro) throw erro(401, conf.erro === 'Usuário ou senha incorretos.' ? 'Senha incorreta.' : conf.erro);
+    if (!db.get('SELECT 1 FROM contratos WHERE contrato_id = ?', req.params.id)) throw erro(404, 'Unidade não encontrada.');
+    if (req.escopo && !req.escopo.has(req.params.id)) throw erro(403, 'Esta unidade não está na sua carteira. Peça à superintendente para incluí-la.');
+    const regra = CR.gravar(db, req.usuario, req.params.id, b.conteudo, 'edição na unidade');
+    trilha.registrar(db, { usuario: req.usuario.login, tabela: 'contrato_regras', registro: req.params.id, campo: 'configuração', valor_novo: 'regra alterada na unidade, confirmada com senha', motivo });
+    res.json({ regra, contratoRegras: CR.ler(db, req.params.id) });
+  });
+
   // ---------- Checklist de recebimento ----------
   r.get('/competencias/:cid/checklist', (req, res) => { const c = D.competenciaPorCid(db, req.params.cid); res.json(CL.listar(db, c.cid)); });
   r.put('/competencias/:cid/checklist/:item', (req, res) => { CL.atualizar(db, req.usuario, req.params.cid, req.params.item, req.body || {}); res.json(CL.listar(db, req.params.cid)); });
