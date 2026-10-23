@@ -378,6 +378,10 @@ let base;
     assert.ok((await an.inputValue('#dc-tx')).includes('Senhor Gestor'), 'rascunho veio do modelo');
     await an.setViewportSize({ width: 1280, height: 900 }); await limpa(an); await an.screenshot({ path: path.join(CAP, '31-documento-editor.png') });
     log('documentos: modelo ensinado e rascunho montado');
+    await an.goto(base + '/ctai#/ensinar'); await an.waitForSelector('#en-tx', { timeout: 8000 });
+    await an.fill('#en-tx', 'Quando faltar o relatório, avisar a unidade no mesmo dia.'); await an.click('#en-enviar');
+    await an.waitForSelector('td:has-text("Quando faltar o relatório")', { timeout: 8000 });
+    log('ensinar ao sistema: pedido enviado');
     for (const p of paginas) assert.deepEqual(p.erros, [], 'erros de JavaScript na tela: ' + p.erros.join(' | '));
     console.log('\nE2E OK');
   } catch (e) {

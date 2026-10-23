@@ -122,6 +122,10 @@ CREATE TABLE IF NOT EXISTS documentos (
 CREATE TABLE IF NOT EXISTS documentos_conferencia (
   id INTEGER PRIMARY KEY AUTOINCREMENT, doc_id INTEGER NOT NULL, usuario_id INTEGER NOT NULL, status TEXT NOT NULL, comentario TEXT, data_hora TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS ensinos (
+  ensino_id INTEGER PRIMARY KEY AUTOINCREMENT, usuario_id INTEGER NOT NULL, titulo TEXT NOT NULL, texto TEXT NOT NULL DEFAULT '', anexo_id INTEGER, uso_imediato INTEGER NOT NULL DEFAULT 0,
+  tipo_documento TEXT, modelo_id INTEGER, status TEXT NOT NULL DEFAULT 'recebido', avaliado_por INTEGER, avaliado_em TEXT, parecer TEXT, criado_em TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS achados (
   achado_id INTEGER PRIMARY KEY AUTOINCREMENT, origem_tipo TEXT NOT NULL, origem_id INTEGER NOT NULL, cid INTEGER, gravidade TEXT NOT NULL, tipo TEXT, trecho TEXT, risco TEXT,
   sugestao TEXT, setor_sugerido TEXT, provedor TEXT, status TEXT NOT NULL DEFAULT 'novo', fixado_por TEXT, criado_em TEXT, atualizado_em TEXT

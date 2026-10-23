@@ -286,4 +286,7 @@ module.exports = (db) => {
   return r;
 };
 module.exports.preencher = preencher;
+module.exports.aprender = aprender;
+module.exports.criarModelo = criarModelo;
+module.exports.TIPOS = TIPOS;
 module.exports.detectarSemIA = detectarSemIA;
