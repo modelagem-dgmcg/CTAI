@@ -24,12 +24,16 @@
     if (pe.configurada) { try { ext.itens = (await api('GET', '/api/mensageiro/ponte/contatos')).contatos; } catch (e) { ext.erro = e.message; } }
     const col = h('div', { class: 'cartao msg-contatos', id: 'msg-contatos' });
     const painel = h('div', { class: 'cartao', id: 'msg-painel' }, h('p', { class: 'mudo' }, 'Escolha uma pessoa para conversar.'));
-    const pintarContatos = () => col.replaceChildren(h('h3', null, 'Equipe'), ...c.contatos.map((p) => h('button', { type: 'button', class: 'ct' + (p.login === ESTADO.login ? ' ativo' : ''), 'data-login': p.login, onclick: () => abrir(p.login) },
-      h('span', null, p.nome, h('br'), h('small', null, (PERFIL[p.perfil] || p.perfil) + ' · ' + p.origem)), p.naoLidas ? h('span', { class: 'selo atencao' }, String(p.naoLidas)) : null)),
-      c.contatos.length ? null : h('p', { class: 'mudo peq' }, 'Nenhum outro usuário da equipe ainda.'),
-      h('h3', { style: 'margin-top:14px' }, 'Analista (diretoria)'),
-      !pe.configurada ? h('p', { class: 'mudo peq' }, 'Ligação com o Analista ainda não configurada.') : ext.erro ? aviso('atencao', 'Não consegui falar com o Analista agora: ' + ext.erro) : null,
-      ...ext.itens.map((p) => h('button', { type: 'button', class: 'ct' + (ESTADO.login === 'analista:' + p.id ? ' ativo' : ''), 'data-externo': p.id, onclick: () => abrirExterno(p) }, h('span', null, p.nome, h('br'), h('small', null, p.gerencia ? 'Analista · ' + p.gerencia : 'Analista')))));
+    const pintarContatos = () => {
+      const itens = c.contatos.map((p) => h('button', { type: 'button', class: 'ct' + (p.login === ESTADO.login ? ' ativo' : ''), 'data-login': p.login, onclick: () => abrir(p.login) },
+        h('span', { class: 'ponto ' + (p.status ? p.status.nivel : 'off'), title: p.status ? p.status.texto : '' }),
+        h('span', { class: 'ct-txt' }, p.nome, h('br'), h('small', null, (p.cargo || PERFIL[p.perfil] || p.perfil) + ' · ' + (p.status ? p.status.texto : ''))), p.naoLidas ? h('span', { class: 'selo atencao' }, String(p.naoLidas)) : null));
+      const ext2 = ext.itens.map((p) => h('button', { type: 'button', class: 'ct' + (ESTADO.login === 'analista:' + p.id ? ' ativo' : ''), 'data-externo': p.id, onclick: () => abrirExterno(p) }, h('span', { class: 'ponto off' }), h('span', { class: 'ct-txt' }, p.nome, h('br'), h('small', null, p.gerencia ? 'Analista · ' + p.gerencia : 'Analista'))));
+      col.replaceChildren(...[h('button', { type: 'button', class: 'sec msg-todos', id: 'msg-todos', onclick: abrirGrupo }, 'Escrever para várias pessoas'), h('h3', null, 'Equipe da CTAI'),
+        ...itens, c.contatos.length ? null : h('p', { class: 'mudo peq' }, 'Nenhum outro usuário da equipe ainda.'),
+        pe.configurada || ext.erro ? h('h3', { style: 'margin-top:14px' }, 'Diretoria (Analista)') : null,
+        ext.erro ? aviso('atencao', 'Não consegui falar com o Analista agora: ' + ext.erro) : null, ...ext2].filter(Boolean));
+    };
     async function abrirExterno(p) {
       ESTADO.login = 'analista:' + p.id; pintarContatos();
       let msgs = [];
@@ -41,13 +45,29 @@
         h('p', { class: 'mudo peq' }, 'A mensagem chega ao Analista como “CTAI”, com o seu nome. Para o Analista, só texto; anexos valem entre a equipe do CTAI.'));
       hist.scrollTop = hist.scrollHeight;
     }
+    async function abrirGrupo() {
+      ESTADO.login = null; pintarContatos();
+      const gr = (await api('GET', '/api/mensageiro/grupos')).grupos;
+      const sel = h('select', { id: 'gr-g' }, gr.map((g) => h('option', { value: g.id }, g.nome)));
+      const texto = h('textarea', { id: 'gr-t', rows: 5, placeholder: 'Escreva o recado. Cada pessoa recebe na sua própria conversa.', 'aria-label': 'Mensagem' });
+      const arq = h('input', { type: 'file', id: 'gr-a', accept: '.pdf,.docx,.xlsx,.csv,.txt,.png,.jpg,.jpeg', 'aria-label': 'Anexar documento' });
+      const enviar = async () => {
+        try {
+          const corpo = { grupo: sel.value, texto: texto.value }; const f = arq.files[0];
+          if (f) { if (f.size > 4 * 1024 * 1024) throw new Error('Arquivo acima de 4 MB.'); corpo.anexo = { nome: f.name, base64: await lerBase64(f) }; }
+          const o = await api('POST', '/api/mensageiro/enviar-grupo', corpo); toast('Enviado para ' + o.enviadas + (o.enviadas === 1 ? ' pessoa.' : ' pessoas.')); texto.value = ''; arq.value = '';
+        } catch (e) { toast(e.message, true); }
+      };
+      painel.replaceChildren(h('h3', null, 'Escrever para várias pessoas'), h('div', { class: 'campo' }, h('label', { for: 'gr-g' }, 'Para quem'), sel), h('div', { class: 'campo' }, texto),
+        h('div', { class: 'linha' }, arq, h('button', { id: 'gr-enviar', onclick: enviar }, 'Enviar')), h('p', { class: 'mudo peq' }, 'Cada pessoa vê o recado na conversa dela com você, marcado com o nome do grupo.'));
+    }
     async function abrir(login) {
       ESTADO.login = login;
       const d = await api('GET', '/api/mensageiro/conversa/' + encodeURIComponent(login));
       const p = c.contatos.find((x) => x.login === login); if (p) p.naoLidas = 0;
       pintarContatos(); atualizarContador();
       const hist = h('div', { class: 'msg-hist', id: 'msg-hist' }, d.mensagens.length ? d.mensagens.map((m) => h('div', { class: 'msg-b' + (m.meu ? ' meu' : '') },
-        m.texto || null, m.anexo ? h('div', null, h('a', { href: '/api/mensageiro/anexo/' + m.anexo.id, download: m.anexo.nome }, '📎 ' + m.anexo.nome), ' ', h('small', null, kb(m.anexo.tamanho))) : null, h('small', null, hora(m.criado_em)))) : h('p', { class: 'mudo' }, 'Sem mensagens ainda.'));
+        m.grupo ? h('small', { class: 'grupo-tag' }, 'Para: ' + m.grupo) : null, m.texto || null, m.anexo ? h('div', null, h('a', { href: '/api/mensageiro/anexo/' + m.anexo.id, download: m.anexo.nome }, '📎 ' + m.anexo.nome), ' ', h('small', null, kb(m.anexo.tamanho))) : null, h('small', null, hora(m.criado_em)))) : h('p', { class: 'mudo' }, 'Sem mensagens ainda.'));
       const texto = h('textarea', { id: 'msg-texto', rows: 2, placeholder: 'Escreva a mensagem…', 'aria-label': 'Mensagem' });
       const arq = h('input', { type: 'file', id: 'msg-arquivo', accept: '.pdf,.docx,.xlsx,.csv,.txt,.png,.jpg,.jpeg', 'aria-label': 'Anexar documento' });
       const enviar = async () => {

@@ -59,6 +59,7 @@ function cookieDe(token, expira) {
   return 'ctai_sid=' + token + '; Path=/; HttpOnly; SameSite=Lax; Expires=' + expira.toUTCString() + (config.cookieSeguro ? '; Secure' : '');
 }
 
+const VISTO = new Map();
 function usuarioDaSessao(db, req) {
   const token = lerCookies(req).ctai_sid;
   if (!token) return null;
@@ -67,6 +68,8 @@ function usuarioDaSessao(db, req) {
   if (new Date(s.expira_em) < new Date()) { db.run('DELETE FROM sessoes WHERE token_hash = ?', s.token_hash); return null; }
   const u = db.get('SELECT usuario_id, login, nome, perfil, funcao, contrato_id, setor, setores, trocar_senha, ativo FROM usuarios WHERE usuario_id = ?', s.usuario_id);
   if (!u || !u.ativo) return null;
+  const t = Date.now(); // "visto por último": no máximo uma gravação por minuto por pessoa
+  if (t - (VISTO.get(u.usuario_id) || 0) > 60000) { VISTO.set(u.usuario_id, t); try { db.run('UPDATE usuarios SET visto_em = ? WHERE usuario_id = ?', new Date(t).toISOString(), u.usuario_id); } catch (_) { /* sem presença */ } }
   return u;
 }
 

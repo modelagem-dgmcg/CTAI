@@ -8,12 +8,24 @@ const MAX = 4 * 1024 * 1024;
 const TIPOS = { pdf: 'application/pdf', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', csv: 'text/csv', txt: 'text/plain', png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg' };
 const agora = () => new Date().toISOString();
 
+// Status da pessoa: online (ativa nos últimos 5 minutos), ausente (tem substituição marcada), ou visto por último.
+function statusDe(visto, ausente) {
+  const min = visto ? (Date.now() - new Date(visto).getTime()) / 60000 : null;
+  if (min !== null && min <= 5 && !ausente) return { nivel: 'online', texto: 'Online agora' };
+  if (ausente) return { nivel: 'ausente', texto: 'Ausente (com substituto)' };
+  if (min === null) return { nivel: 'off', texto: 'Ainda não entrou' };
+  const t = min < 60 ? 'há ' + Math.round(min) + ' min' : min < 1440 ? 'há ' + Math.round(min / 60) + ' h' : 'há ' + Math.round(min / 1440) + ' dia(s)';
+  return { nivel: 'off', texto: 'Visto ' + t };
+}
 function contatos(db, eu) {
-  const lista = db.all(`SELECT usuario_id, nome, login, perfil FROM usuarios WHERE ativo = 1 AND perfil IN ('admin','criador','colega','superintendente') AND usuario_id <> ? ORDER BY nome`, eu.usuario_id);
+  const lista = db.all(`SELECT usuario_id, nome, login, perfil, funcao, visto_em FROM usuarios WHERE ativo = 1 AND perfil IN ('admin','criador','colega','superintendente') AND usuario_id <> ? ORDER BY nome`, eu.usuario_id);
+  const hoje = new Date().toISOString().slice(0, 10);
   return lista.map((u) => {
     const n = db.get('SELECT COUNT(*) AS n FROM msg WHERE de_id = ? AND para_id = ? AND lido_em IS NULL', u.usuario_id, eu.usuario_id).n;
     const ult = db.get('SELECT criado_em FROM msg WHERE (de_id = ? AND para_id = ?) OR (de_id = ? AND para_id = ?) ORDER BY msg_id DESC LIMIT 1', u.usuario_id, eu.usuario_id, eu.usuario_id, u.usuario_id);
-    return Object.assign(u, { naoLidas: n, ultima: ult ? ult.criado_em : null, origem: 'CTAI' });
+    const fora = db.get('SELECT 1 AS x FROM caixa_substituicoes WHERE de_usuario_id = ? AND cancelado_em IS NULL AND desde <= ? AND ate >= ?', u.usuario_id, hoje, hoje);
+    const { visto_em: visto } = u; delete u.visto_em;
+    return Object.assign(u, { naoLidas: n, ultima: ult ? ult.criado_em : null, origem: 'CTAI', cargo: (u.perfil === 'superintendente' && u.funcao) || null, status: statusDe(visto, !!fora) });
   }).sort((a, b) => (b.naoLidas - a.naoLidas) || String(b.ultima || '').localeCompare(String(a.ultima || '')) || a.nome.localeCompare(b.nome));
 }
 const contador = (db, eu) => ({ naoLidas: db.get('SELECT COUNT(*) AS n FROM msg WHERE para_id = ? AND lido_em IS NULL', eu.usuario_id).n });
@@ -27,11 +39,19 @@ function par(db, eu, login) {
 function conversa(db, eu, login) {
   const o = par(db, eu, login);
   db.run('UPDATE msg SET lido_em = ? WHERE de_id = ? AND para_id = ? AND lido_em IS NULL', agora(), o.usuario_id, eu.usuario_id);
-  const msgs = db.all('SELECT m.msg_id, m.de_id, m.texto, m.criado_em, m.anexo_id, a.nome AS anexo_nome, a.tamanho AS anexo_tamanho FROM msg m LEFT JOIN msg_anexos a ON a.anexo_id = m.anexo_id WHERE (m.de_id = ? AND m.para_id = ?) OR (m.de_id = ? AND m.para_id = ?) ORDER BY m.msg_id DESC LIMIT 200', eu.usuario_id, o.usuario_id, o.usuario_id, eu.usuario_id).reverse();
-  return { contato: o, mensagens: msgs.map((m) => ({ id: m.msg_id, meu: m.de_id === eu.usuario_id, texto: m.texto, criado_em: m.criado_em, anexo: m.anexo_id ? { id: m.anexo_id, nome: m.anexo_nome, tamanho: m.anexo_tamanho } : null })) };
+  const msgs = db.all('SELECT m.msg_id, m.de_id, m.texto, m.criado_em, m.grupo, m.anexo_id, a.nome AS anexo_nome, a.tamanho AS anexo_tamanho FROM msg m LEFT JOIN msg_anexos a ON a.anexo_id = m.anexo_id WHERE (m.de_id = ? AND m.para_id = ?) OR (m.de_id = ? AND m.para_id = ?) ORDER BY m.msg_id DESC LIMIT 200', eu.usuario_id, o.usuario_id, o.usuario_id, eu.usuario_id).reverse();
+  return { contato: o, mensagens: msgs.map((m) => ({ id: m.msg_id, meu: m.de_id === eu.usuario_id, texto: m.texto, grupo: m.grupo || null, criado_em: m.criado_em, anexo: m.anexo_id ? { id: m.anexo_id, nome: m.anexo_nome, tamanho: m.anexo_tamanho } : null })) };
 }
 
-function enviar(db, eu, dados) {
+const GRUPOS = { todos: 'Toda a equipe', criador: 'Analistas', colega: 'Conferentes', superintendente: 'Superintendência', admin: 'Administração' };
+function enviarGrupo(db, eu, dados) {
+  const g = String(dados.grupo || 'todos');
+  if (!GRUPOS[g]) throw erro(400, 'Escolha para quem enviar.');
+  const dest = db.all(`SELECT login FROM usuarios WHERE ativo = 1 AND perfil IN ('admin','criador','colega','superintendente') AND usuario_id <> ?` + (g === 'todos' ? '' : ' AND perfil = ?'), ...(g === 'todos' ? [eu.usuario_id] : [eu.usuario_id, g]));
+  if (!dest.length) throw erro(400, 'Não há outras pessoas nesse grupo.');
+  return db.tx(() => { for (const d of dest) enviar(db, eu, Object.assign({}, dados, { para: d.login }), GRUPOS[g]); return dest.length; });
+}
+function enviar(db, eu, dados, grupo) {
   const o = par(db, eu, dados.para);
   const texto = String(dados.texto || '').trim().slice(0, 4000);
   let anexoId = null;
@@ -46,7 +66,7 @@ function enviar(db, eu, dados) {
     anexoId = Number(db.run('INSERT INTO msg_anexos (nome, mime, tamanho, dados, criado_em) VALUES (?,?,?,?,?)', nome, TIPOS[ext], buf.length, buf, agora()).lastInsertRowid);
   }
   if (!texto && !anexoId) throw erro(400, 'Escreva uma mensagem ou anexe um arquivo.');
-  const id = Number(db.run('INSERT INTO msg (de_id, para_id, texto, anexo_id, criado_em) VALUES (?,?,?,?,?)', eu.usuario_id, o.usuario_id, texto, anexoId, agora()).lastInsertRowid);
+  const id = Number(db.run('INSERT INTO msg (de_id, para_id, texto, anexo_id, criado_em, grupo) VALUES (?,?,?,?,?,?)', eu.usuario_id, o.usuario_id, texto, anexoId, agora(), grupo || null).lastInsertRowid);
   if (anexoId) trilha.registrar(db, { usuario: eu.login, tabela: 'msg', registro: id, campo: 'anexo', valor_novo: 'enviado a ' + o.login });
   return id;
 }
@@ -57,4 +77,4 @@ function anexo(db, eu, id) {
   return a;
 }
 
-module.exports = { contatos, contador, conversa, enviar, anexo, TIPOS, MAX };
+module.exports = { enviarGrupo, GRUPOS, contatos, contador, conversa, enviar, anexo, TIPOS, MAX };

@@ -11,6 +11,8 @@ module.exports = (db) => {
   r.get('/contador', (req, res) => res.json(MS.contador(db, req.usuario)));
   r.get('/conversa/:login', (req, res) => res.json(MS.conversa(db, req.usuario, req.params.login)));
   r.post('/enviar', (req, res) => res.json({ msg_id: MS.enviar(db, req.usuario, req.body || {}) }));
+  r.get('/grupos', (req, res) => res.json({ grupos: Object.entries(MS.GRUPOS).map(([id, nome]) => ({ id, nome })) }));
+  r.post('/enviar-grupo', (req, res) => res.json({ enviadas: MS.enviarGrupo(db, req.usuario, req.body || {}) }));
   // Ponte com o Analista da diretoria (só texto).
   r.get('/ponte/estado', (req, res) => res.json({ configurada: PA.configurada() }));
   r.get('/ponte/contatos', async (req, res) => res.json({ contatos: await PA.contatos() }));

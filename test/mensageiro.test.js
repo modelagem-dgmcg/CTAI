@@ -61,3 +61,14 @@ test('ponte com o Analista: contatos, conversa e envio pela chave de serviço (s
     assert.equal((await a.get('/api/mensageiro/ponte/contatos')).status, 503);
   } finally { srv.close(); delete process.env.ANALISTA_API_URL; delete process.env.ANALISTA_SERVICO_CHAVE; }
 });
+
+test('status da pessoa e mensagem para um grupo', async () => {
+  const lista = (await a.get('/api/mensageiro/contatos')).json.contatos;
+  assert.ok(lista.length && lista.every((x) => x.status && x.status.texto));
+  const r = await a.post('/api/mensageiro/enviar-grupo', { grupo: 'todos', texto: 'Reunião às 14h' });
+  assert.equal(r.status, 200); assert.ok(r.json.enviadas >= 1);
+  const outro = lista[0].login;
+  const msgs = (await a.get('/api/mensageiro/conversa/' + outro)).json.mensagens;
+  assert.ok(msgs.some((m) => m.grupo === 'Toda a equipe' && m.texto === 'Reunião às 14h'));
+  assert.equal((await a.post('/api/mensageiro/enviar-grupo', { grupo: 'x', texto: 'a' })).status, 400);
+});
