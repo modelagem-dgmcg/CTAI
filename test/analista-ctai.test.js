@@ -50,6 +50,9 @@ test('encaminhar à unidade: só a equipe, com mensagem; a unidade vê e respond
 
   const resp = await setorAssist.post('/api/unidade/achados/' + achadoId + '/responder', { resposta: 'Foi erro de digitação; o valor correto é o numérico.' });
   assert.equal(resp.status, 200);
+  const pdfR = await setorAssist.get('/api/unidade/achados/' + achadoId + '/pdf');
+  assert.equal(pdfR.status, 200); assert.equal(pdfR.buffer.slice(0, 4).toString(), '%PDF');
+  assert.equal((await setorOuv.get('/api/unidade/achados/' + achadoId + '/pdf')).status, 404, 'outro setor não baixa');
   assert.equal((await gestor.post('/api/unidade/achados/' + achadoId + '/responder', { resposta: 'outra' })).status, 409, 'já respondido');
   const a = (await cleuton.get('/api/analista/achados?cid=' + cid06)).json.achados.find((x) => x.achado_id === achadoId);
   assert.equal(a.status, 'respondido');

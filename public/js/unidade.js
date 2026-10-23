@@ -71,17 +71,17 @@
     const responder = async (a) => {
       const t = await perguntar('Responder à CTAI', 'Escreva o esclarecimento. Não coloque dado de paciente.', { longo: true, botao: 'Enviar resposta' });
       if (!t) return;
-      try { await api('POST', '/api/unidade/achados/' + a.achado_id + '/responder', { resposta: t }); toast('Resposta enviada.'); esclarecimentos(); } catch (e) { toast(e.message, true); }
+      try { await api('POST', '/api/unidade/achados/' + a.achado_id + '/responder', { resposta: t }); toast('Resposta enviada. O PDF já está disponível.'); esclarecimentos(); } catch (e) { toast(e.message, true); }
     };
     const abertos = r.achados.filter((a) => a.status === 'encaminhado');
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Esclarecimentos'), h('p', null, 'Pontos que a CTAI pediu para a unidade esclarecer. A resposta fica registrada com data e nome.'))),
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Esclarecimentos'), h('p', null, 'Pedidos de esclarecimento sobre o relatório. A resposta fica registrada com data e nome e pode ser baixada em PDF para o SEI.'))),
       abertos.length ? aviso('atencao', h('strong', null, abertos.length + ' aguardando resposta.')) : aviso('ok', 'Nada aguardando resposta.'),
       r.achados.length ? r.achados.map((a) => h('div', { class: 'item-mesa ' + (a.status === 'encaminhado' ? '' : 'ok') },
         h('div', { class: 'linha espaco' }, h('strong', null, (a.tipo || 'Ponto a esclarecer') + (a.competencia_id ? ' · ' + fmt.comp(a.competencia_id) : '')), h('div', { class: 'linha' }, seloGrav(a.gravidade), selo(a.status === 'encaminhado' ? 'aguarda resposta' : 'respondido', a.status === 'encaminhado' ? 'atencao' : 'ok'), a.setor ? selo(NOME[a.setor] || a.setor) : null)),
         a.trecho ? h('blockquote', { style: 'margin:8px 0;padding:6px 12px;border-left:3px solid var(--borda);color:var(--cinza)' }, a.trecho) : null,
         h('p', { class: 'peq', style: 'margin:4px 0' }, h('strong', null, 'Pedido da CTAI: '), a.mensagem), h('p', { class: 'peq mudo', style: 'margin:2px 0' }, 'Em ' + fmt.data(a.encaminhado_em) + (a.prazo ? ' · prazo ' + fmt.data(a.prazo) : ''), a.status === 'encaminhado' && a.prazo && a.prazo < hoje ? [' ', selo('prazo vencido', 'alta')] : null),
-        a.resposta ? h('div', { class: 'aviso ok', style: 'margin:8px 0' }, h('strong', null, 'Resposta: '), a.resposta, h('div', { class: 'peq mudo' }, a.respondido_por + ' em ' + fmt.data(a.respondido_em))) : h('button', { onclick: () => responder(a) }, 'Responder')))
-        : h('p', { class: 'vazio' }, 'A CTAI ainda não pediu nenhum esclarecimento.'));
+        a.resposta ? h('div', { class: 'aviso ok', style: 'margin:8px 0' }, h('strong', null, 'Resposta: '), a.resposta, h('div', { class: 'peq mudo' }, a.respondido_por + ' em ' + fmt.data(a.respondido_em)), h('a', { class: 'btn sec', href: '/api/unidade/achados/' + a.achado_id + '/pdf', target: '_blank', rel: 'noopener', style: 'margin-top:6px;display:inline-block' }, 'Gerar o PDF da resposta')) : h('button', { onclick: () => responder(a) }, 'Responder')))
+        : h('p', { class: 'vazio' }, 'Nenhum pedido de esclarecimento até agora.'));
   }
 
   // ---------- Competência ----------

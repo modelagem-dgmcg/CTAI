@@ -144,6 +144,21 @@ module.exports = (db) => {
   // ---------- Linhas (listas) ----------
   // Esclarecimentos que a CTAI pediu à unidade (achados encaminhados). A unidade vê só o que foi encaminhado a ela.
   r.get('/achados', (req, res) => res.json({ achados: achadosDb.daUnidade(db, Object.assign({}, req.usuario, { contrato_id: contratoDe(req) })) }));
+  // PDF da resposta, para a unidade levar ao SEI. A transmissão dos dados à CTAI segue igual.
+  r.get('/achados/:id/pdf', async (req, res) => {
+    const a = achadosDb.daUnidade(db, Object.assign({}, req.usuario, { contrato_id: contratoDe(req) })).find((x) => x.achado_id === Number(req.params.id));
+    if (!a) throw erro(404, 'Esclarecimento não encontrado.');
+    if (!a.resposta) throw erro(400, 'Responda primeiro; depois o PDF fica disponível.');
+    const un = (db.get('SELECT unidade, numero_cg FROM contratos WHERE contrato_id = ?', contratoDe(req)) || {});
+    const data = (iso) => (iso ? String(iso).slice(0, 10).split('-').reverse().join('/') : '—');
+    const blocos = [{ tipo: 'chaveValor', itens: [['Unidade', un.unidade || '—'], ['Contrato de Gestão', un.numero_cg || '—'], ['Competência', a.competencia_id || '—'], ['Assunto', a.tipo || 'Ponto a esclarecer'], ['Pedido enviado em', data(a.encaminhado_em)], ['Prazo', data(a.prazo)]] }];
+    if (a.trecho) blocos.push({ tipo: 'titulo', nivel: 2, texto: 'Trecho em questão' }, { tipo: 'paragrafo', texto: a.trecho });
+    blocos.push({ tipo: 'titulo', nivel: 1, texto: 'Pedido de esclarecimento' }, { tipo: 'paragrafo', texto: a.mensagem || '—' });
+    blocos.push({ tipo: 'titulo', nivel: 1, texto: 'Resposta da unidade' }, { tipo: 'paragrafo', texto: a.resposta });
+    blocos.push({ tipo: 'paragrafo', texto: 'Respondido por ' + (a.respondido_por || '—') + ' em ' + data(a.respondido_em) + '.' });
+    const buf = await require('../pdf/render').renderizar({ titulo: 'Resposta a pedido de esclarecimento', subtitulo: un.unidade || '', blocos });
+    res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="esclarecimento-' + a.achado_id + '.pdf"' }).send(buf);
+  });
   r.post('/achados/:id/responder', (req, res) => { achadosDb.responder(db, req.params.id, req.usuario, req.body && req.body.resposta); res.json({ ok: true }); });
 
   r.get('/fontes', (req, res) => res.json({ fontes: Object.entries(F.FONTES).map(([id, f]) => ({ id, nome: f.nome, setor: f.setor, indicadores: f.indicadores, ajuda: f.ajuda, colunas: f.colunas })), colunasProibidas: L.COLUNAS_PROIBIDAS }));
