@@ -47,3 +47,10 @@
 .sg-tela-cab strong{flex:1}
 .sg-tela-cab button{background:#5c636a;color:#fff;border:0;border-radius:6px;padding:4px 10px;font:600 12px "Segoe UI",system-ui,sans-serif;cursor:pointer}
 .sg-tela video{display:block;width:100%;background:#000;max-height:70vh;object-fit:contain}
+
+/* Convite para entrar na sala */
+.sg-convite{position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:2147483000;width:min(420px,calc(100vw - 32px));background:#fff;color:#212529;border-radius:12px;border-top:5px solid #d97706;box-shadow:0 10px 30px rgba(0,0,0,.35);padding:14px 16px;font:14px "Segoe UI",system-ui,sans-serif}
+.sg-convite p{margin:6px 0 10px;color:#495057}
+.sg-convite button{background:#1a1d20;color:#fff;border:0;border-radius:8px;padding:9px 16px;font:600 14px "Segoe UI",system-ui,sans-serif;cursor:pointer}
+.sg-convite button.sg-sec{background:#fff;color:#495057;border:1px solid #adb5bd}
+.sg-convite .sg-linha{gap:10px}

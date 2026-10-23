@@ -140,3 +140,21 @@ test('assumir a condução passa o apontador para quem assumiu', async () => {
   assert.equal((await cond.post('/api/sala/ponteiro', { codigo: c.codigo, eu: c.eu, dados: { tipo: 'mover', fx: 0.1, fy: 0.1 } })).status, 403);
   await a.post('/api/sala/encerrar', { codigo: c.codigo, eu: ea.eu });
 });
+
+test('convidar: aviso para quem está fora, mensagem para a equipe da CTAI, recusa some', async () => {
+  const c = (await cond.post('/api/sala/criar')).json;
+  assert.equal((await a.post('/api/sala/convidar', { codigo: c.codigo, eu: c.eu, quem: 'todos' })).status, 403);
+  assert.equal((await cond.post('/api/sala/convidar', { codigo: c.codigo, eu: c.eu, quem: 'xx' })).status, 400);
+  const r = await cond.post('/api/sala/convidar', { codigo: c.codigo, eu: c.eu, quem: 'todos' });
+  assert.equal(r.status, 200); assert.ok(r.json.convidados >= 3);
+  const v = (await a.get('/api/sala/convites')).json.convites;
+  assert.equal(v.length, 1); assert.equal(v[0].codigo, c.codigo);
+  assert.equal((await unidade.get('/api/sala/convites')).json.convites.length, 1, 'quem é da unidade também recebe o aviso');
+  const conv = (await a.get('/api/mensageiro/conversa/cleuton')).json.mensagens;
+  assert.ok(conv.some((m) => m.grupo === 'Sala guiada' && m.texto.includes(c.codigo)));
+  await a.post('/api/sala/convites/recusar', { codigo: c.codigo });
+  assert.equal((await a.get('/api/sala/convites')).json.convites.length, 0);
+  assert.equal((await unidade.post('/api/sala/entrar', { codigo: c.codigo })).status, 200);
+  assert.equal((await unidade.get('/api/sala/convites')).json.convites.length, 0, 'quem já entrou não recebe');
+  await cond.post('/api/sala/encerrar', { codigo: c.codigo, eu: c.eu });
+});

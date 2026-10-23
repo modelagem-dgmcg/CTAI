@@ -98,6 +98,7 @@ function acharSala(req) {
 }
 
 module.exports = (db) => {
+  const MS = require('./mensageiro');
   const r = express.Router();
   r.use(A.exigir(db));
 
@@ -107,7 +108,7 @@ module.exports = (db) => {
     if (!podeConduzir(req.usuario)) throw erro(403, 'Não foi possível criar a sala.');
     for (const s of [...salas.values()]) if (s.parts.get(s.condutorId) && s.parts.get(s.condutorId).login === req.usuario.login) encerrar(s, 'Você criou uma nova sala; a anterior foi encerrada.');
     const codigo = codigoNovo(), id = crypto.randomBytes(6).toString('hex');
-    const sala = { codigo, criada: Date.now(), condutorId: id, parts: new Map(), ultimo: null };
+    const sala = { codigo, criada: Date.now(), condutorId: id, parts: new Map(), ultimo: null, convidados: new Map() };
     sala.parts.set(id, { id, login: req.usuario.login, nome: req.usuario.nome, mudo: true, res: null, offlineDesde: Date.now() });
     salas.set(codigo, sala);
     res.json({ codigo, eu: id, max: MAX, ice: iceServers(), condutor: true });
@@ -171,6 +172,45 @@ module.exports = (db) => {
     const msg = { tipo, alvo: txt(d.alvo, 300), fx: num(d.fx), fy: num(d.fy), x: num(d.x), y: num(d.y), pagina: txt(d.pagina, 200), ts: Date.now() };
     if (tipo !== 'clique') sala.ultimo = msg;
     transmitir(sala, 'ponteiro', msg, p.id);
+    res.json({ ok: true });
+  });
+
+  // Convidar: quem conduz chama pessoas para a sala. Quem tem acesso à CTAI recebe também uma mensagem em "Falar com a equipe";
+  // todos os convidados que estiverem com o sistema aberto recebem um aviso na tela, com "Entrar agora" ou "Agora não".
+  r.post('/convidar', (req, res) => {
+    const { sala, p } = acharSala(req);
+    if (p.id !== sala.condutorId) throw erro(403, 'Só quem conduz convida.');
+    const quem = String((req.body && req.body.quem) || 'online');
+    let l = db.all('SELECT usuario_id, login, perfil, visto_em FROM usuarios WHERE ativo = 1 AND login <> ?', req.usuario.login);
+    if (quem === 'online') l = l.filter((u) => u.visto_em && Date.now() - new Date(u.visto_em).getTime() <= 5 * 60000);
+    else if (quem === 'equipe') l = l.filter((u) => A.PERFIS_CTAI.includes(u.perfil));
+    else if (quem !== 'todos') throw erro(400, 'Escolha quem convidar.');
+    l = l.slice(0, 300);
+    let novos = 0;
+    for (const u of l) {
+      if ([...sala.parts.values()].some((x) => x.login === u.login)) continue;
+      if (!sala.convidados.has(u.login)) { sala.convidados.set(u.login, { em: Date.now(), recusou: false }); novos++; }
+      if (A.PERFIS_CTAI.includes(u.perfil) && !(sala.convidados.get(u.login).msg)) {
+        sala.convidados.get(u.login).msg = true;
+        try { MS.enviar(db, req.usuario, { para: u.login, texto: 'Convite para a Sala guiada, com o código ' + sala.codigo + '. Clique em "Sala guiada" no canto da tela e digite o código (ou aceite o aviso que aparece na tela).' }, 'Sala guiada'); } catch (_) { /* a mensagem é um reforço; o aviso na tela é o principal */ }
+      }
+    }
+    res.json({ convidados: l.length, novos });
+  });
+  r.get('/convites', (req, res) => {
+    const login = req.usuario.login, lista = [];
+    for (const s of salas.values()) {
+      const c = s.convidados && s.convidados.get(login);
+      if (!c || c.recusou) continue;
+      if ([...s.parts.values()].some((x) => x.login === login)) continue;
+      lista.push({ codigo: s.codigo, de: (s.parts.get(s.condutorId) || {}).nome || '', em: c.em });
+    }
+    res.json({ convites: lista });
+  });
+  r.post('/convites/recusar', (req, res) => {
+    const s = salas.get(txt(req.body && req.body.codigo, 12).toUpperCase());
+    const c = s && s.convidados && s.convidados.get(req.usuario.login);
+    if (c) c.recusou = true;
     res.json({ ok: true });
   });
 

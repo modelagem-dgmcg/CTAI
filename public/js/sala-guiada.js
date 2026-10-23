@@ -370,6 +370,10 @@
         ap.onclick = () => { apontador = !apontador; if (!apontador && est) api('POST', '/api/sala/ponteiro', { codigo: est.codigo, eu: est.eu, dados: { tipo: 'sumir' } }).catch(() => {}); desenhar(); };
         const si = el('button', 'sg-sec', 'Silenciar todos'); si.onclick = () => api('POST', '/api/sala/silenciar', { codigo: est.codigo, eu: est.eu }).catch((e) => aviso(e.message, true));
         l.append(ap, si); p.appendChild(l);
+        const cv = el('div', 'sg-linha'); const sel = el('select'); sel.setAttribute('aria-label', 'Quem convidar');
+        [['online', 'Quem está no sistema agora'], ['equipe', 'Toda a equipe da CTAI'], ['todos', 'Todas as pessoas com acesso']].forEach(([v, t]) => { const o = el('option', null, t); o.value = v; sel.appendChild(o); });
+        const bc = el('button', null, 'Convidar'); bc.onclick = async () => { try { const o = await api('POST', '/api/sala/convidar', { codigo: est.codigo, eu: est.eu, quem: sel.value }); aviso(o.convidados ? 'Convite enviado a ' + o.convidados + ' pessoa(s).' : 'Ninguém para convidar nesse grupo agora.'); } catch (e) { aviso(e.message, true); } };
+        cv.append(sel, bc); p.appendChild(cv);
       } else {
         const lab = el('label', 'sg-seguir'); const cb = el('input'); cb.type = 'checkbox'; cb.checked = seguir; cb.onchange = () => { seguir = cb.checked; };
         lab.append(cb, document.createTextNode(' Acompanhar a tela de quem conduz (dentro da mesma área)')); p.appendChild(lab);
@@ -443,11 +447,28 @@
     try { e = await api('GET', '/api/sala/estado'); } catch (_) { return; } // sem login ou sem a rota: não mostra nada
     ui.podeCriar = !!e.podeCriar;
     montar();
+    setTimeout(verConvites, 1500);
     const antes = lembrado();
     if (antes) { // voltou de outra página: retoma a mesma sala
       try { const info = await api('GET', '/api/sala/retomar?codigo=' + encodeURIComponent(antes.codigo) + '&eu=' + encodeURIComponent(antes.eu)); await abrir(info); ui.som.hidden = false; } catch (_) { guardar(null); }
     }
   }
+  /* ---------- convites ---------- */
+  const vistos = new Set();
+  async function verConvites() {
+    if (est || document.hidden || !ui.botao || /^ctai-/.test(window.name)) return;
+    let o; try { o = await api('GET', '/api/sala/convites'); } catch (_) { return; }
+    const c = (o.convites || []).find((x) => !vistos.has(x.codigo)); if (!c) return;
+    vistos.add(c.codigo);
+    const cx = el('div', 'sg-convite'); cx.setAttribute('role', 'alertdialog');
+    cx.append(el('strong', null, c.de + ' chamou você para a Sala guiada'), el('p', null, 'Você vai ouvir a pessoa e ver o que ela mostrar. Seu microfone começa desligado.'));
+    const l = el('div', 'sg-linha');
+    const sim = el('button', null, 'Entrar agora'); sim.onclick = async () => { cx.remove(); preparar(); try { await abrir(await api('POST', '/api/sala/entrar', { codigo: c.codigo })); ui.painel.hidden = false; } catch (e) { ui.painel.hidden = false; aviso(e.message, true); } };
+    const nao = el('button', 'sg-sec', 'Agora não'); nao.onclick = () => { cx.remove(); api('POST', '/api/sala/convites/recusar', { codigo: c.codigo }).catch(() => {}); };
+    l.append(sim, nao); cx.appendChild(l); document.body.appendChild(cx);
+  }
+  setInterval(verConvites, 8000);
+
   // Para conferir se o áudio ligou de verdade (útil quando a rede da SES bloqueia): SalaGuiada.diagnostico() no console.
   function diagnostico() { return [...pcs.entries()].map(([id, r]) => ({ com: (lista.find((x) => x.id === id) || {}).nome || id, conexao: r.pc.connectionState, ice: r.pc.iceConnectionState })); }
   window.SalaGuiada = { iniciar, sair: sairLocal, diagnostico };
