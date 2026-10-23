@@ -243,3 +243,4 @@ button:not(.sec):not(.leve):hover,.btn:not(.sec):hover{background:var(--acento-h
 .comece-marca{flex:none;width:26px;height:26px;border-radius:50%;background:#e9ecef;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
 .comece-lista li.feito .comece-marca{background:#d1e7dd;color:var(--ok)}
 .comece-lista li.feito{opacity:.7}
+.cx-faixa{text-decoration:none;color:inherit}.cx-faixa:hover strong{text-decoration:underline}

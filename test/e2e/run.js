@@ -356,7 +356,7 @@ let base;
     await an.waitForSelector('#cx-resumo', { timeout: 8000 });
     assert.match(an.url(), /#\/caixa$/, 'analista começa na Caixa de entrada');
     assert.equal(await an.locator('a.nav:text-is("Unidades")').count(), 1, 'o analista sempre tem o item Unidades (o início dele é a Caixa)');
-    assert.ok(await an.locator('#cx-resumo a').count() >= 4, 'faixa de resumo com atalhos');
+    assert.ok(await an.isVisible('#cx-resumo'), 'quadro de resumo da caixa');
     await an.setViewportSize({ width: 1280, height: 900 }); await limpa(an); await an.screenshot({ path: path.join(CAP, '30-inicio-analista-caixa.png') });
     await an.goto(base + '/ctai#/'); await an.waitForSelector('#cx-resumo', { timeout: 8000 }); assert.match(an.url(), /#\/caixa$/, 'link antigo do Painel redireciona sem erro');
     const sup2 = await entrar(browser, 'nathalia', 1280, true); paginas.push(sup2);

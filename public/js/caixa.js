@@ -45,7 +45,9 @@
       await janela('Histórico do item', h('div', null, h('p', { class: 'mudo peq' }, 'Recebem: ' + x.destinatarios.map((p) => p.nome + (p.lido_em ? ' (leu ' + fmt.data(p.lido_em) + ')' : ' (não leu)')).join(', ')),
         tabela([{ t: 'Quando' }, { t: 'Quem' }, { t: 'O quê' }], x.historico.map((e) => [fmt.data(e.em), e.quem, e.acao + (e.detalhe ? ' — ' + e.detalhe : '')]))));
     };
-    const faixa = (id, n, rot, tom, tipo, sit) => h('a', { href: '#/caixa', id: 'cx-rs-' + id, style: 'text-decoration:none;color:inherit', onclick: (e) => { e.preventDefault(); F.tipo = tipo || ''; F.situacao = sit || 'pendentes'; caixa(); } }, h('strong', { class: 'num-grande', style: 'font-size:20px' }, String(n)), ' ', h('span', { class: 'peq' }, rot));
+    // Quadro de resumo: frases completas, explicação ao passar o mouse, só o que tem algo a fazer, e cada item leva à lista daquilo.
+    const plural = (n, um, varios) => n + ' ' + (n === 1 ? um : varios);
+    const faixa = (id, n, texto, ajuda, tom, tipo, sit) => (n ? h('a', { href: '#/caixa', id: 'cx-rs-' + id, class: 'cx-faixa ' + (tom || ''), title: ajuda, onclick: (e) => { e.preventDefault(); F.tipo = tipo || ''; F.situacao = sit || 'pendentes'; caixa(); } }, h('strong', { class: 'num-grande', style: 'font-size:20px' }, String(n)), ' ', h('span', { class: 'peq' }, texto)) : null);
     const card = (i) => h('div', { class: 'cartao cx-item' + (i.lido || i.tratado ? '' : ' nao-lido'), 'data-item': i.item_id },
       h('div', { class: 'linha espaco' }, h('div', null, selo(i.tipo_rotulo, tomTipo[i.tipo] || ''), ' ', i.em_substituicao_de ? selo('em substituição de ' + i.em_substituicao_de, 'atencao') : null, ' ', !i.lido && !i.tratado ? selo('não lido', 'alta') : null, ' ', i.tratado ? selo('tratado', 'ok') : selo('pendente', 'atencao')), h('span', { class: 'mudo peq' }, fmt.data(i.criado_em))),
       h('h3', { style: 'margin:6px 0 2px' }, i.titulo),
@@ -142,9 +144,12 @@
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Caixa de entrada'), h('p', null, d.todas ? 'Tudo que chegou das unidades, por unidade. Você vê todas (sem carteira definida).' : 'Tudo que chegou das unidades da sua carteira, reunido por unidade. Quem divide a unidade com você recebe os mesmos itens; o primeiro que tratar marca para todos.'))),
       window.CTAI_COMECE ? window.CTAI_COMECE.cartao() : null,
       h('div', { class: 'cartao cx-resumo', id: 'cx-resumo', style: 'padding:10px 14px' }, h('div', { class: 'linha', style: 'gap:18px;flex-wrap:wrap' },
-        faixa('nao_lidos', rs.naoLidos, 'não lidos', rs.naoLidos ? 'atencao' : '', '', 'nao_lidos'), faixa('prazos', rs.prazos_vencidos, 'prazo(s) vencido(s)', rs.prazos_vencidos ? 'alta' : '', 'prazo_vencido'),
-        faixa('prazos2', rs.prazos_a_vencer, 'a vencer', rs.prazos_a_vencer ? 'atencao' : '', 'prazo_vencer'), faixa('resp', rs.respostas, 'achado(s) com resposta', rs.respostas ? 'atencao' : '', 'resposta'),
-        faixa('semg', rs.sem_gestor, 'unidade(s) sem gestor', rs.sem_gestor ? 'atencao' : '', 'sem_gestor'))),
+        faixa('nao_lidos', rs.naoLidos, rs.naoLidos === 1 ? 'aviso novo, ainda não aberto' : 'avisos novos, ainda não abertos', 'Avisos da sua caixa que você ainda não abriu.', 'atencao', '', 'nao_lidos'),
+        faixa('prazos', rs.prazos_vencidos, rs.prazos_vencidos === 1 ? 'aviso de prazo vencido' : 'avisos de prazo vencido', 'A unidade passou do prazo de entrega no SEI ou no SIMAS.', 'alta', 'prazo_vencido'),
+        faixa('prazos2', rs.prazos_a_vencer, rs.prazos_a_vencer === 1 ? 'aviso de prazo a vencer' : 'avisos de prazo a vencer', 'O prazo de entrega da unidade está chegando.', 'atencao', 'prazo_vencer'),
+        faixa('resp', rs.respostas, rs.respostas === 1 ? 'achado respondido pela unidade' : 'achados respondidos pelas unidades', 'Pontos que a CTAI encaminhou à unidade e que ela já respondeu.', 'atencao', 'resposta'),
+        faixa('semg', rs.sem_gestor, rs.sem_gestor === 1 ? 'unidade ainda sem gestor cadastrado' : 'unidades ainda sem gestor cadastrado', 'Sem o administrador da unidade no Portal, ninguém da unidade consegue enviar os dados. Cadastre em Gestão > Usuários.', 'atencao', 'sem_gestor'),
+        (rs.naoLidos || rs.prazos_vencidos || rs.prazos_a_vencer || rs.respostas || rs.sem_gestor) ? null : h('span', { class: 'mudo' }, 'Tudo em dia: nada pendente na sua caixa.'))),
       h('div', { class: 'filtros cartao' },
         h('div', { class: 'campo filtro' }, h('label', { for: 'cx-busca' }, 'Unidade'), busca),
         opc('cx-f-tipo', 'Tipo', [['', 'Todos']].concat(Object.entries(d.tipos)), F.tipo, (v) => { F.tipo = v; caixa(); }),
