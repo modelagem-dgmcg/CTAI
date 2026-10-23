@@ -107,6 +107,21 @@ CREATE TABLE IF NOT EXISTS conferencias (
   comentario TEXT, data_hora TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_conf ON conferencias (versao_id);
+CREATE TABLE IF NOT EXISTS modelos_documento (
+  modelo_id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, tipo TEXT NOT NULL, dono_id INTEGER NOT NULL, compartilhado INTEGER NOT NULL DEFAULT 0,
+  versao INTEGER NOT NULL DEFAULT 1, corpo TEXT NOT NULL, campos TEXT NOT NULL DEFAULT '[]', ativo INTEGER NOT NULL DEFAULT 1, criado_em TEXT NOT NULL, atualizado_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS modelos_documento_hist (
+  hist_id INTEGER PRIMARY KEY AUTOINCREMENT, modelo_id INTEGER NOT NULL, versao INTEGER NOT NULL, corpo TEXT NOT NULL, campos TEXT NOT NULL, salvo_em TEXT NOT NULL, salvo_por INTEGER
+);
+CREATE TABLE IF NOT EXISTS documentos (
+  doc_id INTEGER PRIMARY KEY AUTOINCREMENT, tipo TEXT NOT NULL, modelo_id INTEGER, modelo_versao INTEGER, contrato_id TEXT, trimestre TEXT, titulo TEXT NOT NULL,
+  campos TEXT NOT NULL DEFAULT '{}', texto TEXT NOT NULL DEFAULT '', criador_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'rascunho',
+  conferencia_pedida INTEGER NOT NULL DEFAULT 0, convocados TEXT NOT NULL DEFAULT '[]', sei_numero TEXT, sei_em TEXT, criado_em TEXT NOT NULL, atualizado_em TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS documentos_conferencia (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, doc_id INTEGER NOT NULL, usuario_id INTEGER NOT NULL, status TEXT NOT NULL, comentario TEXT, data_hora TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS achados (
   achado_id INTEGER PRIMARY KEY AUTOINCREMENT, origem_tipo TEXT NOT NULL, origem_id INTEGER NOT NULL, cid INTEGER, gravidade TEXT NOT NULL, tipo TEXT, trecho TEXT, risco TEXT,
   sugestao TEXT, setor_sugerido TEXT, provedor TEXT, status TEXT NOT NULL DEFAULT 'novo', fixado_por TEXT, criado_em TEXT, atualizado_em TEXT

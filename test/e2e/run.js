@@ -366,6 +366,18 @@ let base;
     assert.equal(await an.locator('a.nav:text-is("Unidades")').count(), 1, 'com a configuração ligada, o analista começa em Unidades');
     CFG.painelAnalista = false;
     log('tela inicial por perfil: analista na Caixa de entrada, superintendente no Painel, configuração de volta');
+    // Documentos: ensinar um modelo, montar um ofício, pedir conferência e gerar PDF
+    await an.goto(base + '/ctai#/documentos/modelos'); await an.waitForSelector('.rec-cab:has-text("Ensinar um modelo novo")', { timeout: 8000 });
+    await an.click('.rec-cab:has-text("Ensinar um modelo novo")');
+    await an.fill('#en-n', 'Ofício de teste'); await an.fill('#en-x', 'Ofício nº 123/2024\nRecife, 10/03/2024\nSenhor Gestor, encaminhamos o processo 0012345678.000123/2024-11 para as providências.');
+    await an.click('button:has-text("Aprender este modelo")'); await an.waitForSelector('#en-corpo', { timeout: 8000 });
+    await an.click('button:has-text("Guardar modelo")'); await an.waitForSelector('td:has-text("Ofício de teste")', { timeout: 8000 });
+    await an.goto(base + '/ctai#/d/novo/-/-'); await an.waitForSelector('#nd-t', { timeout: 8000 });
+    await an.selectOption('#nd-t', 'oficio'); await an.selectOption('#nd-m', { label: 'Ofício de teste' });
+    await an.click('button:has-text("Montar o rascunho")'); await an.waitForSelector('#dc-tx', { timeout: 8000 });
+    assert.ok((await an.inputValue('#dc-tx')).includes('Senhor Gestor'), 'rascunho veio do modelo');
+    await an.setViewportSize({ width: 1280, height: 900 }); await limpa(an); await an.screenshot({ path: path.join(CAP, '31-documento-editor.png') });
+    log('documentos: modelo ensinado e rascunho montado');
     for (const p of paginas) assert.deepEqual(p.erros, [], 'erros de JavaScript na tela: ' + p.erros.join(' | '));
     console.log('\nE2E OK');
   } catch (e) {

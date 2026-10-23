@@ -83,7 +83,7 @@
   // ---------- A página ----------
   async function pagina(p) {
     const id = p.id;
-    const [rc, rp] = await Promise.all([api('GET', '/api/ctai/contratos'), api('GET', '/api/ctai/pareceres')]);
+    const [rc, rp, rd] = await Promise.all([api('GET', '/api/ctai/contratos'), api('GET', '/api/ctai/pareceres'), api('GET', '/api/documentos?contrato=' + encodeURIComponent(id)).catch(() => ({ documentos: [] }))]);
     const c = rc.contratos.find((x) => x.contrato_id === id);
     if (!c) { montar(aviso('erro', 'Unidade não encontrada, ou fora da sua carteira.')); return; }
     document.title = c.unidade + ' · Analista CTAI';
@@ -96,6 +96,7 @@
     const tris = [...new Set(comDados.concat([triAtual()]))].sort().reverse();
     const T = (tris.includes(guardaTri(id)) ? guardaTri(id) : (comDados[0] || triAtual())); // começa no trimestre mais recente que tem dados
     const K = c.competencias.filter((k) => triDe(k.competencia_id) === T);
+    const docs = (rd.documentos || []).filter((x) => !x.trimestre || x.trimestre === T);
     const Pa = pareceres.find((x) => x.trimestre === T) || null;
     const V = Pa && Pa.ultimaVersao;
     const euCriador = Pa && Pa.criador_id === EU().usuario_id;
@@ -139,7 +140,7 @@
         return [posso ? h('div', { class: 'linha espaco' }, h('span', null, 'Nenhum documento deste trimestre ainda. O parecer abre já com os meses ' + mesesDe(T).map((m) => fmt.comp(m)).join(', ') + '.'),
           h('button', { type: 'button', onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres', { contrato_id: id, trimestre: T, competencias: mesesDe(T) }); toast('Parecer criado.'); await recarregar(); janelaNova('/p/' + o.parecer_id); } catch (e) { toast(e.message, true); } } }, 'Começar o parecer de ' + T))
           : aviso('info', 'O documento deste trimestre é aberto por quem tem o perfil de criação de pareceres.'),
-          h('p', { class: 'mudo peq' }, 'Parecer é o primeiro modelo. Ofício e despacho entram aqui quando os modelos forem cadastrados.')];
+          null];
       },
       // 5. Conferir novamente
       () => {
@@ -157,6 +158,11 @@
             : h('span', { class: 'mudo peq' }, 'Quem registra é quem criou o documento.'))];
       },
     ];
+    const parecerEtapa4 = conteudos[3];
+    conteudos[3] = () => parecerEtapa4().concat([
+      h('div', { class: 'etapa-docs' }, h('h3', null, 'Ofício, despacho e outros'),
+        h('div', { class: 'linha' }, [['oficio', 'Novo ofício'], ['despacho', 'Novo despacho'], ['branco', 'Documento em branco']].map(([t, r]) => h('button', { type: 'button', class: 'sec', onclick: () => janelaNova('/d/novo/' + encodeURIComponent(id) + '/' + T + '/' + t) }, r)), h('a', { class: 'btn sec', href: '#/documentos/modelos', target: '_blank', rel: 'noopener' }, 'Meus modelos')),
+        docs.length ? tabela([{ t: 'Documento' }, { t: 'Tipo' }, { t: 'Situação' }, { t: '' }], docs.map((d) => [d.titulo, d.tipoNome, selo(d.status, d.status === 'finalizado' || d.status === 'conferido' ? 'ok' : (d.status === 'com reparos' ? 'atencao' : '')), h('button', { type: 'button', class: 'sec', onclick: () => janelaNova('/d/' + d.doc_id) }, 'Abrir')])) : h('p', { class: 'mudo peq' }, 'Nenhum ofício ou despacho desta unidade neste trimestre.'))]);
     const NOMES = ['Receber', 'Conferir', 'Decidir', 'Produzir', 'Conferir novamente', 'Registrar no SEI'];
     const secoes = NOMES.map((nome, i) => {
       const aberta = i === atualIdx || (atualIdx === -1 && i === 5);
