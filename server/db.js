@@ -257,7 +257,7 @@ CREATE TRIGGER IF NOT EXISTS trg_conf_no_delete BEFORE DELETE ON conferencias
 
 // Colunas acrescentadas depois da primeira versão (migração segura: só acrescenta, nunca altera o que existe).
 const COLUNAS_NOVAS = {
-  usuarios: ['setores TEXT', 'funcao TEXT', 'visto_em TEXT'],
+  usuarios: ['setores TEXT', 'funcao TEXT', 'visto_em TEXT', 'prov_status TEXT', 'prov_setor TEXT', 'prov_formulario TEXT', 'prov_justificativa TEXT', 'prov_expira_em TEXT', 'prov_resposta TEXT', 'prov_decidido_por TEXT', 'prov_decidido_em TEXT', 'apagado_em TEXT'],
   msg: ['grupo TEXT'],
   contratos: ['tipo TEXT', 'municipio TEXT', 'criado_por TEXT', 'criado_em TEXT'],
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],

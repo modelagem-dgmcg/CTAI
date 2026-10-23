@@ -83,7 +83,7 @@
   // ---------- A página ----------
   async function pagina(p) {
     const id = p.id;
-    const [rc, rp, rd] = await Promise.all([api('GET', '/api/ctai/contratos'), api('GET', '/api/ctai/pareceres'), api('GET', '/api/documentos?contrato=' + encodeURIComponent(id)).catch(() => ({ documentos: [] }))]);
+    const [rc, rp, rd, rv] = await Promise.all([api('GET', '/api/ctai/contratos'), api('GET', '/api/ctai/pareceres'), api('GET', '/api/documentos?contrato=' + encodeURIComponent(id)).catch(() => ({ documentos: [] })), api('GET', '/api/provisorios?contrato=' + encodeURIComponent(id)).catch(() => ({ pedidos: [] }))]);
     const c = rc.contratos.find((x) => x.contrato_id === id);
     if (!c) { montar(aviso('erro', 'Unidade não encontrada, ou fora da sua carteira.')); return; }
     document.title = c.unidade + ' · Analista CTAI';
@@ -163,6 +163,16 @@
       h('div', { class: 'etapa-docs' }, h('h3', null, 'Ofício, despacho e outros'),
         h('div', { class: 'linha' }, [['oficio', 'Novo ofício'], ['despacho', 'Novo despacho'], ['branco', 'Documento em branco']].map(([t, r]) => h('button', { type: 'button', class: 'sec', onclick: () => janelaNova('/d/novo/' + encodeURIComponent(id) + '/' + T + '/' + t) }, r)), h('a', { class: 'btn sec', href: '#/documentos/modelos', target: '_blank', rel: 'noopener' }, 'Meus modelos')),
         docs.length ? tabela([{ t: 'Documento' }, { t: 'Tipo' }, { t: 'Situação' }, { t: '' }], docs.map((d) => [d.titulo, d.tipoNome, selo(d.status, d.status === 'finalizado' || d.status === 'conferido' ? 'ok' : (d.status === 'com reparos' ? 'atencao' : '')), h('button', { type: 'button', class: 'sec', onclick: () => janelaNova('/d/' + d.doc_id) }, 'Abrir')])) : h('p', { class: 'mudo peq' }, 'Nenhum ofício ou despacho desta unidade neste trimestre.'))]);
+    const decidirAcesso = async (x, concordo) => {
+      let justificativa = '';
+      if (!concordo) { justificativa = await perguntar('Por que não concorda?', 'Escreva a justificativa. O gestor da unidade vai receber esta resposta.', { longo: true, botao: 'Enviar resposta' }); if (!justificativa) return; }
+      try { await api('POST', '/api/provisorios/' + x.usuario_id + '/decidir', { concordo, justificativa }); toast(concordo ? 'Acesso mantido.' : 'Resposta enviada ao gestor.'); recarregar(); } catch (e) { toast(e.message, true); }
+    };
+    const acessosProv = (rv.pedidos || []).length ? h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Acessos provisórios pedidos pela unidade'),
+      h('p', { class: 'mudo peq' }, 'Se você concordar, o acesso fica permanente. Se não concordar, escreva a justificativa; sem concordância o acesso é apagado no prazo.'),
+      (rv.pedidos || []).map((x) => h('div', { class: 'linha espaco', style: 'border-top:1px solid #e5e7eb;padding:8px 0' },
+        h('div', null, h('strong', null, x.nome), ' · ' + x.setor + ' · ' + x.formulario, h('div', null, 'Justificativa do gestor: ' + x.justificativa), h('div', { class: 'mudo peq' }, 'Apagado em ' + fmt.data(x.expira_em) + ' se ninguém concordar' + (x.status === 'discordado' ? ' · você já respondeu que não concorda' : ''))),
+        h('div', { class: 'linha' }, h('button', { type: 'button', onclick: () => decidirAcesso(x, true) }, 'Concordo'), h('button', { type: 'button', class: 'sec', onclick: () => decidirAcesso(x, false) }, 'Não concordo'))))) : null;
     const NOMES = ['Receber', 'Conferir', 'Decidir', 'Produzir', 'Conferir novamente', 'Registrar no SEI'];
     const secoes = NOMES.map((nome, i) => {
       const aberta = i === atualIdx || (atualIdx === -1 && i === 5);
@@ -177,7 +187,7 @@
     montar(avDup,
       h('div', { class: 'topo' }, h('div', null, h('h1', null, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null), h('p', null, [c.tipo, c.oss, c.numero_cg].filter(Boolean).join(' · '))),
         h('div', { class: 'linha' }, h('label', { for: 'un-tri', class: 'mudo peq', style: 'margin:0' }, 'Trimestre'), seletor, h('button', { type: 'button', class: 'sec', onclick: () => configuracoes(id, recarregar).catch((e) => toast(e.message, true)) }, 'Configurações'))),
-      barra, secoes);
+      acessosProv, barra, secoes);
   }
 
   // Painel de consulta do editor: dados do trimestre e regras do contrato, para conferir sem trocar de janela.

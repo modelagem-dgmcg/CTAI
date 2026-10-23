@@ -39,6 +39,12 @@
   const avisosPrazos = (pz) => (pz ? [['SEI', pz.sei], ['SIMAS', pz.simas]].filter(([, x]) => ['alta', 'atencao'].includes(x.nivel)).map(([c, x]) => aviso(x.nivel === 'alta' ? 'erro' : 'atencao', h('strong', null, 'Prazo no ' + c + ': '), x.mensagem + ' (prazo ' + dataBr(x.prazo) + ').')) : null);
 
   // ---------- Início ----------
+  // O que a pessoa deve fazer, conforme o perfil dela.
+  function sintese() {
+    if (EU.perfil === 'gestor_unidade' || EU.perfil === 'admin') return 'Para cada mês: acompanhe as fichas dos setores, confira e envie o relatório. Pelo menu "Equipe da unidade" você cadastra as pessoas e diz qual ficha cada uma preenche.';
+    const n = (EU.setores || []).length;
+    return n ? 'Abra o mês e preencha ' + (n > 1 ? 'as fichas do seu setor' : 'a ficha do seu setor') + '. Quando terminar, marque como pronta: o gestor da unidade confere e envia.' : 'Abra o mês e preencha a ficha que o gestor da unidade indicou para você. Quando terminar, marque como pronta.';
+  }
   async function inicio() {
     await carregarInfo();
     const c = INFO.contrato;
@@ -46,7 +52,7 @@
     montar(faixaDemo(),
       h('div', { class: 'topo' }, h('div', null, h('h1', null, c.unidade), h('p', null, c.oss + ' · Contrato de Gestão ' + (c.numero_cg || '')))),
       pendEsc ? h('div', { class: 'aviso atencao' }, h('strong', null, pendEsc + ' esclarecimento(s) pedido(s) pela CTAI. '), h('a', { href: '#/esclarecimentos' }, 'Responder')) : null,
-      h('div', { class: 'aviso info' }, 'Cada mês tem seis fichas (uma por setor) e algumas listas. Quando todas estiverem prontas, o gestor confere e envia: o sistema gera o PDF que segue para o SEI e a CTAI recebe e recalcula.'),
+      h('div', { class: 'aviso info' }, sintese()),
       h('div', { class: 'grade' }, INFO.competencias.map((k) => h('div', { class: 'cartao' },
         h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, fmt.comp(k.competencia_id)), k.mes_implantacao ? selo('implantação', 'atencao') : null),
         h('p', { class: 'mudo peq' }, k.versaoEnvio ? 'Enviado (versão ' + k.versaoEnvio + ') · situação: ' + k.status : 'Ainda não enviado'),
@@ -256,7 +262,7 @@
       try {
         const o = await api('POST', '/api/unidade/competencias/' + p.cid + '/enviar', { motivo: motivo.value });
         clearTimeout(t1); clearTimeout(t2); pintar(3);
-        resultado.append(aviso('ok', h('strong', null, 'Tudo certo: o relatório foi enviado (versão ' + o.versao + '). '), 'A CTAI já recebeu os dados e recalculou. Falta só o documento oficial: abra o PDF, anexe e assine no SEI e, depois, volte e registre o número do documento. ', h('a', { href: '/api/unidade/envios/' + o.envio_id + '/pdf', target: '_blank', rel: 'noopener' }, 'Abrir o PDF'), ' · ', h('a', { href: '#/c/' + p.cid + '/envios' }, 'Registrar o número do SEI'), h('div', { class: 'peq mudo' }, 'No rodapé do PDF: Versão v' + o.versao + ' · código de integridade ' + o.hash.slice(0, 12))));
+        resultado.append(aviso('ok', h('strong', null, 'Tudo certo: o relatório foi enviado (versão ' + o.versao + '). '), 'Os dados foram recebidos. Falta só o documento oficial: abra o PDF, anexe e assine no SEI e, depois, volte e registre o número do documento. ', h('a', { href: '/api/unidade/envios/' + o.envio_id + '/pdf', target: '_blank', rel: 'noopener' }, 'Abrir o PDF'), ' · ', h('a', { href: '#/c/' + p.cid + '/envios' }, 'Registrar o número do SEI'), h('div', { class: 'peq mudo' }, 'No rodapé do PDF: Versão v' + o.versao + ' · código de integridade ' + o.hash.slice(0, 12))));
         toast('Relatório enviado.');
       } catch (e) { clearTimeout(t1); clearTimeout(t2); pintar(0, true); resultado.append(aviso('erro', h('strong', null, 'Não foi possível enviar. '), e.message + ' Nada foi enviado; corrija e tente de novo.')); toast(e.message, true); botao.disabled = false; }
     } }, 'Gerar o PDF e enviar para a CTAI');
@@ -265,13 +271,13 @@
       !d.voce.podeEnviar ? aviso('info', 'Só o gestor da unidade envia o relatório. Você pode preencher a ficha do seu setor.') : null,
       h('div', { class: 'cartao' }, h('h3', null, 'O que o sistema conferiu'),
         d.avisos.length ? h('ul', null, d.avisos.map((a) => h('li', null, seloGrav(a.nivel === 'atencao' ? 'média' : 'baixa'), ' ', a.mensagem))) : h('p', { class: 'mudo' }, 'Nenhum ponto de atenção.'),
-        h('p', { class: 'mudo peq' }, 'Estes avisos são da unidade e não impedem o envio. A CTAI recalcula de forma independente, a partir das linhas.')),
+        h('p', { class: 'mudo peq' }, 'Estes avisos não impedem o envio.')),
       h('div', { class: 'cartao' }, h('h3', null, 'Indicadores como serão enviados'),
         tabela([{ t: 'Item' }, { t: 'Indicador' }, { t: 'Valor', n: true }, { t: 'Origem' }, { t: 'Anexo' }],
           regras.indicadores.map((i) => { const c = d.consolidado[i.id] || {}; return [i.id, i.nome, fmt.valor(c.valor), ({ digitado: 'digitado', apoio: 'das contagens', linhas: 'das linhas' })[c.origem] || '—', c.anexo || '—']; }))),
       h('div', { class: 'cartao' }, h('h3', null, jaEnviou ? 'Novo envio (versão ' + (d.envios[0].versao + 1) + ')' : 'Enviar'),
         jaEnviou ? h('div', { class: 'campo' }, h('label', { for: 'motivo' }, 'Motivo da correção'), motivo) : null, h('div', { class: 'linha' }, botao), resultado,
-        h('p', { class: 'mudo peq' }, 'O PDF é gerado antes de gravar. O sistema não guarda senha nem credencial do SEI: o documento é anexado e assinado no SEI, por quem tem a competência. Depois de assinar, registre o número do documento na aba Envios. Os dois caminhos andam juntos: os dados no sistema (a CTAI recalcula) e o PDF assinado no SEI (o documento oficial). O sistema não bloqueia o envio por falta desse registro.')));
+        h('p', { class: 'mudo peq' }, 'Depois do envio, abra o PDF, anexe e assine no SEI e, na aba Envios, registre o número do documento que o SEI gerar. O sistema não guarda senha nem credencial do SEI.')));
     void nomes;
   }
 
@@ -353,6 +359,7 @@
     const caixas = (marcados, prefixo) => e.setores.map((s) => h('label', { class: 'ck', for: prefixo + s.id }, h('input', Object.assign({ type: 'checkbox', id: prefixo + s.id, value: s.id }, marcados.includes(s.id) ? { checked: true } : {})), ' ', s.nome));
     const lidos = (cx) => cx.map((l) => l.querySelector('input')).filter((i) => i.checked).map((i) => i.value);
     const novas = caixas([], 'nv-');
+    f.setorLivre = h('input', { type: 'text', id: 'eq-sl', placeholder: 'Ex.: Farmácia' }); f.formLivre = h('input', { type: 'text', id: 'eq-fl', placeholder: 'Ex.: Dispensação mensal' }); f.just = h('textarea', { id: 'eq-j', rows: 3, placeholder: 'Por que essa pessoa precisa do acesso? A analista da CTAI vai ler.' });
     const editar = async (u) => {
       const nome = h('input', { type: 'text', id: 'ed-n', value: u.nome });
       const cx = caixas(u.setores, 'ed-');
@@ -360,10 +367,10 @@
       if (r !== 'ok') return;
       try { await api('PATCH', '/api/unidade/equipe/' + u.usuario_id, { nome: nome.value, setores: lidos(cx) }); toast('Pessoa atualizada.'); equipe(); } catch (x) { toast(x.message, true); }
     };
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Equipe da unidade'), h('p', null, 'Quem preenche cada ficha. Você cuida só das pessoas da sua unidade; a CTAI cria a unidade e o gestor.'))),
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Equipe da unidade'), h('p', null, 'Cadastre as pessoas da sua unidade e diga qual ficha cada uma preenche.'))),
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Pessoas'),
         tabela([{ t: 'Login' }, { t: 'Nome' }, { t: 'Fichas' }, { t: 'Situação' }, { t: '' }], e.usuarios.map((u) => [u.login, u.nome, u.somenteLeitura ? h('span', { class: 'mudo' }, 'gestor (todas)') : (u.setores.length ? u.setores.map((s) => h('span', { class: 'selo', style: 'margin-right:4px' }, nomeSetor(s).split(' (')[0])) : h('span', { class: 'mudo' }, 'nenhuma')),
-          u.ativo ? (u.trocar_senha ? selo('senha temporária', 'atencao') : selo('ativo', 'ok')) : selo('desativado', 'alta'),
+          [u.ativo ? (u.trocar_senha ? selo('senha temporária', 'atencao') : selo('ativo', 'ok')) : selo('desativado', 'alta'), u.provisorio ? h('div', { class: 'peq', style: 'margin-top:4px' }, selo(u.provisorio.status === 'discordado' ? 'analista não concordou' : 'aguardando a analista', 'atencao'), h('div', { class: 'mudo' }, (u.provisorio.setor || '') + ' · ' + (u.provisorio.formulario || '')), u.provisorio.resposta ? h('div', null, h('strong', null, 'Resposta da analista: '), u.provisorio.resposta) : null, h('div', { class: 'mudo' }, 'Será apagado em ' + fmt.data(u.provisorio.expira_em) + ' se não for mantido.')) : null],
           u.somenteLeitura ? '' : h('div', { class: 'linha' }, h('button', { class: 'leve', onclick: () => editar(u) }, 'Editar'),
             h('button', { class: 'leve', onclick: async () => { if (await confirmar('Definir senha temporária para ' + u.login + '?', 'A pessoa troca a senha no próximo acesso e as sessões abertas são encerradas.', 'Definir')) { try { const o = await api('POST', '/api/unidade/equipe/' + u.usuario_id + '/senha', {}); toast('Senha temporária: ' + (o.senhaTemporaria || '(definida)')); equipe(); } catch (x) { toast(x.message, true); } } } }, 'Senha temporária'),
             h('button', { class: 'leve', onclick: async () => { try { await api('POST', '/api/unidade/equipe/' + u.usuario_id + '/ativo', { ativo: !u.ativo }); equipe(); } catch (x) { toast(x.message, true); } } }, u.ativo ? 'Desativar' : 'Ativar'))]))),
@@ -376,7 +383,10 @@
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Nova pessoa'),
         h('div', { class: 'duas' }, h('div', { class: 'campo' }, h('label', { for: 'eq-l' }, 'Login (letras minúsculas, números, ponto)'), f.login), h('div', { class: 'campo' }, h('label', { for: 'eq-n' }, 'Nome'), f.nome)),
         h('p', { class: 'mudo peq' }, 'Fichas que esta pessoa preenche:'), novas,
-        h('button', { id: 'eq-criar', onclick: async () => { try { const o = await api('POST', '/api/unidade/equipe', { login: f.login.value, nome: f.nome.value, setores: lidos(novas) }); toast('Pessoa cadastrada. Senha temporária: ' + (o.senhaTemporaria || '(definida)')); equipe(); } catch (x) { toast(x.message, true); } } }, 'Cadastrar'),
+        h('div', { class: 'cartao-interno' }, h('h3', null, 'Setor ou formulário que não está na lista'), h('p', { class: 'mudo peq' }, 'Preencha só se a pessoa for enviar algo que não está nas fichas acima. O acesso fica provisório: a analista da CTAI avalia e, se não concordar, ele é apagado em 7 dias.'),
+          h('div', { class: 'duas' }, h('div', { class: 'campo' }, h('label', { for: 'eq-sl' }, 'Nome do setor'), f.setorLivre), h('div', { class: 'campo' }, h('label', { for: 'eq-fl' }, 'Nome do formulário que vai enviar'), f.formLivre)),
+          h('div', { class: 'campo' }, h('label', { for: 'eq-j' }, 'Justificativa'), f.just)),
+        h('button', { id: 'eq-criar', onclick: async () => { try { const o = await api('POST', '/api/unidade/equipe', { login: f.login.value, nome: f.nome.value, setores: lidos(novas), setor_livre: f.setorLivre.value, formulario_livre: f.formLivre.value, justificativa: f.just.value }); toast('Pessoa cadastrada. Senha temporária: ' + (o.senhaTemporaria || '(definida)') + (o.provisorio ? ' · acesso provisório, aguardando a analista.' : '')); equipe(); } catch (x) { toast(x.message, true); } } }, 'Cadastrar'),
         h('p', { class: 'mudo peq' }, 'Tudo fica registrado na trilha, com o seu nome.')));
   }
 

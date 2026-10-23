@@ -59,6 +59,13 @@ function cookieDe(token, expira) {
   return 'ctai_sid=' + token + '; Path=/; HttpOnly; SameSite=Lax; Expires=' + expira.toUTCString() + (config.cookieSeguro ? '; Secure' : '');
 }
 
+// Acesso provisório criado pelo gestor da unidade: sem a concordância do analista, some em 7 dias corridos (fica desativado, com o registro na trilha).
+function provVencido(u) { return !!(u && u.prov_status && u.prov_status !== 'permanente' && u.prov_status !== 'apagado' && u.prov_expira_em && new Date(u.prov_expira_em) < new Date()); }
+function apagarProvisorio(db, u) {
+  db.run("UPDATE usuarios SET ativo = 0, prov_status = 'apagado', apagado_em = ? WHERE usuario_id = ?", new Date().toISOString(), u.usuario_id);
+  db.run('DELETE FROM sessoes WHERE usuario_id = ?', u.usuario_id);
+  trilha.registrar(db, { usuario: 'sistema', tabela: 'usuarios', registro: u.login, campo: 'acesso_provisorio', valor_novo: 'apagado', motivo: 'Passaram 7 dias sem o analista tornar o acesso permanente' });
+}
 const VISTO = new Map();
 function usuarioDaSessao(db, req) {
   const token = lerCookies(req).ctai_sid;
@@ -66,7 +73,8 @@ function usuarioDaSessao(db, req) {
   const s = db.get('SELECT * FROM sessoes WHERE token_hash = ?', U.sha256(token));
   if (!s) return null;
   if (new Date(s.expira_em) < new Date()) { db.run('DELETE FROM sessoes WHERE token_hash = ?', s.token_hash); return null; }
-  const u = db.get('SELECT usuario_id, login, nome, perfil, funcao, contrato_id, setor, setores, trocar_senha, ativo FROM usuarios WHERE usuario_id = ?', s.usuario_id);
+  const u = db.get('SELECT usuario_id, login, nome, perfil, funcao, contrato_id, setor, setores, trocar_senha, ativo, prov_status, prov_expira_em FROM usuarios WHERE usuario_id = ?', s.usuario_id);
+  if (provVencido(u)) { apagarProvisorio(db, u); return null; }
   if (!u || !u.ativo) return null;
   const t = Date.now(); // "visto por último": no máximo uma gravação por minuto por pessoa
   if (t - (VISTO.get(u.usuario_id) || 0) > 60000) { VISTO.set(u.usuario_id, t); try { db.run('UPDATE usuarios SET visto_em = ? WHERE usuario_id = ?', new Date(t).toISOString(), u.usuario_id); } catch (_) { /* sem presença */ } }
@@ -75,7 +83,8 @@ function usuarioDaSessao(db, req) {
 
 // Tentativas de login: 5 erros bloqueiam por 10 minutos.
 function entrar(db, login, senha) {
-  const u = db.get('SELECT * FROM usuarios WHERE login = ?', String(login || '').trim().toLowerCase());
+  let u = db.get('SELECT * FROM usuarios WHERE login = ?', String(login || '').trim().toLowerCase());
+  if (provVencido(u)) { apagarProvisorio(db, u); u = db.get('SELECT * FROM usuarios WHERE usuario_id = ?', u.usuario_id); }
   if (!u || !u.ativo) { conferirSenha(senha || '', 'scrypt$16384$00$00'); return { erro: 'Usuário ou senha incorretos.', motivo: u ? 'usuário desativado' : 'usuário inexistente', conhecido: u || null }; }
   if (u.bloqueado_ate && new Date(u.bloqueado_ate) > new Date()) return { erro: 'Acesso bloqueado por tentativas erradas. Tente de novo em alguns minutos.', motivo: 'acesso bloqueado', conhecido: u };
   if (!conferirSenha(senha || '', u.senha_hash)) {
@@ -124,4 +133,4 @@ function exigir(db, perfis) {
   };
 }
 
-module.exports = { setoresDe, PERFIS, PERFIS_CTAI, PERFIS_UNIDADE, gerarHash, conferirSenha, validarForcaSenha, lerCookies, criarSessao, cookieDe, usuarioDaSessao, entrar, criarUsuario, exigir, erro };
+module.exports = { provVencido, apagarProvisorio, setoresDe, PERFIS, PERFIS_CTAI, PERFIS_UNIDADE, gerarHash, conferirSenha, validarForcaSenha, lerCookies, criarSessao, cookieDe, usuarioDaSessao, entrar, criarUsuario, exigir, erro };

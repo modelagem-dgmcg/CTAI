@@ -14,9 +14,9 @@ const { erro } = A;
 const avisos = { aoCriar: null };
 const TIPOS = {
   envio: 'Relatório recebido', reenvio: 'Reenvio / correção', resposta: 'Resposta da unidade', prazo_vencer: 'Prazo a vencer', prazo_vencido: 'Prazo vencido',
-  minuta: 'Minuta aguardando conferência', sem_gestor: 'Unidade sem gestor', sem_carteira: 'Unidade sem carteira', redirecionado: 'Redirecionado',
+  minuta: 'Minuta aguardando conferência', sem_gestor: 'Unidade sem gestor', sem_carteira: 'Unidade sem carteira', redirecionado: 'Redirecionado', acesso_provisorio: 'Acesso provisório pedido',
 };
-const URGENCIA = { prazo_vencido: 90, prazo_vencer: 70, resposta: 60, minuta: 55, reenvio: 52, envio: 50, redirecionado: 45, sem_carteira: 42, sem_gestor: 40 };
+const URGENCIA = { prazo_vencido: 90, prazo_vencer: 70, resposta: 60, minuta: 55, acesso_provisorio: 58, reenvio: 52, envio: 50, redirecionado: 45, sem_carteira: 42, sem_gestor: 40 };
 const PERFIS_CAIXA = ['criador', 'colega', 'superintendente', 'admin'];
 const agora = () => new Date().toISOString();
 const hoje = () => PZ.dataLocal();
@@ -117,6 +117,7 @@ function garantir(db, spec, vale) {
 
 const ultimaSync = new WeakMap();
 function sincronizar(db, opc) {
+  try { require('./provisorios').varrer(db); } catch (_) { /* a limpeza não derruba a caixa */ }
   const t = Date.now();
   if (!(opc && opc.forcar) && ultimaSync.has(db) && t - ultimaSync.get(db) < 20000) return;
   ultimaSync.set(db, t);
@@ -410,5 +411,5 @@ function tempos(db, usuarioId, de, ate, contrato) {
 // Ponto de extensão (aviso por e-mail): nada é enviado hoje. Para ligar no futuro, registre aqui uma função que receba
 // { item_id, tipo, unidade, titulo, destinatarios:[{login,nome}] } — ela é chamada depois que o item é criado.
 
-module.exports = { visaoUnidades, compartilhar, TIPOS, PERFIS_CAIXA, criar, eventoEnvio, eventoResposta, eventoMinuta, sincronizar, listar, resumo, contador, detalhe, marcarLido, marcarTodosLidos, tratar, reabrir, redirecionarItem,
+module.exports = { destinosDaUnidade: destinatariosDaUnidade, visaoUnidades, compartilhar, TIPOS, PERFIS_CAIXA, criar, eventoEnvio, eventoResposta, eventoMinuta, sincronizar, listar, resumo, contador, detalhe, marcarLido, marcarTodosLidos, tratar, reabrir, redirecionarItem,
   criarSubstituicao, cancelarSubstituicao, listarSubstituicoes, minhasUnidades, entregas, tempos, diasNaoLido, destinatariosDaUnidade, avisos };
