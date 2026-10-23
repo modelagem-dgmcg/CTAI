@@ -128,7 +128,7 @@
       h('div', { class: 'rodape' }, h('div', null, h('strong', null, u.nome)), h('div', null, u.perfilNome), h('label', { class: 'rod-opcao' }, h('input', { type: 'checkbox', checked: menuEmJanela(), onchange: (ev) => { try { localStorage.setItem('ctai_menu_janela', ev.target.checked ? '1' : '0'); } catch (_) { /* ok */ } } }), ' Abrir menus em nova janela'), h('button', { class: 'sec', onclick: async () => { await api('POST', '/api/auth/logout', {}); esquecerAbertos(); location.href = '/'; } }, 'Sair')));
     const main = h('main', { class: 'conteudo', id: 'conteudo', tabindex: '-1' });
     document.getElementById('app').replaceChildren(h('div', { class: 'casca' }, lat, main));
-    window.__marcarMenu = (hash) => lat.querySelectorAll('a.nav').forEach((a) => { const alvo = a.getAttribute('data-h').replace('#', ''); const h2 = hash.replace(/^\/[pv]\//, '/pareceres/').replace(/^\/analista/, '/pareceres'); a.classList.toggle('ativo', alvo === '/' ? (hash === '/' || hash.startsWith('/c/')) : h2.startsWith(alvo)); });
+    window.__marcarMenu = (hash) => lat.querySelectorAll('a.nav').forEach((a) => { const alvo = a.getAttribute('data-h').replace('#', ''); const h2 = hash.replace(/^\/[pv]\//, '/pareceres/').replace(/^\/analista/, '/pareceres'); a.classList.toggle('ativo', alvo === '/unidades' ? (hash === '/' || hash === '/unidades' || hash.startsWith('/c/') || hash.startsWith('/u/')) : h2.startsWith(alvo)); });
     if (u.trocar_senha) { await trocarSenha(true); if (window.SalaGuiada) window.SalaGuiada.iniciar(); } // a Sala guiada só liga depois da troca da senha provisória
     return u;
   }

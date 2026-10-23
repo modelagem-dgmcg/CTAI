@@ -20,7 +20,7 @@
 
   const PASSOS = {
     analista: [
-      { t: 'Abra uma unidade da sua carteira', d: 'Em Unidades, clique na unidade. Ela abre em uma aba própria, com todas as etapas em sequência.', v: 'u', link: '#/', rot: 'Ver unidades' },
+      { t: 'Abra uma unidade da sua carteira', d: 'Em Unidades, clique na unidade. Ela abre em uma aba própria, com todas as etapas em sequência.', v: 'u', link: '#/unidades', rot: 'Ver unidades' },
       { t: 'Confira o que a unidade enviou', d: 'Dentro da unidade, abra um mês para ver os envios, os prazos e as divergências.', v: 'c' },
       { t: 'Abra o documento do trimestre', d: 'Na etapa Produzir, comece o parecer. Ele abre numa janela própria, já com os dados e as regras ao lado.', v: 'p' },
       { t: 'Acompanhe a conferência e o registro no SEI', d: 'Depois de congelar a versão, a conferência e a autorização acontecem aqui. No fim, você cola o número do SEI.', v: 'v' },
@@ -28,7 +28,7 @@
     gestao: [
       { t: 'Cadastre a equipe e distribua as unidades', d: 'Em Gestão, use Usuários e Carteira.', v: 'gestao', link: '#/gestao', rot: 'Abrir Gestão' },
       { t: 'Confira as regras dos contratos', d: 'Em Regras e decisões, veja as unidades com regra a conferir.', v: 'regras', link: '#/regras', rot: 'Ver regras' },
-      { t: 'Abra uma unidade', d: 'Em Unidades, clique na unidade para ver a linha de montagem dela.', v: 'u', link: '#/', rot: 'Ver unidades' },
+      { t: 'Abra uma unidade', d: 'Em Unidades, clique na unidade para ver a linha de montagem dela.', v: 'u', link: '#/unidades', rot: 'Ver unidades' },
       { t: 'Autorize os documentos conferidos', d: 'A conferência dos colegas termina na sua autorização.', v: 'v' },
     ],
   };

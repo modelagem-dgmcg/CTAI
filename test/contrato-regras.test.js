@@ -64,7 +64,7 @@ test('configuração na unidade: analista da carteira altera a regra com senha e
   assert.equal((await cec.put(url, { conteudo: regra, motivo: 'TA 03 mudou a meta', senha: '123' })).status, 200);
   assert.equal((await cec.put(url, { conteudo: regra, motivo: '', senha: '123' })).status, 400, 'motivo obrigatório');
   assert.equal((await cec.put(url, { conteudo: regra, motivo: 'TA 03 mudou a meta' })).status, 400, 'senha obrigatória');
-  assert.equal((await cec.put(url, { conteudo: regra, motivo: 'TA 03 mudou a meta', senha: 'errada' })).status, 401, 'senha errada');
+  assert.equal((await cec.put(url, { conteudo: regra, motivo: 'TA 03 mudou a meta', senha: 'errada' })).status, 400, 'senha errada (400 e não 401: o 401 faria a tela voltar ao login)');
   assert.ok([403, 404].includes((await jul.put(url, { conteudo: regra, motivo: 'TA 03 mudou a meta', senha: '123' })).status), 'fora da carteira não altera');
   const lido = (await cec.get('/api/ctai/contratos/' + delta.contrato_id + '/decisoes')).json;
   assert.equal(lido.contratoRegras.conteudo.indicadores[0].nome, 'Indicador de teste');

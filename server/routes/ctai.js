@@ -70,7 +70,7 @@ module.exports = (db) => {
     if (motivo.length < 5) throw erro(400, 'Escreva o motivo da alteração (uma linha basta).');
     if (!b.senha) throw erro(400, 'Confirme com a sua senha.');
     const conf = A.entrar(db, req.usuario.login, String(b.senha));
-    if (conf.erro) throw erro(401, conf.erro === 'Usuário ou senha incorretos.' ? 'Senha incorreta.' : conf.erro);
+    if (conf.erro) throw erro(400, conf.erro === 'Usuário ou senha incorretos.' ? 'Senha incorreta.' : conf.erro);
     if (!db.get('SELECT 1 FROM contratos WHERE contrato_id = ?', req.params.id)) throw erro(404, 'Unidade não encontrada.');
     if (req.escopo && !req.escopo.has(req.params.id)) throw erro(403, 'Esta unidade não está na sua carteira. Peça à superintendente para incluí-la.');
     const regra = CR.gravar(db, req.usuario, req.params.id, b.conteudo, 'edição na unidade');

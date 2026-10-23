@@ -667,8 +667,9 @@
         const b64 = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => no(new Error('Não consegui ler o arquivo.')); r.readAsDataURL(f); });
         const o = await api('POST', '/api/analista/extrair', { nome: f.name, base64: b64 });
         origem.nome = f.name; origem.base64 = b64;
-        texto.value = o.texto;
-        if (o.texto.length > 200000) toast('Arquivo muito longo: a análise usa os primeiros 200.000 caracteres.', true); troca(saida, aviso('ok', 'Arquivo lido (' + o.texto.length.toLocaleString('pt-BR') + ' caracteres' + (o.paginas ? ', ' + o.paginas + ' pág./planilha(s)' : '') + '). Confira o texto abaixo e clique em Analisar.'));
+        const total = o.texto.length;
+        texto.value = o.texto.slice(0, 200000); // a análise usa os primeiros 200.000 caracteres; mandar mais só faz o envio falhar
+        if (total > 200000) toast('Arquivo muito longo: a análise usa os primeiros 200.000 caracteres.', true); troca(saida, aviso('ok', 'Arquivo lido (' + o.texto.length.toLocaleString('pt-BR') + ' caracteres' + (o.paginas ? ', ' + o.paginas + ' pág./planilha(s)' : '') + '). Confira o texto abaixo e clique em Analisar.'));
       } catch (e) { troca(saida, aviso('erro', e.message)); }
     };
     const usar = async () => {
@@ -681,7 +682,7 @@
     const analisar = async () => {
       troca(saida, h('p', { class: 'mudo' }, 'Lendo o documento…'));
       try {
-        const o = await api('POST', '/api/analista/analisar', { texto: texto.value, cid: comp.value || null, salvar: guardar.checked });
+        const o = await api('POST', '/api/analista/analisar', { texto: texto.value.slice(0, 200000), cid: comp.value || null, salvar: guardar.checked });
         troca(saida, h('p', { class: 'mudo peq' }, o.achados.length + ' ponto(s) a conferir · lido por: ' + o.provedor + (o.salvos ? ' · ' + o.salvos + ' guardado(s) na competência' : '')),
           o.tentativas.length ? h('p', { class: 'mudo peq' }, 'Provedores tentados: ' + o.tentativas.map((t) => t.provedor + (t.ok ? ' (ok)' : ' (' + t.erro + ')')).join(' · ')) : null,
           o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'O Analista não encontrou inconsistências neste texto. Isso não substitui a conferência humana.'));
@@ -804,13 +805,13 @@
     const meta0 = await api('GET', '/api/meta').catch(() => null);
     window.__semPainel = !!(me0 && ['criador', 'colega'].includes(me0.usuario.perfil) && meta0 && !meta0.painelAnalista);
     window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Fontes de dados' }, { href: '#/trilha', rotulo: 'Auditoria' }] : [];
-    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: (window.__semPainel ? [] : [{ href: '#/', rotulo: 'Unidades' }]).concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/pareceres', rotulo: 'Editor de Documentos' }]).concat(window.__soGestao || []).concat([{ href: '#/mensageiro', rotulo: 'Mensagens', classe: 'fim' }]) });
+    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/unidades', rotulo: 'Unidades' }].concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/pareceres', rotulo: 'Editor de Documentos' }]).concat(window.__soGestao || []).concat([{ href: '#/mensageiro', rotulo: 'Mensagens', classe: 'fim' }]) });
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); }, 60000);
     if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), document.querySelector('.lateral .nav-linha.fim') || nav); }
     META = await api('GET', '/api/meta');
-    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/unidades', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();
