@@ -94,6 +94,36 @@
       cartaoPrazos(d.prazos)];
   }
 
+  // Botão "Como foi feito": a explicação fica fechada e só abre quando a pessoa pede (passos em linguagem simples).
+  function comoFoi(titulo, intro, passos, limites, fatos) {
+    return h('button', { type: 'button', class: 'leve', title: 'Entenda o que foi conferido e de que jeito', onclick: () => janela(titulo, h('div', { class: 'como-foi' },
+      h('p', null, intro),
+      fatos && fatos.length ? aviso('info', h('strong', null, 'Nesta conferência: '), fatos.join(' · ')) : null,
+      h('ol', { style: 'padding-left:20px' }, passos.map(([t, d]) => h('li', { style: 'margin:8px 0' }, h('strong', null, t), h('div', { class: 'peq mudo' }, d)))),
+      limites ? aviso('atencao', h('strong', null, 'O que isto não faz: '), limites) : null)) }, 'Como foi feito');
+  }
+  const COMO_RECALCULO = () => comoFoi('Como o recálculo é feito',
+    'O sistema refaz a conta de cada indicador do jeito que a equipe fazia nas tabelas, só que a partir dos dados que a unidade enviou. Nada é alterado no que a unidade declarou: os dois valores ficam lado a lado.',
+    [['1. Lê o que a unidade enviou', 'Os valores digitados nas fichas, as contagens de apoio e as listas (linhas) de atendimentos, óbitos, queixas, pessoas capacitadas e transferências.'],
+     ['2. Escolhe a melhor base para cada indicador', 'Se há lista com horários, calcula a partir dela ("linhas"). Se há só contagens, usa as contagens da ficha. Se não há nada para recalcular, repete o valor declarado e avisa. A coluna "Base" mostra qual foi usada e quantos casos entraram.'],
+     ['3. Faz a conta', 'Tempo médio = soma dos minutos ÷ número de casos. Taxas = parte ÷ total × 100. Linhas sem tempo válido ficam de fora e são avisadas.'],
+     ['4. Aplica a faixa de pontos do contrato', 'O valor recalculado é comparado com as faixas da ficha do contrato (passe o mouse no nome do indicador para ver as faixas). Daí saem os pontos recalculados, de 0 até o máximo do indicador.'],
+     ['5. Compara com o declarado', 'Se os pontos mudam, o número aparece em vermelho. Se só o valor muda mas a faixa é a mesma, fica registrado sem mudar a pontuação.'],
+     ['6. Procura sinais de problema', 'Amostra pequena (menos de 10 casos), média muito perto do limite, cobertura baixa, números redondos demais, listas incompletas, resposta copiada, contagens diferentes entre abas. Cada sinal vira um alerta com a gravidade.'],
+     ['7. Soma o IGQ e calcula o desconto', 'A soma dos pontos dá o IGQ recalculado. O desconto segue a regra do contrato e o mês de implantação (sem desconto). Dúvidas de regra aparecem no topo até alguém decidir.']],
+    'Não valida a fonte (SIMAS, relatórios da OSS) nem prova que o dado enviado é verdadeiro: confere só se o que foi enviado é coerente e se a conta está certa. Quem decide o ponto que vale é a CTAI, na etapa "Pontos adotados" do parecer.');
+
+  const COMO_REVISAO = (o) => comoFoi('Como a revisão do parecer foi feita',
+    'A revisão lê o texto do parecer e o compara com os dados do sistema, com as regras e com fontes externas. Ela só aponta: não muda nada no texto. Cada ponto aponta o trecho, o risco e uma sugestão.',
+    [['1. Conferências do próprio sistema', 'Procura seção vazia, campo ainda por preencher, nome de outra unidade, mês fora do período, texto que diz "sem desconto" quando o sistema apurou desconto (e o contrário), texto que diz "todas as metas cumpridas" com indicador parcial no quadro, e IGQ adotado diferente do recalculado.'],
+     ['2. Quadros contra os relatórios', 'Se você importou os relatórios do período, confere se os valores de cada linha dos quadros aparecem nesses relatórios. O que não aparece vira achado.'],
+     ['3. Cadastro do GAOCG', 'Quando a ligação está ativa (ou há cópia), confere o nome da OSS, o número do contrato e se a vigência cobre o período analisado.'],
+     ['4. Leitura do Analista', 'Aplica as regras de redação e, se houver IA ligada, pede uma leitura do texto (nomes de pacientes e dados pessoais são mascarados antes de sair). Considera as normas vigentes da unidade.'],
+     ['5. Busca externa de normas', 'Procura leis, decretos e jurisprudência citados. Para isso só saem as citações e os nomes dos indicadores; o texto do parecer não é enviado.'],
+     ['6. Junta e ordena', 'Tudo vira achado, ordenado por gravidade (alta, média, baixa), fica salvo na fila de achados e é registrado na trilha de auditoria.']],
+    'Não refaz a análise dos indicadores a partir das listas da unidade (isso é o recálculo, na tela da competência), não confere se o dado do SIMAS é verdadeiro e pode deixar passar erro. A IA pode errar: cada achado precisa do seu olhar.',
+    [o.provedor ? 'leitura: ' + o.provedor : null, o.relatorios && o.relatorios.usado ? o.relatorios.n + ' relatório(s) importado(s) usado(s)' : 'sem relatórios importados', o.gaocg && o.gaocg.usado ? 'GAOCG consultado' : 'GAOCG não usado', o.normasDaUnidade ? o.normasDaUnidade + ' norma(s) da unidade' : 'sem normas da unidade cadastradas', o.externa && o.externa.ok ? 'busca externa feita' : 'busca externa indisponível'].filter(Boolean));
+
   // ---------- Competência ----------
   const ABAS = [['recalculo', 'Recálculo'], ['divergencias', 'Divergências'], ['evidencias', 'Evidências'], ['achados', 'Achados do Analista'], ['checklist', 'Checklist de recebimento'], ['envios', 'Envios']];
   async function competencia(p) {
@@ -126,7 +156,7 @@
       prazosTopo,
       decAbertas.length ? aviso('atencao', h('strong', null, decAbertas.length + ' dúvida(s) de regra ainda sem decisão. '), 'O recálculo usa a ficha do contrato enquanto isso. ', h('a', { href: '#/regras/' + d.competencia.contrato_id }, 'Decidir agora')) : null,
       h('div', { class: 'kpis' }, kpi('Versão recebida', 'v' + rec.envio.versao, fmt.data(rec.envio.enviado_em)), kpi('IGQ declarado', rec.igqDeclarado, 'pelos valores da unidade'), kpi('IGQ recalculado', rec.igqRecalculado, 'pelas linhas e contagens'), kpi('Diferença', (dif > 0 ? '+' : '') + dif, dif === 0 ? 'sem diferença' : 'pontos'), kpi('Alertas', String(rec.alertas.length), rec.divergencias.length + ' divergência(s)')),
-      h('div', { class: 'cartao' }, h('h3', null, 'Indicador a indicador'),
+      h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, 'Indicador a indicador'), COMO_RECALCULO()),
         tabela([{ t: 'Item' }, { t: 'Indicador' }, { t: 'Declarado', n: true }, { t: 'Recalculado', n: true }, { t: 'Base' }, { t: 'Pts decl.', n: true }, { t: 'Pts recalc.', n: true }, { t: 'Alertas' }],
           d.regras.indicadores.map((i) => { const r = rec.indicadores[i.id]; if (!r) return [i.id, i.nome, '—', '—', '—', '—', '—', '']; const mudou = r.pontosDeclarados !== null && r.pontosDeclarados !== r.pontos;
             return [i.id, h('span', { title: i.faixasTexto }, i.nome), fmt.valor(r.valorDeclarado), fmt.valor(r.valor), r.fonteCalculo + (r.n ? ' (' + r.n + ')' : ''), r.pontosDeclarados === null ? '—' : String(r.pontosDeclarados), h('span', { class: 'pontos', style: mudou ? 'color:var(--verm)' : '' }, r.pontos + ' / ' + i.max), r.alertas.filter((a) => a.gravidade !== 'baixa').length ? selo(String(r.alertas.filter((a) => a.gravidade !== 'baixa').length), 'atencao') : '']; }))),
@@ -455,7 +485,7 @@
         await api('PUT', base + '/modelo', lerTudo());
         const o = await api('POST', '/api/analista/pareceres/' + P.parecer_id + '/revisao-completa', {});
         const ex = o.externa || {};
-        troca(caixaRev, h('p', { class: 'peq mudo' }, o.achados.length + ' achado(s) · ' + o.provedor + (o.relatorios && o.relatorios.usado ? ' · quadros conferidos com ' + o.relatorios.n + ' relatório(s) importado(s)' : '') + (o.gaocg && o.gaocg.usado ? ' · conferido com o GAOCG (' + (o.gaocg.da_copia ? 'cópia de ' : 'lido às ') + new Date(o.gaocg.lido_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + (o.normasDaUnidade ? ' · ' + o.normasDaUnidade + ' norma(s) da unidade consideradas' : '')),
+        troca(caixaRev, h('div', { class: 'linha espaco' }, h('span', { class: 'peq mudo' }, o.achados.length + ' achado(s) · ' + o.provedor + (o.relatorios && o.relatorios.usado ? ' · quadros conferidos com ' + o.relatorios.n + ' relatório(s) importado(s)' : '') + (o.gaocg && o.gaocg.usado ? ' · conferido com o GAOCG (' + (o.gaocg.da_copia ? 'cópia de ' : 'lido às ') + new Date(o.gaocg.lido_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + (o.normasDaUnidade ? ' · ' + o.normasDaUnidade + ' norma(s) da unidade consideradas' : '')), COMO_REVISAO(o)),
           o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'Nenhum achado nas conferências locais e no Analista.'),
           h('h4', null, 'Busca externa (normas e jurisprudência)'),
           ex.ok ? [ex.aviso ? h('p', { class: 'peq mudo' }, ex.aviso) : h('p', { class: 'peq', style: 'white-space:pre-wrap' }, ex.resposta || ''), ex.fontes && ex.fontes.length ? h('ul', { class: 'peq' }, ex.fontes.map((f) => h('li', null, h('a', { href: f.url, target: '_blank', rel: 'noopener noreferrer' }, f.titulo)))) : null]
