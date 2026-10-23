@@ -98,7 +98,7 @@
         ehGestor() ? [h('button', { onclick: async () => { await api('POST', '/api/unidade/lotes/' + l.lote_id + '/confirmar', { substituir: false }); toast('Lote confirmado.'); competencia(p); } }, 'Confirmar'),
           h('button', { class: 'sec', onclick: async () => { if (await confirmar('Descartar o lote?', 'As linhas deste lote serão apagadas do rascunho.', 'Descartar', true)) { await api('POST', '/api/unidade/lotes/' + l.lote_id + '/descartar', {}); competencia(p); } } }, 'Descartar')] : null))) : null;
     montar(topo,
-      h('div', { class: 'kpis' }, kpi('Fichas prontas', prontas + ' de ' + d.setores.length), kpi('Linhas confirmadas', fmt.num(totalLinhas, 0)), kpi('Pontos pelas regras', d.pontos.total + ' de 100', 'informativo; a pontuação final é da CTAI'), kpi('Versão enviada', d.envios.length ? 'v' + d.envios[0].versao : 'nenhuma')),
+      h('div', { class: 'kpis' }, kpi('Fichas prontas', prontas + ' de ' + d.setores.length), kpi('Linhas confirmadas', fmt.num(totalLinhas, 0)), kpi('Versão enviada', d.envios.length ? 'v' + d.envios[0].versao : 'nenhuma')),
       lotes, avisosPrazos(d.prazos), avisosSei(d, p.cid, true), cartaoPrazos(d.prazos, p.cid, () => competencia(p)),
       h('div', { class: 'grade' }, d.setores.map((s) => h('div', { class: 'cartao' },
         h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, s.nome), statusSelo(s.status)),
@@ -139,7 +139,7 @@
       g.campos.push(c);
     }
     const form = h('form', { novalidate: true }, grupos.map((g) => h('div', { class: 'cartao' },
-      h('h3', null, g.chave === 'obs' ? 'Observações' : (g.chave === 'geral' ? 'Dados gerais' : 'Indicador ' + g.chave + ' · ' + (d.pontos && d.pontos.porIndicador[g.chave] !== undefined ? d.pontos.porIndicador[g.chave] + ' ponto(s) pelas regras' : ''))),
+      h('h3', null, g.chave === 'obs' ? 'Observações' : (g.chave === 'geral' ? 'Dados gerais' : 'Indicador ' + g.chave)),
       h('div', { class: 'duas' }, g.campos.map((c) => {
         const el = entradaCampo(c, dados[c.id]);
         if (bloqueada) el.setAttribute('disabled', '');
@@ -180,8 +180,8 @@
         h('p', { class: 'mudo peq' }, 'Anexe o relatório (PDF, Word, Excel, CSV ou TXT). O sistema lê e sugere os valores nos campos; nada é salvo até você conferir e clicar em salvar. O arquivo não fica guardado.'),
         h('div', { class: 'linha' }, arq, h('button', { type: 'button', class: 'sec', id: 'fi-ler', onclick: lerArquivo }, 'Ler e preencher'))),
       form,
-      h('div', { class: 'cartao' }, h('h3', null, 'Como o sistema vai usar estes dados'), tabela([{ t: 'Indicador' }, { t: 'Valor', n: true }, { t: 'Origem' }, { t: 'Pontos', n: true }],
-        f.setor.indicadores.map((i) => { const c = d.consolidado[i] || {}; return [i, fmt.valor(c.valor), ({ digitado: 'digitado por você', apoio: 'calculado das contagens', linhas: 'calculado das linhas' })[c.origem] || '—', String(d.pontos.porIndicador[i] ?? 0)]; }),
+      h('div', { class: 'cartao' }, h('h3', null, 'Como o sistema vai usar estes dados'), tabela([{ t: 'Indicador' }, { t: 'Valor', n: true }, { t: 'Origem' }],
+        f.setor.indicadores.map((i) => { const c = d.consolidado[i] || {}; return [i, fmt.valor(c.valor), ({ digitado: 'digitado por você', apoio: 'calculado das contagens', linhas: 'calculado das linhas' })[c.origem] || '—']; }),
         { vazio: 'Este setor não tem indicador próprio; seus dados alimentam os cruzamentos da CTAI.' }),
         h('p', { class: 'mudo peq' }, 'Atualizado após salvar. Se o valor digitado ficar em branco, o sistema usa as contagens ou as linhas das listas.')),
       bloqueada ? null : h('div', { class: 'linha no-print' }, h('button', { type: 'button', class: 'sec', onclick: () => salvar() }, 'Salvar rascunho'),
@@ -249,11 +249,16 @@
       if (jaEnviou && !motivo.value.trim()) { toast('Informe o motivo da correção.', true); motivo.focus(); return; }
       if (!(await confirmar('Gerar o PDF e enviar?', 'O envio fica registrado e não pode ser alterado. Se precisar corrigir depois, será uma nova versão com o motivo.', 'Gerar e enviar'))) return;
       botao.disabled = true;
+      const passos = ['Conferindo os dados do mês', 'Gerando o PDF do relatório', 'Enviando os dados para a CTAI'];
+      const pintar = (feitos, falhou) => troca(resultado, h('ol', { class: 'progresso-envio', 'aria-live': 'polite' }, passos.map((t, i) => h('li', { class: i < feitos ? 'feito' : (i === feitos && !falhou ? 'andando' : '') }, (i < feitos ? '✔ ' : (i === feitos && !falhou ? '… ' : '○ ')) + t))));
+      pintar(0);
+      const t1 = setTimeout(() => pintar(1), 700), t2 = setTimeout(() => pintar(2), 1500);
       try {
         const o = await api('POST', '/api/unidade/competencias/' + p.cid + '/enviar', { motivo: motivo.value });
-        troca(resultado, aviso('ok', h('strong', null, 'Enviado (versão ' + o.versao + '). '), 'A CTAI recebeu os dados e já recalculou. Falta o documento oficial: baixe o PDF, anexe e assine no SEI e, depois, registre aqui o número do documento. ', h('a', { href: '/api/unidade/envios/' + o.envio_id + '/pdf', target: '_blank', rel: 'noopener' }, 'Abrir o PDF'), ' · ', h('a', { href: '#/c/' + p.cid + '/envios' }, 'Registrar o número do SEI'), h('div', { class: 'peq mudo' }, 'No rodapé do PDF: Versão v' + o.versao + ' · código de integridade ' + o.hash.slice(0, 12))));
+        clearTimeout(t1); clearTimeout(t2); pintar(3);
+        resultado.append(aviso('ok', h('strong', null, 'Tudo certo: o relatório foi enviado (versão ' + o.versao + '). '), 'A CTAI já recebeu os dados e recalculou. Falta só o documento oficial: abra o PDF, anexe e assine no SEI e, depois, volte e registre o número do documento. ', h('a', { href: '/api/unidade/envios/' + o.envio_id + '/pdf', target: '_blank', rel: 'noopener' }, 'Abrir o PDF'), ' · ', h('a', { href: '#/c/' + p.cid + '/envios' }, 'Registrar o número do SEI'), h('div', { class: 'peq mudo' }, 'No rodapé do PDF: Versão v' + o.versao + ' · código de integridade ' + o.hash.slice(0, 12))));
         toast('Relatório enviado.');
-      } catch (e) { toast(e.message, true); botao.disabled = false; }
+      } catch (e) { clearTimeout(t1); clearTimeout(t2); pintar(0, true); resultado.append(aviso('erro', h('strong', null, 'Não foi possível enviar. '), e.message + ' Nada foi enviado; corrija e tente de novo.')); toast(e.message, true); botao.disabled = false; }
     } }, 'Gerar o PDF e enviar para a CTAI');
     montar(topo,
       d.bloqueios.length ? aviso('erro', h('strong', null, 'Ainda não dá para enviar:'), h('ul', null, d.bloqueios.map((b) => h('li', null, b)))) : aviso('ok', 'Tudo pronto para enviar.'),
@@ -262,9 +267,8 @@
         d.avisos.length ? h('ul', null, d.avisos.map((a) => h('li', null, seloGrav(a.nivel === 'atencao' ? 'média' : 'baixa'), ' ', a.mensagem))) : h('p', { class: 'mudo' }, 'Nenhum ponto de atenção.'),
         h('p', { class: 'mudo peq' }, 'Estes avisos são da unidade e não impedem o envio. A CTAI recalcula de forma independente, a partir das linhas.')),
       h('div', { class: 'cartao' }, h('h3', null, 'Indicadores como serão enviados'),
-        tabela([{ t: 'Item' }, { t: 'Indicador' }, { t: 'Valor', n: true }, { t: 'Origem' }, { t: 'Pontos', n: true }, { t: 'Anexo' }],
-          regras.indicadores.map((i) => { const c = d.consolidado[i.id] || {}; return [i.id, i.nome, fmt.valor(c.valor), ({ digitado: 'digitado', apoio: 'das contagens', linhas: 'das linhas' })[c.origem] || '—', (d.pontos.porIndicador[i.id] ?? 0) + ' / ' + i.max, c.anexo || '—']; })),
-        h('p', { class: 'peq' }, h('strong', null, 'Pontos pelas regras do contrato: ' + d.pontos.total + ' de 100.'), ' Informativo. A pontuação final é da CTAI.')),
+        tabela([{ t: 'Item' }, { t: 'Indicador' }, { t: 'Valor', n: true }, { t: 'Origem' }, { t: 'Anexo' }],
+          regras.indicadores.map((i) => { const c = d.consolidado[i.id] || {}; return [i.id, i.nome, fmt.valor(c.valor), ({ digitado: 'digitado', apoio: 'das contagens', linhas: 'das linhas' })[c.origem] || '—', c.anexo || '—']; }))),
       h('div', { class: 'cartao' }, h('h3', null, jaEnviou ? 'Novo envio (versão ' + (d.envios[0].versao + 1) + ')' : 'Enviar'),
         jaEnviou ? h('div', { class: 'campo' }, h('label', { for: 'motivo' }, 'Motivo da correção'), motivo) : null, h('div', { class: 'linha' }, botao), resultado,
         h('p', { class: 'mudo peq' }, 'O PDF é gerado antes de gravar. O sistema não guarda senha nem credencial do SEI: o documento é anexado e assinado no SEI, por quem tem a competência. Depois de assinar, registre o número do documento na aba Envios. Os dois caminhos andam juntos: os dados no sistema (a CTAI recalcula) e o PDF assinado no SEI (o documento oficial). O sistema não bloqueia o envio por falta desse registro.')));
@@ -379,7 +383,7 @@
   async function iniciar() {
     const me0 = await api('GET', '/api/auth/me').catch(() => null);
     const extra = me0 && me0.usuario.perfil === 'gestor_unidade' ? [{ href: '#/equipe', rotulo: 'Equipe da unidade' }] : [];
-    EU = await casca({ titulo: 'Portal da Unidade', subtitulo: '', perfis: ['gestor_unidade', 'setor_unidade'], itens: [{ href: '#/', rotulo: 'Meses' }, { href: '#/esclarecimentos', rotulo: 'Esclarecimentos' }, { href: '#/regras', rotulo: 'Regras de pontuação' }].concat(extra) });
+    EU = await casca({ titulo: 'Portal da Unidade', subtitulo: '', perfis: ['gestor_unidade', 'setor_unidade'], itens: [{ href: '#/', rotulo: 'Meses' }, { href: '#/esclarecimentos', rotulo: 'Esclarecimentos' }].concat(extra) });
     if (!EU) return;
     try { const m = await api('GET', '/api/meta'); Object.entries(m.fontes).forEach(([k, v]) => { NOMES_FONTES[k] = v.nome; }); } catch (_) { /* segue */ }
     rotear([['/', inicio], ['/c/:cid', competencia], ['/c/:cid/enviar', enviar], ['/c/:cid/envios', envios], ['/c/:cid/ficha/:setor', ficha], ['/c/:cid/lista/:fonte', lista], ['/esclarecimentos', esclarecimentos], ['/regras', regras], ['/integracao', integracao]].concat(me0 && me0.usuario.perfil === 'gestor_unidade' ? [['/equipe', equipe]] : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));

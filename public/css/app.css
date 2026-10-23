@@ -266,3 +266,8 @@ button:not(.sec):not(.leve):hover,.btn:not(.sec):hover{background:var(--acento-h
 .lateral a.nav:hover .nav-rot,.lateral a.nav:focus-visible .nav-rot,.lateral a.nav.ativo .nav-rot{max-width:200px;margin-left:10px;opacity:1}
 .lateral a.nav .contador{margin-left:8px}
 @media (max-width:760px){.lateral a.nav .nav-rot{max-width:200px;margin-left:8px;opacity:1}}
+
+.progresso-envio{list-style:none;margin:12px 0;padding:0}
+.progresso-envio li{padding:6px 0;color:#6b7280}
+.progresso-envio li.feito{color:#166534;font-weight:600}
+.progresso-envio li.andando{color:var(--escuro,#1a1d20);font-weight:600}
