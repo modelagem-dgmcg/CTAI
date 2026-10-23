@@ -32,9 +32,8 @@ test.before(async () => {
 test.after(async () => { await S.fechar(); });
 const { _salas } = require('../server/sala-guiada');
 
-test('só a equipe da CTAI cria; quem é da unidade entra com o código', async () => {
-  assert.equal((await unidade.post('/api/sala/criar')).status, 403);
-  assert.equal((await unidade.get('/api/sala/estado')).json.podeCriar, false);
+test('qualquer pessoa com login cria; quem entra precisa do código', async () => {
+  assert.equal((await unidade.get('/api/sala/estado')).json.podeCriar, true);
   assert.equal((await cond.get('/api/sala/estado')).json.podeCriar, true);
   const c = await cond.post('/api/sala/criar');
   assert.equal(c.status, 200); assert.match(c.json.codigo, /^[A-HJ-NP-Z2-9]{5}$/); assert.ok(c.json.ice.length >= 1);
@@ -130,4 +129,14 @@ test('código errado várias vezes é barrado', async () => {
   let ultimo;
   for (let i = 0; i < 10; i++) ultimo = await b.post('/api/sala/entrar', { codigo: 'QQQQ' + i });
   assert.equal(ultimo.status, 429);
+});
+
+test('assumir a condução passa o apontador para quem assumiu', async () => {
+  const c = (await cond.post('/api/sala/criar')).json;
+  const ea = (await a.post('/api/sala/entrar', { codigo: c.codigo })).json;
+  assert.equal((await a.post('/api/sala/ponteiro', { codigo: c.codigo, eu: ea.eu, dados: { tipo: 'mover', fx: 0.5, fy: 0.5 } })).status, 403);
+  assert.equal((await a.post('/api/sala/assumir', { codigo: c.codigo, eu: ea.eu })).status, 200);
+  assert.equal((await a.post('/api/sala/ponteiro', { codigo: c.codigo, eu: ea.eu, dados: { tipo: 'mover', fx: 0.5, fy: 0.5 } })).status, 200);
+  assert.equal((await cond.post('/api/sala/ponteiro', { codigo: c.codigo, eu: c.eu, dados: { tipo: 'mover', fx: 0.1, fy: 0.1 } })).status, 403);
+  await a.post('/api/sala/encerrar', { codigo: c.codigo, eu: ea.eu });
 });

@@ -20,7 +20,9 @@ const erro = A.erro;
 
 // Quem pode criar (conduzir) uma sala: equipe da CTAI e, se quiser, logins extras em CTAI_SALA_CONDUTORES (ex.: um usuário de unidade de teste).
 const condutoresExtras = () => String(config.env('CTAI_SALA_CONDUTORES', '')).split(',').map((x) => x.trim().toLowerCase()).filter(Boolean);
-const podeConduzir = (u) => A.PERFIS_CTAI.includes(u.perfil) || u.perfil === 'admin' || condutoresExtras().includes(String(u.login).toLowerCase());
+// Qualquer pessoa com login pode criar uma sala (treinamento); quem entra continua precisando do código de 5 letras.
+const podeConduzir = () => true;
+void condutoresExtras;
 
 function iceServers() {
   const lista = [{ urls: 'stun:stun.l.google.com:19302' }];
@@ -102,7 +104,7 @@ module.exports = (db) => {
   r.get('/estado', (req, res) => res.json({ podeCriar: podeConduzir(req.usuario), max: MAX }));
 
   r.post('/criar', (req, res) => {
-    if (!podeConduzir(req.usuario)) throw erro(403, 'Só a equipe da CTAI cria uma sala guiada.');
+    if (!podeConduzir(req.usuario)) throw erro(403, 'Não foi possível criar a sala.');
     for (const s of [...salas.values()]) if (s.parts.get(s.condutorId) && s.parts.get(s.condutorId).login === req.usuario.login) encerrar(s, 'Você criou uma nova sala; a anterior foi encerrada.');
     const codigo = codigoNovo(), id = crypto.randomBytes(6).toString('hex');
     const sala = { codigo, criada: Date.now(), condutorId: id, parts: new Map(), ultimo: null };
@@ -169,6 +171,16 @@ module.exports = (db) => {
     const msg = { tipo, alvo: txt(d.alvo, 300), fx: num(d.fx), fy: num(d.fy), x: num(d.x), y: num(d.y), pagina: txt(d.pagina, 200), ts: Date.now() };
     if (tipo !== 'clique') sala.ultimo = msg;
     transmitir(sala, 'ponteiro', msg, p.id);
+    res.json({ ok: true });
+  });
+
+  // Assumir a condução: quem está na sala passa a ser quem conduz (apontador); quem conduzia vira participante.
+  r.post('/assumir', (req, res) => {
+    const { sala, p } = acharSala(req);
+    if (p.id === sala.condutorId) return res.json({ ok: true });
+    sala.condutorId = p.id; sala.ultimo = null;
+    transmitir(sala, 'condutor', { id: p.id, nome: p.nome });
+    avisarLista(sala);
     res.json({ ok: true });
   });
 

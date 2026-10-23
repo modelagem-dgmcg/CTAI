@@ -16,6 +16,8 @@
   let ctx = null, timerFala = null;
   let apontador = true, seguir = false, ultimo = null, voando = false, pendMover = null, dialogosAbertos = 0;
   let devEntrada = '', devSaida = '', confirmando = false;
+  let tela = null;                // minha tela, quando estou compartilhando
+  let quemMostra = '';            // nome de quem está compartilhando comigo
   const ui = {};
 
   /* ---------- utilidades ---------- */
@@ -69,8 +71,16 @@
     const reg = { pc, iniciador };
     pcs.set(id, reg);
     if (stream) stream.getAudioTracks().forEach((t) => pc.addTrack(t, stream)); else pc.addTransceiver('audio', { direction: 'recvonly' });
+    if (tela) reg.telaSenders = tela.getTracks().map((t) => pc.addTrack(t, tela));
+    pc.onnegotiationneeded = () => { if (reg.pronto) renegociar(id); };
     pc.onicecandidate = (e) => { if (e.candidate) sinalar(id, { tipo: 'ice', candidato: e.candidate }); };
     pc.ontrack = (e) => {
+      if (e.track.kind === 'video') { // tela de quem está compartilhando
+        const fl = e.streams[0] || new MediaStream([e.track]);
+        mostrarTela(id, fl);
+        e.track.onmute = () => esconderTela(id); e.track.onended = () => esconderTela(id);
+        return;
+      }
       const fluxo = e.streams[0] || new MediaStream([e.track]);
       let a = audios.get(id);
       if (!a) { a = el('audio'); a.autoplay = true; a.setAttribute('playsinline', ''); ui.audios.appendChild(a); audios.set(id, a); }
@@ -80,7 +90,7 @@
       medir(id, fluxo);
     };
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'connected') tentativas.set(id, 0);
+      if (pc.connectionState === 'connected') { tentativas.set(id, 0); reg.pronto = true; if (tela) renegociar(id); }
       if (pc.connectionState === 'failed' && pcs.get(id) === reg) {
         fecharPc(id);
         const n = (tentativas.get(id) || 0) + 1; tentativas.set(id, n);
@@ -90,6 +100,7 @@
     return reg;
   }
   function fecharPc(id) {
+    if (ui.tela && ui.tela.dataset.de === id) esconderTela(id);
     const r = pcs.get(id); if (r) { try { r.pc.onconnectionstatechange = null; r.pc.close(); } catch (_) { /* ok */ } pcs.delete(id); }
     const a = audios.get(id); if (a) { a.srcObject = null; a.remove(); audios.delete(id); }
     medidores.delete(id);
@@ -112,8 +123,13 @@
   async function aoReceberSinal(de, d) {
     if (!est || !d) return;
     try {
+      if (d.tipo === 'apresentando') { if (tela) pararTela(false); quemMostra = d.nome || ''; return; }
+      if (d.tipo === 'parou') { esconderTela(de); return; }
       if (d.tipo === 'oferta') {
-        const { pc } = criarPc(de, false);
+        const velho = pcs.get(de);
+        let pc;
+        if (d.reneg && velho && velho.pc.signalingState !== 'closed') { pc = velho.pc; if (pc.signalingState !== 'stable') await pc.setLocalDescription({ type: 'rollback' }).catch(() => {}); }
+        else pc = criarPc(de, false).pc;
         await pc.setRemoteDescription(d.sdp); await esvaziar(de, pc);
         await pc.setLocalDescription(await pc.createAnswer());
         sinalar(de, { tipo: 'resposta', sdp: pc.localDescription });
@@ -125,6 +141,37 @@
         else { if (!pend.has(de)) pend.set(de, []); pend.get(de).push(d.candidato); }
       }
     } catch (_) { fecharPc(de); }
+  }
+  async function renegociar(id) {
+    const r = pcs.get(id); if (!r || r.pc.signalingState !== 'stable') return;
+    try { await r.pc.setLocalDescription(await r.pc.createOffer()); sinalar(id, { tipo: 'oferta', reneg: true, sdp: r.pc.localDescription }); } catch (_) { /* tenta na próxima mudança */ }
+  }
+  // ---------- compartilhar a tela ----------
+  async function compartilharTela() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { aviso('Este navegador não compartilha tela. Use o Chrome ou o Edge atualizados.', true); return; }
+    let fl;
+    try { fl = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always' }, audio: false }); } catch (_) { aviso('Compartilhamento cancelado. Escolha "Tela inteira" para mostrar o sistema todo.'); return; }
+    tela = fl; aviso('');
+    const meu = (lista.find((x) => x.id === est.eu) || {}).nome || '';
+    fl.getVideoTracks()[0].onended = () => pararTela(true);
+    for (const p of lista) if (p.id !== est.eu && p.online) sinalar(p.id, { tipo: 'apresentando', nome: meu }); // quem estava mostrando a própria tela para
+    for (const r of pcs.values()) r.telaSenders = fl.getTracks().map((t) => r.pc.addTrack(t, fl));
+    desenhar();
+  }
+  function pararTela(avisar) {
+    if (!tela) return;
+    const fl = tela; tela = null; fl.getTracks().forEach((t) => { t.onended = null; t.stop(); });
+    for (const [id, r] of pcs.entries()) { for (const s of r.telaSenders || []) { try { r.pc.removeTrack(s); } catch (_) { /* ok */ } } r.telaSenders = []; if (avisar && est) sinalar(id, { tipo: 'parou' }); }
+    desenhar();
+  }
+  function mostrarTela(id, fl) {
+    if (!ui.tela) return;
+    const nome = (lista.find((x) => x.id === id) || {}).nome || quemMostra || 'participante';
+    ui.tela.dataset.de = id; ui.telaNome.textContent = 'Tela de ' + nome; ui.video.srcObject = fl; ui.video.play().catch(() => {}); ui.tela.hidden = false;
+  }
+  function esconderTela(id) {
+    if (!ui.tela || (id && ui.tela.dataset.de && ui.tela.dataset.de !== id)) return;
+    ui.video.srcObject = null; ui.tela.hidden = true; ui.tela.dataset.de = '';
   }
   async function esvaziar(id, pc) { for (const c of pend.get(id) || []) await pc.addIceCandidate(c).catch(() => {}); pend.delete(id); }
 
@@ -162,6 +209,10 @@
     es.addEventListener('participantes', (e) => { lista = ler(e).participantes || []; sincronizar(); desenharLista(); });
     es.addEventListener('sinal', (e) => { const d = ler(e); aoReceberSinal(d.de, d.dados); });
     es.addEventListener('ponteiro', (e) => { if (!est.condutor) aoPonteiro(ler(e)); });
+    es.addEventListener('condutor', (e) => { // alguém assumiu a condução
+      const d = ler(e); retirarEmissor(); est.condutor = d.id === est.eu; est.condutorNome = d.nome; esconderPonteiro(); limparPagina(); instalarEmissor(); desenhar();
+      aviso(est.condutor ? 'Você agora conduz a sala.' : d.nome + ' assumiu a condução.');
+    });
     es.addEventListener('silenciar', () => { if (!mudo) { alternarMicrofone(true); aviso('Quem conduz silenciou a sala. Ligue seu microfone para falar.'); } });
     es.addEventListener('encerrada', (e) => { const m = ler(e).motivo; sairLocal(); aviso(m || 'A sala foi encerrada.'); });
     es.onerror = () => { if (es && es.readyState === 2) { sairLocal(); aviso('A conexão com a sala caiu e não voltou. Entre de novo com o código.', true); } };
@@ -171,6 +222,8 @@
 
   function sairLocal() {
     if (es) { es.close(); es = null; }
+    if (tela) { tela.getTracks().forEach((t) => { t.onended = null; t.stop(); }); tela = null; }
+    esconderTela();
     for (const id of [...pcs.keys()]) fecharPc(id);
     for (const a of audios.values()) a.remove();
     audios.clear(); medidores.clear(); pend.clear(); tentativas.clear();
@@ -321,6 +374,10 @@
         const lab = el('label', 'sg-seguir'); const cb = el('input'); cb.type = 'checkbox'; cb.checked = seguir; cb.onchange = () => { seguir = cb.checked; };
         lab.append(cb, document.createTextNode(' Acompanhar a tela de quem conduz (dentro da mesma área)')); p.appendChild(lab);
       }
+      const ts = el('button', tela ? 'sg-aberto' : 'sg-sec', tela ? 'Parar de compartilhar a tela' : 'Compartilhar minha tela');
+      ts.onclick = () => (tela ? pararTela(true) : compartilharTela()); p.appendChild(ts);
+      p.appendChild(el('p', 'sg-ajuda', tela ? 'Todos estão vendo a sua tela. Para mostrar o sistema inteiro, mude de janela à vontade: a tela compartilhada acompanha.' : 'Mostra a sua tela a todos da sala. Escolha "Tela inteira" para poder trocar de janela.'));
+      if (!est.condutor) { const as = el('button', 'sg-sec', 'Assumir a condução'); as.onclick = () => api('POST', '/api/sala/assumir', { codigo: est.codigo, eu: est.eu }).catch((e) => aviso(e.message, true)); p.appendChild(as); }
       const det = el('details', 'sg-disp'); det.appendChild(el('summary', null, 'Microfone e fone'));
       det.addEventListener('toggle', () => { if (det.open) preencherDispositivos(det); });
       p.appendChild(det);
@@ -368,7 +425,14 @@
     ui.paginaBtn = el('button', null, 'Ir para lá'); ui.pagina.appendChild(ui.paginaBtn);
     ui.ponteiro = el('div', 'sg-ponteiro'); ui.ponteiro.setAttribute('popover', 'manual'); ui.ponteiro.setAttribute('aria-hidden', 'true');
     ui.ponteiro.append(el('span', 'sg-ponta'), ui.ponteiroNome = el('span', 'sg-etiqueta', ''));
-    document.body.append(ui.botao, ui.painel, ui.pagina, ui.ponteiro);
+    ui.tela = el('div', 'sg-tela'); ui.tela.hidden = true;
+    const cab = el('div', 'sg-tela-cab'); ui.telaNome = el('strong', null, 'Tela compartilhada');
+    const cheia = el('button', null, 'Tela cheia'); cheia.onclick = () => { if (ui.video.requestFullscreen) ui.video.requestFullscreen().catch(() => {}); };
+    const rec = el('button', null, 'Esconder'); rec.onclick = () => { ui.tela.hidden = true; };
+    cab.append(ui.telaNome, cheia, rec);
+    ui.video = document.createElement('video'); ui.video.autoplay = true; ui.video.muted = true; ui.video.setAttribute('playsinline', '');
+    ui.tela.append(cab, ui.video);
+    document.body.append(ui.botao, ui.painel, ui.pagina, ui.ponteiro, ui.tela);
     if (ui.ponteiro.showPopover) { try { ui.ponteiro.showPopover(); ui.ponteiro.dataset.p = '1'; } catch (_) { /* ok */ } }
     desenhar();
   }

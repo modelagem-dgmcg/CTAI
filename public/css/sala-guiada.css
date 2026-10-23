@@ -39,3 +39,11 @@
 .sg-onda{position:fixed;z-index:2147483001;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:3px solid #d97706;pointer-events:none;animation:sg-onda .75s ease-out forwards}
 @keyframes sg-onda{to{transform:scale(4);opacity:0}}
 @media (prefers-reduced-motion:reduce){.sg-ponteiro{transition:none}.sg-onda{animation-duration:.01s}}
+
+/* Tela compartilhada por quem apresenta */
+.sg-tela{position:fixed;left:16px;bottom:16px;z-index:899;width:min(640px,62vw);background:#1a1d20;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.35);overflow:hidden}
+.sg-tela[hidden]{display:none}
+.sg-tela-cab{display:flex;align-items:center;gap:8px;padding:6px 10px;color:#fff;font:600 13px "Segoe UI",system-ui,sans-serif}
+.sg-tela-cab strong{flex:1}
+.sg-tela-cab button{background:#5c636a;color:#fff;border:0;border-radius:6px;padding:4px 10px;font:600 12px "Segoe UI",system-ui,sans-serif;cursor:pointer}
+.sg-tela video{display:block;width:100%;background:#000;max-height:70vh;object-fit:contain}
