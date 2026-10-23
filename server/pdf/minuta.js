@@ -10,8 +10,9 @@ function construirMinuta(conteudo, versao, estado) {
   const id = conteudo.identificacao;
   const blocos = [];
   const autorizada = estado === 'autorizada';
+  const rascunho = versao && versao.numero === 'rascunho';
   if (id.demo) blocos.push({ tipo: 'aviso', nivel: 'atencao', texto: 'DEMONSTRAÇÃO – dados fictícios. Esta minuta não vale como parecer.' });
-  blocos.push({ tipo: 'aviso', nivel: autorizada ? 'info' : 'atencao', texto: autorizada
+  blocos.push({ tipo: 'aviso', nivel: autorizada ? 'info' : 'atencao', texto: rascunho ? 'Rascunho para leitura e impressão (ainda não foi congelado nem conferido). Não é o parecer assinado.' : autorizada
     ? 'Versão ' + versao.numero + ' autorizada internamente. O parecer só vale depois de assinado no SEI pelas pessoas responsáveis. O "OK" do sistema é controle interno e não substitui a assinatura.'
     : 'Minuta para conferência (versão ' + versao.numero + ', situação: ' + estado + '). Não é o parecer assinado. O "OK" do sistema é controle interno e não substitui a assinatura no SEI.' });
 
@@ -99,10 +100,10 @@ function construirMinuta(conteudo, versao, estado) {
 
   return {
     titulo: id.titulo || 'Minuta de parecer',
-    subtitulo: id.unidade + ' · ' + id.trimestre + ' · versão ' + versao.numero,
-    cabecalhoCurto: 'Minuta · ' + id.unidade + ' · ' + id.trimestre,
+    subtitulo: id.unidade + ' · ' + id.trimestre + (rascunho ? ' · rascunho' : ' · versão ' + versao.numero),
+    cabecalhoCurto: (rascunho ? 'Rascunho · ' : 'Minuta · ') + id.unidade + ' · ' + id.trimestre,
     demo: !!id.demo,
-    rodape: 'Minuta v' + versao.numero + ' · código de integridade ' + versao.hash.slice(0, 16) + ' · situação: ' + estado,
+    rodape: rascunho ? 'Rascunho do parecer · gerado para leitura e impressão' : 'Minuta v' + versao.numero + ' · código de integridade ' + versao.hash.slice(0, 16) + ' · situação: ' + estado,
     blocos,
   };
 }

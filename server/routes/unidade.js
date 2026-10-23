@@ -144,6 +144,9 @@ module.exports = (db) => {
   // ---------- Linhas (listas) ----------
   // Esclarecimentos que a CTAI pediu à unidade (achados encaminhados). A unidade vê só o que foi encaminhado a ela.
   r.get('/achados', (req, res) => res.json({ achados: achadosDb.daUnidade(db, Object.assign({}, req.usuario, { contrato_id: contratoDe(req) })) }));
+  r.get('/formularios/pdf', async (req, res) => {
+    try { res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="formularios-em-branco.pdf"' }).send(await require('../pdf/formularios').gerar(req.query.setor)); } catch (e) { throw e.status ? erro(e.status, e.message) : e; }
+  });
   // PDF da resposta, para a unidade levar ao SEI. A transmissão dos dados à CTAI segue igual.
   r.get('/achados/:id/pdf', async (req, res) => {
     const a = achadosDb.daUnidade(db, Object.assign({}, req.usuario, { contrato_id: contratoDe(req) })).find((x) => x.achado_id === Number(req.params.id));

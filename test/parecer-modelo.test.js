@@ -64,3 +64,12 @@ test('parecer pode ser criado para trimestre sem competência cadastrada', async
   const ruim = await cleuton.post('/api/ctai/pareceres', { contrato_id: 'DEMO-UPA', trimestre: '2030-T4', competencias: ['x'] });
   assert.equal(ruim.status, 400);
 });
+
+test('rascunho do parecer e formulários em branco saem em PDF', async () => {
+  const r = await cleuton.get('/api/ctai/pareceres/' + id + '/pdf');
+  assert.equal(r.status, 200); assert.equal(r.buffer.slice(0, 4).toString(), '%PDF');
+  const f = await cleuton.get('/api/ctai/formularios/pdf');
+  assert.equal(f.status, 200); assert.equal(f.buffer.slice(0, 4).toString(), '%PDF');
+  assert.equal((await cleuton.get('/api/ctai/formularios/pdf?setor=assistencia')).status, 200);
+  assert.equal((await cleuton.get('/api/ctai/formularios/pdf?setor=xx')).status, 404);
+});

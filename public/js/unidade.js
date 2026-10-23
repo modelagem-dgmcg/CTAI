@@ -52,7 +52,7 @@
     montar(faixaDemo(),
       h('div', { class: 'topo' }, h('div', null, h('h1', null, c.unidade), h('p', null, c.oss + ' · Contrato de Gestão ' + (c.numero_cg || '')))),
       pendEsc ? h('div', { class: 'aviso atencao' }, h('strong', null, pendEsc + ' esclarecimento(s) pedido(s) pela CTAI. '), h('a', { href: '#/esclarecimentos' }, 'Responder')) : null,
-      h('div', { class: 'aviso info' }, sintese()),
+      h('div', { class: 'aviso info' }, sintese(), ' ', h('a', { href: '/api/unidade/formularios/pdf', target: '_blank', rel: 'noopener' }, 'Formulários em branco para imprimir (PDF)')),
       h('div', { class: 'grade' }, INFO.competencias.map((k) => h('div', { class: 'cartao' },
         h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, fmt.comp(k.competencia_id)), k.mes_implantacao ? selo('implantação', 'atencao') : null),
         h('p', { class: 'mudo peq' }, k.versaoEnvio ? 'Enviado (versão ' + k.versaoEnvio + ') · situação: ' + k.status : 'Ainda não enviado'),
@@ -176,7 +176,7 @@
         ficha(p);
       } catch (e) { mostrarErros(e.dados && e.dados.erros); toast(e.message, true); }
     };
-    montar(topo,
+    montar(topo, h('p', { class: 'peq' }, h('a', { href: '/api/unidade/formularios/pdf?setor=' + encodeURIComponent(p.setor), target: '_blank', rel: 'noopener' }, 'Imprimir esta ficha em branco (PDF)')),
       h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, f.setor.nome), statusSelo(f.ficha.status)),
       h('p', { class: 'mudo' }, f.setor.resumo),
       aviso('atencao', h('strong', null, 'Não escreva dados de paciente. '), 'Nada de nome, CPF, número de prontuário ou data de nascimento, nem nas observações. Para identificar um atendimento, use só o número de protocolo.'),

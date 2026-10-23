@@ -203,6 +203,15 @@ module.exports = (db) => {
   });
   r.post('/versoes/:id/conferir', (req, res) => res.json(M.conferir(db, req.params.id, req.usuario, req.body && req.body.item, req.body && req.body.status, req.body && req.body.comentario)));
   r.post('/versoes/:id/autorizar', (req, res) => res.json(M.autorizar(db, req.params.id, req.usuario)));
+  // Rascunho do parecer para ler e imprimir (sem congelar nada).
+  r.get('/pareceres/:id/pdf', async (req, res) => {
+    const p = M.obter(db, req.params.id);
+    const buf = await minutaPdf.gerarMinutaPdf(M.conteudoAtual(db, p.parecer_id), { numero: 'rascunho' }, 'rascunho');
+    res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="parecer-rascunho-' + p.parecer_id + '.pdf"' }).send(buf);
+  });
+  r.get('/formularios/pdf', async (req, res) => {
+    try { res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'inline; filename="formularios-em-branco.pdf"' }).send(await require('../pdf/formularios').gerar(req.query.setor)); } catch (e) { throw e.status ? erro(e.status, e.message) : e; }
+  });
   r.get('/versoes/:id/pdf', async (req, res) => {
     const est = M.estadoDaVersao(db, req.params.id);
     const v = db.get('SELECT conteudo FROM versoes_minuta WHERE versao_id = ?', Number(req.params.id));
