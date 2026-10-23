@@ -14,10 +14,8 @@
   // Nova janela (editor flutuante): o mesmo nome reaproveita a janela já aberta daquele documento.
   function janelaNova(hash, nome) {
     const url = location.pathname + '#' + hash.replace(/^#/, '');
-    const w = window.open(url, nome || ('ctai-' + hash), 'popup=yes,width=1180,height=860,resizable=yes,scrollbars=yes');
-    if (!w) { location.hash = hash; return null; }
-    try { w.focus(); } catch (_) { /* ok */ }
-    return w;
+    // noopener: a janela nova não herda o que esta aba guarda (por exemplo, a sala guiada em andamento).
+    window.open(url, nome || ('ctai-' + hash), 'popup=yes,width=1180,height=860,resizable=yes,scrollbars=yes,noopener');
   }
 
   // Aviso quando a mesma unidade está aberta em outra aba (uma sobrescreveria a outra).
@@ -176,5 +174,23 @@
       barra, secoes);
   }
 
-  window.CTAI_UNIDADE = { pagina, configuracoes, janelaNova, rotas: [['/u/:id', pagina]] };
+  // Painel de consulta do editor: dados do trimestre e regras do contrato, para conferir sem trocar de janela.
+  async function painelDados(contratoId, trimestre) {
+    const [rc, d] = await Promise.all([api('GET', '/api/ctai/contratos'), api('GET', '/api/ctai/contratos/' + encodeURIComponent(contratoId) + '/decisoes')]);
+    const c = rc.contratos.find((x) => x.contrato_id === contratoId);
+    const K = c ? c.competencias.filter((k) => triDe(k.competencia_id) === trimestre) : [];
+    const cr = d.contratoRegras && d.contratoRegras.conteudo;
+    const corpo = h('div', null,
+      h('h3', null, 'Meses de ' + trimestre),
+      K.length ? tabela([{ t: 'Mês' }, { t: 'Situação' }, { t: 'Envio' }, { t: 'Divergências abertas', n: true }, { t: 'Sistema × SEI' }],
+        K.map((k) => [fmt.comp(k.competencia_id), selo(k.status), k.versaoEnvio ? 'v' + k.versaoEnvio : 'não enviou', String(k.divergenciasAbertas || 0), k.seiAlertas ? selo(k.seiAlertas + ' alerta(s)', 'atencao') : '—'])) : h('p', { class: 'mudo' }, 'Sem meses deste trimestre no sistema.'),
+      h('div', { class: 'linha espaco', style: 'margin-top:14px' }, h('h3', { style: 'margin:0' }, 'Regras do contrato'), h('button', { type: 'button', class: 'sec', onclick: () => configuracoes(contratoId, () => location.reload()).catch((e) => toast(e.message, true)) }, 'Configurações')),
+      cr ? [h('p', { class: 'mudo peq' }, [cr.contrato_numero && 'Contrato ' + cr.contrato_numero, cr.oss, cr.valor_mensal && 'valor mensal ' + cr.valor_mensal].filter(Boolean).join(' · ') + (d.contratoRegras.conferida ? ' · regra conferida' : ' · regra a conferir')),
+        tabela([{ t: 'Indicador' }, { t: 'Tipo' }, { t: 'Peso %', n: true }, { t: 'Meta' }], (cr.indicadores || []).map((i) => [i.nome, i.tipo, i.peso_pct_total === null || i.peso_pct_total === undefined ? '—' : String(i.peso_pct_total), i.meta || '—'])),
+        (cr.observacoes || []).length ? h('ul', { class: 'peq' }, cr.observacoes.map((o) => h('li', null, o))) : null]
+        : h('p', { class: 'mudo' }, 'Esta unidade ainda não tem a regra do contrato cadastrada.'));
+    return window.CTAI.recolher('editor-dados:' + contratoId, 'Consulta: dados do trimestre e regras do contrato', 'para conferir sem sair do documento', corpo);
+  }
+
+  window.CTAI_UNIDADE = { painelDados, pagina, configuracoes, janelaNova, rotas: [['/u/:id', pagina]] };
 })();

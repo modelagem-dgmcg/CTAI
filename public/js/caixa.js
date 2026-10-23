@@ -140,6 +140,7 @@
     desenharLista();
 
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Caixa de entrada'), h('p', null, d.todas ? 'Tudo que chegou das unidades, por unidade. Você vê todas (sem carteira definida).' : 'Tudo que chegou das unidades da sua carteira, reunido por unidade. Quem divide a unidade com você recebe os mesmos itens; o primeiro que tratar marca para todos.'))),
+      window.CTAI_COMECE ? window.CTAI_COMECE.cartao() : null,
       h('div', { class: 'cartao cx-resumo', id: 'cx-resumo', style: 'padding:10px 14px' }, h('div', { class: 'linha', style: 'gap:18px;flex-wrap:wrap' },
         faixa('nao_lidos', rs.naoLidos, 'não lidos', rs.naoLidos ? 'atencao' : '', '', 'nao_lidos'), faixa('prazos', rs.prazos_vencidos, 'prazo(s) vencido(s)', rs.prazos_vencidos ? 'alta' : '', 'prazo_vencido'),
         faixa('prazos2', rs.prazos_a_vencer, 'a vencer', rs.prazos_a_vencer ? 'atencao' : '', 'prazo_vencer'), faixa('resp', rs.respostas, 'achado(s) com resposta', rs.respostas ? 'atencao' : '', 'resposta'),

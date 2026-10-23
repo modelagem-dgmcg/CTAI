@@ -515,10 +515,13 @@
     const marcados = nCol.map((u) => h('input', { type: 'checkbox', value: u.usuario_id, checked: true, id: 'cv-' + u.usuario_id }));
     const motivo = h('textarea', { id: 'cv-motivo', rows: 2, placeholder: ult ? 'O que mudou desde a versão ' + ult.numero + '?' : 'Opcional na primeira versão' });
     const achadosMin = h('div');
+    const painelConsulta = await window.CTAI_UNIDADE.painelDados(P.contrato_id, P.trimestre).catch(() => null);
+    document.title = P.titulo + ' · Analista CTAI';
     montar(demo(P.demo), migalha(h('a', { href: '#/pareceres' }, 'Editor de Documentos'), P.titulo),
       h('div', { class: 'topo' }, h('div', null, h('h1', null, P.titulo), h('p', null, P.unidade + ' · ' + P.trimestre + (P.numero_parecer ? ' · parecer ' + P.numero_parecer : ''))), h('div', { class: 'linha' }, selo(P.status, P.status === 'anexado ao SEI' || P.status === 'autorizado' ? 'ok' : 'atencao'), ult ? h('a', { class: 'btn', href: '#/v/' + ult.versao_id }, 'Abrir a mesa (v' + ult.numero + ')') : null, h('button', { type: 'button', class: 'sec', onclick: () => window.CTAI_UNIDADE.configuracoes(P.contrato_id, () => parecer(p)).catch((e) => toast(e.message, true)) }, 'Configurações'))),
       d.alteradoDesdeCongelamento && ult && !travado ? aviso('atencao', h('strong', null, 'A minuta mudou desde a versão ' + ult.numero + '. '), 'Para os colegas conferirem a mudança, congele uma nova versão com o motivo.') : null,
       !eCriador ? aviso('info', 'Você vê esta minuta, mas só quem a criou altera. Para conferir, abra a mesa.') : null,
+      painelConsulta,
       h('div', { class: 'cartao' }, h('h2', null, '1. Indicadores e pontos'), h('p', { class: 'mudo peq' }, 'O ponto adotado começa igual ao recálculo. Para mudar, use "Ajustar" e explique: o motivo fica na trilha e na mesa.'), c.indicadores.competencias.map((k) => h('div', { style: 'margin-bottom:14px' },
         h('h3', null, fmt.comp(k.competencia) + (k.implantacao ? ' · implantação' : '') + ' · IGQ OSS ' + fmt.valor(k.igq.oss) + ' · recalculado ' + fmt.valor(k.igq.recalculado) + ' · adotado ' + fmt.valor(k.igq.adotado)),
         tabela([{ t: 'Item' }, { t: 'Indicador' }, { t: 'Pts OSS', n: true }, { t: 'Pts CTAI', n: true }, { t: 'Adotado', n: true }, { t: 'Origem / justificativa' }, { t: '' }],
@@ -805,7 +808,7 @@
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); }, 60000);
-    if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), document.querySelector('.lateral a.nav.fim') || nav); }
+    if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), document.querySelector('.lateral .nav-linha.fim') || nav); }
     META = await api('GET', '/api/meta');
     rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});

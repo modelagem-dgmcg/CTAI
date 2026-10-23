@@ -107,6 +107,12 @@
     });
     return caixa;
   }
+  // Menus em nova janela: o ícone ao lado do item abre uma aba nova; a opção do rodapé faz isso por padrão. Ctrl+clique também funciona.
+  const menuEmJanela = () => { try { return localStorage.getItem('ctai_menu_janela') === '1'; } catch (_) { return false; } };
+  // noopener: a nova aba não herda o que a aba atual guarda (por exemplo, a sala guiada em andamento).
+  const abrirAba = (hash) => { window.open(location.pathname + hash, '_blank', 'noopener'); };
+  // Janela própria (editor flutuante): sem o menu lateral, só o documento.
+  if (/^ctai-\//.test(window.name || '')) document.documentElement.classList.add('janela-propria');
   // Quem chega por /unidade volta para a entrada da unidade, não para a da CTAI.
   const entrada = () => (location.pathname === '/unidade' ? '/?entrar=unidade' : '/');
   async function casca(opc) {
@@ -116,8 +122,10 @@
     if (opc.perfis && !opc.perfis.includes(u.perfil) && u.perfil !== 'admin') { location.href = entrada(); return null; }
     const lat = h('nav', { class: 'lateral', 'aria-label': 'Menu' },
       h('div', { class: 'marca' }, h('span', { class: 'logo', 'aria-hidden': 'true' }, 'C'), h('span', null, opc.titulo, h('small', null, opc.subtitulo))),
-      opc.itens.map((i) => h('a', { class: 'nav' + (i.classe ? ' ' + i.classe : ''), href: i.href, 'data-h': i.href }, i.rotulo)),
-      h('div', { class: 'rodape' }, h('div', null, h('strong', null, u.nome)), h('div', null, u.perfilNome), h('button', { class: 'sec', onclick: async () => { await api('POST', '/api/auth/logout', {}); esquecerAbertos(); location.href = '/'; } }, 'Sair')));
+      opc.itens.map((i) => h('div', { class: 'nav-linha' + (i.classe ? ' ' + i.classe : '') },
+        h('a', { class: 'nav' + (i.classe ? ' ' + i.classe : ''), href: i.href, 'data-h': i.href, onclick: (ev) => { if (menuEmJanela() && !ev.ctrlKey && !ev.metaKey && !ev.shiftKey) { ev.preventDefault(); abrirAba(i.href); } } }, i.rotulo),
+        h('button', { type: 'button', class: 'nav-nova', title: 'Abrir em nova janela', 'aria-label': 'Abrir ' + i.rotulo + ' em nova janela', onclick: () => abrirAba(i.href) }, '⧉'))),
+      h('div', { class: 'rodape' }, h('div', null, h('strong', null, u.nome)), h('div', null, u.perfilNome), h('label', { class: 'rod-opcao' }, h('input', { type: 'checkbox', checked: menuEmJanela(), onchange: (ev) => { try { localStorage.setItem('ctai_menu_janela', ev.target.checked ? '1' : '0'); } catch (_) { /* ok */ } } }), ' Abrir menus em nova janela'), h('button', { class: 'sec', onclick: async () => { await api('POST', '/api/auth/logout', {}); esquecerAbertos(); location.href = '/'; } }, 'Sair')));
     const main = h('main', { class: 'conteudo', id: 'conteudo', tabindex: '-1' });
     document.getElementById('app').replaceChildren(h('div', { class: 'casca' }, lat, main));
     window.__marcarMenu = (hash) => lat.querySelectorAll('a.nav').forEach((a) => { const alvo = a.getAttribute('data-h').replace('#', ''); const h2 = hash.replace(/^\/[pv]\//, '/pareceres/').replace(/^\/analista/, '/pareceres'); a.classList.toggle('ativo', alvo === '/' ? (hash === '/' || hash.startsWith('/c/')) : h2.startsWith(alvo)); });
