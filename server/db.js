@@ -212,6 +212,26 @@ CREATE TABLE IF NOT EXISTS gaocg_estado (
 CREATE TABLE IF NOT EXISTS msg_anexos (
   anexo_id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, mime TEXT NOT NULL, tamanho INTEGER NOT NULL, dados BLOB NOT NULL, criado_em TEXT NOT NULL
 );
+-- Histórico dos relatórios e pareceres anteriores, por unidade e trimestre. Nasce como 'rascunho' e só vira 'confirmado' quando a pessoa da carteira confere.
+CREATE TABLE IF NOT EXISTS hist_relatorios (
+  hist_id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, documento_tipo TEXT NOT NULL DEFAULT 'parecer', numero_parecer TEXT,
+  nome_arquivo TEXT, hash TEXT, paginas INTEGER, texto TEXT, igq REAL, desconto_pct REAL, desconto_valor REAL, estado TEXT NOT NULL DEFAULT 'rascunho',
+  origem TEXT NOT NULL DEFAULT 'manual', provedor TEXT, observacao TEXT, criado_por TEXT NOT NULL, criado_em TEXT NOT NULL, atualizado_em TEXT, confirmado_por TEXT, confirmado_em TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_hist_rel ON hist_relatorios (contrato_id, trimestre);
+CREATE TABLE IF NOT EXISTS hist_indicadores (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, hist_id INTEGER NOT NULL, indicador_id TEXT NOT NULL, nome TEXT, valor TEXT, pontos REAL, max REAL, trecho TEXT, verificada INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS ix_hist_ind ON hist_indicadores (hist_id);
+CREATE TABLE IF NOT EXISTS hist_achados (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, hist_id INTEGER NOT NULL, tipo TEXT, descricao TEXT NOT NULL, gravidade TEXT NOT NULL DEFAULT 'MÉDIA', trecho TEXT, verificada INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS ix_hist_ach ON hist_achados (hist_id);
+CREATE TABLE IF NOT EXISTS hist_recomendacoes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, hist_id INTEGER NOT NULL, texto TEXT NOT NULL, tema TEXT, situacao TEXT NOT NULL DEFAULT 'aberta', trecho TEXT, verificada INTEGER NOT NULL DEFAULT 0,
+  situacao_por TEXT, situacao_em TEXT, situacao_nota TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_hist_rec ON hist_recomendacoes (hist_id);
 CREATE TABLE IF NOT EXISTS msg (
   msg_id INTEGER PRIMARY KEY AUTOINCREMENT, de_id INTEGER NOT NULL, para_id INTEGER NOT NULL, texto TEXT NOT NULL DEFAULT '', anexo_id INTEGER, criado_em TEXT NOT NULL, lido_em TEXT
 );
