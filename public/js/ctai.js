@@ -789,8 +789,21 @@
       est.configurada ? h('div', { class: 'linha' },
         h('button', { class: 'sec', id: 'gc-testar', onclick: () => agir('Testando', async () => { const o = await api('POST', '/api/gaocg/testar', {}); troca(saida, aviso(o.ok ? 'ok' : 'erro', o.mensagem)); setTimeout(recarregar, 1200); }) }, 'Testar a conexão'),
         h('button', { class: 'sec', id: 'gc-atualizar', onclick: () => agir('Atualizando', async () => { const o = await api('POST', '/api/gaocg/atualizar', {}); troca(saida, aviso('ok', o.total + ' unidade(s) lidas do GAOCG.')); setTimeout(recarregar, 1200); }) }, 'Atualizar cadastro de unidades'),
-        ehAdmin() ? h('button', { class: 'sec', onclick: () => agir('Lendo os campos', async () => { const o = await api('GET', '/api/gaocg/campos/api_unidades'); troca(saida, h('p', { class: 'peq' }, 'Campos que o GAOCG devolve em unidades: ' + (o.campos.join(', ') || '(nenhum)'))); }) }, 'Ver campos recebidos') : null) : aviso('info', 'Para ligar: coloque GAOCG_API_URL e GAOCG_API_CHAVE nas variáveis da hospedagem e reinicie.'),
+        ehAdmin() ? h('button', { class: 'sec', onclick: () => agir('Lendo os campos', async () => { const o = await api('GET', '/api/gaocg/campos/api_unidades'); troca(saida, h('p', { class: 'peq' }, 'Campos que o GAOCG devolve em unidades: ' + (o.campos.join(', ') || '(nenhum)'))); }) }, 'Ver campos recebidos') : null) : aviso('info', 'Para ligar: guarde o endereço e a chave logo abaixo (administração) ou use as variáveis GAOCG_API_URL e GAOCG_API_CHAVE da hospedagem.'),
+      ehAdmin() ? formGaocg(est, recarregar) : null,
       saida);
+  }
+  function formGaocg(est, recarregar) {
+    const url = h('input', { type: 'url', id: 'gc-url', placeholder: 'https://script.google.com/macros/s/…/exec', autocomplete: 'off' });
+    const chave = h('input', { type: 'password', id: 'gc-chave', placeholder: 'Cole a chave do GAOCG (gaocg_…)', autocomplete: 'new-password' });
+    const msg = h('div', { id: 'gc-form-msg' });
+    const guardar = async () => { try { const o = await api('PUT', '/api/gaocg/config', { url: url.value, chave: chave.value }); chave.value = ''; troca(msg, aviso('ok', 'Guardado (chave terminada em ' + o.final + '). Agora clique em "Testar a conexão".')); setTimeout(recarregar, 1500); } catch (e) { troca(msg, aviso('erro', e.message)); } };
+    const quando = est.origem === 'servidor' ? 'A chave atual vem das variáveis do servidor. Uma chave digitada aqui só vale se essas variáveis forem removidas.' : est.origem === 'tela' ? 'Chave atual guardada na tela, terminada em ' + est.chave_final + '. Para trocar, preencha de novo.' : 'Ainda não há chave. Preencha e guarde.';
+    return h('details', { class: 'cartao-interno', open: !est.configurada }, h('summary', null, est.configurada ? 'Trocar o endereço e a chave' : 'Guardar o endereço e a chave'),
+      h('p', { class: 'peq mudo' }, quando + ' A chave fica cifrada no servidor e nunca volta para a tela.'),
+      h('div', { class: 'campo' }, h('label', { for: 'gc-url' }, 'Endereço da API (termina em /exec)'), url),
+      h('div', { class: 'campo' }, h('label', { for: 'gc-chave' }, 'Chave do GAOCG para o Analista CTAI'), chave),
+      h('button', { id: 'gc-guardar', onclick: guardar }, 'Guardar'), msg);
   }
   function cartaoIntegracao(i, cs) {
     const cfg = i.config, a = cfg.auth || {};

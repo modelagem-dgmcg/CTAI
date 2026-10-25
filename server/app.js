@@ -33,6 +33,7 @@ function criarApp(db) {
   app.use('/api/unidade', require('./routes/unidade')(db));
   app.use('/api/ctai', require('./routes/ctai')(db));
   app.use('/api/caixa', require('./routes/caixa')(db));
+  require('./gaocg').carregar(db);
   app.use('/api/gaocg', require('./routes/gaocg')(db));
   app.use('/api/mensageiro', require('./routes/mensageiro')(db));
   app.use('/api/sala', require('./sala-guiada')(db));

@@ -209,6 +209,10 @@ CREATE TABLE IF NOT EXISTS gaocg_cache (
 CREATE TABLE IF NOT EXISTS gaocg_estado (
   id INTEGER PRIMARY KEY CHECK (id = 1), teste_em TEXT, teste_ok INTEGER, teste_ms INTEGER, teste_msg TEXT, ultimo_uso_em TEXT, ultimo_uso_por TEXT
 );
+-- Endereço e chave do GAOCG digitados na tela pela administração (a chave fica cifrada com CTAI_SEGREDO). A variável da hospedagem, se existir, vale mais.
+CREATE TABLE IF NOT EXISTS gaocg_config (
+  id INTEGER PRIMARY KEY CHECK (id = 1), url TEXT NOT NULL, chave_cifrada TEXT NOT NULL, final TEXT, atualizado_em TEXT NOT NULL, atualizado_por TEXT
+);
 CREATE TABLE IF NOT EXISTS msg_anexos (
   anexo_id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, mime TEXT NOT NULL, tamanho INTEGER NOT NULL, dados BLOB NOT NULL, criado_em TEXT NOT NULL
 );

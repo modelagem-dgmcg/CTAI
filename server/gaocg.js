@@ -9,6 +9,26 @@ const TTL_MS = 6 * 3600 * 1000;
 const agora = () => new Date().toISOString();
 const norm = (s) => String(s === null || s === undefined ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const ligada = () => criar().ligada;
+const IA = require('./ia-config');
+let origem = null; // 'servidor' (variáveis da hospedagem) ou 'tela' (digitado pela administração)
+
+// Liga o GAOCG com o que foi digitado na tela, se a hospedagem não tiver as variáveis. Chamado ao iniciar e depois de salvar.
+function carregar(db) {
+  if (origem !== 'tela' && process.env.GAOCG_API_URL && process.env.GAOCG_API_CHAVE) { origem = 'servidor'; return; }
+  const c = db.get('SELECT url, chave_cifrada FROM gaocg_config WHERE id = 1');
+  const chave = c ? IA.decifrar(c.chave_cifrada) : '';
+  if (c && chave) { process.env.GAOCG_API_URL = c.url; process.env.GAOCG_API_CHAVE = chave; origem = 'tela'; }
+}
+function salvarConfig(db, usuario, b) {
+  const url = String((b && b.url) || '').trim(), chave = String((b && b.chave) || '').trim();
+  if (!/^https:\/\/\S+$/.test(url)) throw erro(400, 'O endereço deve começar com https:// (é o link terminado em /exec).');
+  if (chave.length < 12 || /\s/.test(chave)) throw erro(400, 'A chave parece incompleta. Cole a chave inteira, sem espaços.');
+  const cifrada = IA.cifrar(chave), final = chave.slice(-4);
+  db.run('INSERT INTO gaocg_config (id, url, chave_cifrada, final, atualizado_em, atualizado_por) VALUES (1,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET url = excluded.url, chave_cifrada = excluded.chave_cifrada, final = excluded.final, atualizado_em = excluded.atualizado_em, atualizado_por = excluded.atualizado_por', url, cifrada, final, agora(), usuario.login);
+  origem = 'tela'; process.env.GAOCG_API_URL = url; process.env.GAOCG_API_CHAVE = chave;
+  trilha.registrar(db, { usuario: usuario.login, tabela: 'gaocg', registro: 'conexao', campo: 'chave_trocada', valor_novo: 'final ' + final });
+  return { ok: true, final };
+}
 
 function campo(obj, apelidos) {
   const ks = Object.keys(obj || {}).map((k) => [k, norm(k)]);
@@ -22,7 +42,8 @@ function marcarUso(db, usuario) {
 
 function estado(db) {
   const e = db.get('SELECT * FROM gaocg_estado WHERE id = 1') || {};
-  return { configurada: ligada(), teste: e.teste_em ? { em: e.teste_em, ok: !!e.teste_ok, ms: e.teste_ms, mensagem: e.teste_msg } : null, ultimo_uso: e.ultimo_uso_em ? { em: e.ultimo_uso_em, por: e.ultimo_uso_por } : null,
+  const cfg = db.get('SELECT final, atualizado_em, atualizado_por FROM gaocg_config WHERE id = 1');
+  return { configurada: ligada(), origem, chave_final: origem === 'tela' && cfg ? cfg.final : null, trocada_em: origem === 'tela' && cfg ? cfg.atualizado_em : null, teste: e.teste_em ? { em: e.teste_em, ok: !!e.teste_ok, ms: e.teste_ms, mensagem: e.teste_msg } : null, ultimo_uso: e.ultimo_uso_em ? { em: e.ultimo_uso_em, por: e.ultimo_uso_por } : null,
     copias: db.all('SELECT endpoint, filtros, total, lido_em FROM gaocg_cache ORDER BY lido_em DESC LIMIT 20') };
 }
 
@@ -114,4 +135,4 @@ async function conferirParecer(db, c, textoModelo, usuario) {
   return { achados: out, usado: true, lido_em: u.lido_em, da_copia: u.da_copia };
 }
 
-module.exports = { estado, testar, ler, campos, unidadeDoContrato, conferirParecer, dadosDaUnidade, casar, campo, ligada };
+module.exports = { carregar, salvarConfig, estado, testar, ler, campos, unidadeDoContrato, conferirParecer, dadosDaUnidade, casar, campo, ligada };
