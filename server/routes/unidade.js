@@ -68,7 +68,7 @@ module.exports = (db) => {
     const st = F.setor(req.params.setor);
     if (!st) throw erro(404, 'Setor desconhecido.');
     const f = D.fichasDaCompetencia(db, c.cid)[st.id];
-    res.json({ setor: st, campos: F.camposDoSetor(st.id), ficha: f, podeEditar: req.usuario.perfil === 'gestor_unidade' || req.usuario.perfil === 'admin' || req.usuario.setor === st.id });
+    res.json({ setor: st, campos: F.camposDoSetor(st.id), ficha: f, podeEditar: req.usuario.perfil === 'gestor_unidade' || req.usuario.perfil === 'admin' || A.setoresDe(req.usuario).includes(st.id) });
   });
 
   // Lê PDF/DOCX/XLSX/CSV/TXT e propõe valores para a ficha. Não salva nada; o arquivo não fica guardado.

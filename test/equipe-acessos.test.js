@@ -35,6 +35,10 @@ test('gestor cadastra a equipe da própria unidade, define fichas, troca senha e
   assert.deepEqual(me.setores, ['rh', 'bid']);
   const cid = (await gestor.get('/api/unidade/competencias')).json.competencias[0].cid;
   assert.equal((await rh.get('/api/unidade/competencias/' + cid + '/ficha/rh')).status, 200);
+  // quem tem mais de uma ficha pode editar todas as suas (a tela libera os campos de cada uma, não só da primeira)
+  assert.equal((await rh.get('/api/unidade/competencias/' + cid + '/ficha/rh')).json.podeEditar, true);
+  assert.equal((await rh.get('/api/unidade/competencias/' + cid + '/ficha/bid')).json.podeEditar, true, 'segunda ficha da lista também edita');
+  assert.equal((await rh.get('/api/unidade/competencias/' + cid + '/ficha/assistencia')).json.podeEditar, false);
   assert.equal((await rh.put('/api/unidade/competencias/' + cid + '/ficha/assistencia', { dados: {} })).status, 403, 'ficha de outro setor');
 
   // editar fichas
