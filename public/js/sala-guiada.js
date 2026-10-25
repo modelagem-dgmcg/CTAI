@@ -440,9 +440,10 @@
   }
   function esconderPonteiro() { if (!ui.ponteiro) return; ui.ponteiro.style.opacity = '0'; }
   function limparPagina() { if (ui.pagina) ui.pagina.hidden = true; }
+  let visto = 0, seguindoAgora = false, tSeguindo = null, tRolada = 0;
   function aoPonteiro(m) {
     if (!m || !ui.ponteiro) return;
-    if (m.tipo === 'sumir') { esconderPonteiro(); return; }
+    if (m.tipo === 'sumir') { esconderPonteiro(); ui.seta.hidden = true; seguindoAgora = false; desenharBarra(); return; }
     const aqui = location.pathname + location.hash;
     if (m.pagina && m.pagina !== aqui) {
       esconderPonteiro();
@@ -456,6 +457,13 @@
     if (m.alvo) { try { const a = document.querySelector(m.alvo); if (a && m.fx !== null) { const r = a.getBoundingClientRect(); if (r.width > 0 && r.height > 0) { px = r.left + m.fx * r.width; py = r.top + m.fy * r.height; } } } catch (_) { /* seletor inválido */ } }
     if (px === undefined) { px = m.x * innerWidth; py = m.y * innerHeight; }
     promover();
+    visto = Date.now(); if (!seguindoAgora) { seguindoAgora = true; desenharBarra(); } clearTimeout(tSeguindo); tSeguindo = setTimeout(() => { seguindoAgora = false; ui.seta.hidden = true; desenharBarra(); }, 5000);
+    const fora = px < 0 || py < 0 || px > innerWidth || py > innerHeight;
+    if (fora) { // a bolinha está fora da parte visível: seta na borda e, se estiver acompanhando, rola até lá
+      const cx = Math.max(30, Math.min(innerWidth - 30, px)), cy = Math.max(70, Math.min(innerHeight - 30, py));
+      ui.seta.style.transform = 'translate(' + Math.round(cx) + 'px,' + Math.round(cy) + 'px) rotate(' + Math.round(Math.atan2(py - cy, px - cx) * 180 / Math.PI) + 'deg)'; ui.seta.hidden = false;
+      if (seguir && m.alvo && Date.now() - tRolada > 1200) { try { const a = document.querySelector(m.alvo); if (a) { tRolada = Date.now(); a.scrollIntoView({ block: 'center', behavior: 'smooth' }); } } catch (_) { /* ok */ } }
+    } else ui.seta.hidden = true;
     ui.ponteiro.style.transform = 'translate(' + Math.round(px) + 'px,' + Math.round(py) + 'px)';
     ui.ponteiro.style.opacity = '1';
     if (m.tipo === 'clique') {
@@ -475,6 +483,7 @@
     ui.barra.appendChild(el('span', 'sg-ao-vivo', '● Ao vivo'));
     chip(stream ? (mudo ? 'Microfone desligado' : 'Microfone ligado') : 'Só ouvindo', !mudo && !!stream);
     if (est.condutor) chip('Apontador ' + (apontador ? 'ligado' : 'desligado'), apontador);
+    else if (seguindoAgora) ui.barra.appendChild(el('span', 'sg-siga', '👆 ' + (est.condutorNome || 'Quem conduz') + ' está mostrando. Siga a bolinha'));
     if (tela) chip('Sua tela está sendo mostrada', true);
     if (operando) chip('Você opera o sistema de ' + nomeDe(operando), true);
     if (operador) chip(operador.nome + ' está operando o seu sistema', true);
@@ -580,6 +589,7 @@
     ui.paginaBtn = el('button', null, 'Ir para lá'); ui.pagina.appendChild(ui.paginaBtn);
     ui.ponteiro = el('div', 'sg-ponteiro'); ui.ponteiro.setAttribute('popover', 'manual'); ui.ponteiro.setAttribute('aria-hidden', 'true');
     ui.ponteiro.append(el('span', 'sg-ponta'), ui.ponteiroNome = el('span', 'sg-etiqueta', ''));
+    ui.seta = el('div', 'sg-seta', '➤'); ui.seta.hidden = true; ui.seta.setAttribute('aria-hidden', 'true');
     ui.barra = el('div', 'sg-barra'); ui.barra.hidden = true; ui.barra.setAttribute('role', 'status');
     ui.moldura = el('div', 'sg-moldura'); ui.moldura.hidden = true;
     ui.tela = el('div', 'sg-tela'); ui.tela.hidden = true; ui.tela.tabIndex = 0;
@@ -589,7 +599,7 @@
     cab.append(ui.telaNome, cheia, rec);
     ui.video = document.createElement('video'); ui.video.autoplay = true; ui.video.muted = true; ui.video.setAttribute('playsinline', '');
     ui.tela.append(cab, ui.video);
-    document.body.append(ui.botao, ui.painel, ui.barra, ui.moldura, ui.pagina, ui.ponteiro, ui.tela);
+    document.body.append(ui.botao, ui.painel, ui.barra, ui.seta, ui.moldura, ui.pagina, ui.ponteiro, ui.tela);
     ligarOperacao();
     if (ui.ponteiro.showPopover) { try { ui.ponteiro.showPopover(); ui.ponteiro.dataset.p = '1'; } catch (_) { /* ok */ } }
     desenhar();

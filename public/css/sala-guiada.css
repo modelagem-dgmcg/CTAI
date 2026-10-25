@@ -73,3 +73,13 @@
 .sg-tela.sg-operando{outline:3px solid #d97706}
 .sg-tela.sg-operando video{cursor:crosshair}
 .sg-tela:focus{outline:3px solid #d97706}
+
+/* Apontador mais forte: bolinha maior, com pulso, e seta na borda quando está fora da tela */
+.sg-ponteiro .sg-ponta{left:-19px;top:-19px;width:38px;height:38px;background:rgba(217,119,6,.45);border-width:4px;animation:sg-pulso 1.3s ease-out infinite}
+.sg-ponteiro .sg-etiqueta{left:24px;top:20px;font-size:14px;padding:3px 12px;background:#8e1628;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+@keyframes sg-pulso{0%{box-shadow:0 0 0 2px #fff,0 0 0 0 rgba(217,119,6,.7)}100%{box-shadow:0 0 0 2px #fff,0 0 0 26px rgba(217,119,6,0)}}
+.sg-seta{position:fixed;left:0;top:0;z-index:2147483000;width:40px;height:40px;margin:-20px 0 0 -20px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#d97706;color:#fff;font-size:22px;box-shadow:0 0 0 3px #fff,0 3px 10px rgba(0,0,0,.4);pointer-events:none;animation:sg-bate .8s ease-in-out infinite alternate}
+.sg-seta[hidden]{display:none}
+@keyframes sg-bate{to{opacity:.55}}
+.sg-siga{background:#d97706;color:#fff;border-radius:999px;padding:2px 12px;font-weight:700}
+@media (prefers-reduced-motion:reduce){.sg-ponteiro .sg-ponta,.sg-seta{animation:none}}

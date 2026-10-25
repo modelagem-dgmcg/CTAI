@@ -29,6 +29,10 @@ const SENHA = 'Senha@12345';
     await ela.click('.sg-botao'); await ela.fill('.sg-painel input', codigo); await ela.click('.sg-painel button:has-text("Entrar")');
     await ela.waitForSelector('.sg-codigo');
     await eu.waitForSelector('.sg-chave:has-text("Operar a tela de")', { timeout: 10000 });
+    // apontador: quem acompanha recebe o aviso forte e vê a bolinha
+    await eu.mouse.move(400, 300); await eu.mouse.move(420, 320);
+    await ela.waitForSelector('.sg-barra .sg-siga:has-text("Siga a bolinha")', { timeout: 8000 });
+    await ela.waitForFunction(() => getComputedStyle(document.querySelector('.sg-ponteiro')).opacity === '1', null, { timeout: 5000 });
     // alvo de teste na tela dela
     await ela.evaluate(() => { const i = document.createElement('input'); i.id = 'alvo-teste'; i.style.cssText = 'position:fixed;left:300px;top:200px;width:300px;height:40px;z-index:10;font-size:20px'; document.body.appendChild(i); window.__c = 0; i.addEventListener('click', () => { window.__c++; }); });
     // pede a permissão
