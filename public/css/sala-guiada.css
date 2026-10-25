@@ -54,3 +54,22 @@
 .sg-convite button{background:#1a1d20;color:#fff;border:0;border-radius:8px;padding:9px 16px;font:600 14px "Segoe UI",system-ui,sans-serif;cursor:pointer}
 .sg-convite button.sg-sec{background:#fff;color:#495057;border:1px solid #adb5bd}
 .sg-convite .sg-linha{gap:10px}
+
+/* Ajuda ao vivo: faixa de estado, chaves de liga/desliga e moldura de operação */
+.sg-barra{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:2147482500;display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:calc(100vw - 24px);background:#1a1d20;color:#fff;padding:6px 12px;border-radius:0 0 10px 10px;box-shadow:0 4px 12px rgba(0,0,0,.35);font:13px "Segoe UI",system-ui,sans-serif}
+.sg-barra[hidden],.sg-moldura[hidden]{display:none}
+.sg-barra.sg-alerta{background:#8e1628}
+.sg-ao-vivo{color:#fbbf24;font-weight:700}
+.sg-chip{background:rgba(255,255,255,.12);border-radius:999px;padding:2px 10px}
+.sg-chip.sg-on{background:#d97706;color:#fff}
+.sg-barra button{background:#5c636a;color:#fff;border:0;border-radius:6px;padding:4px 10px;font:600 12px "Segoe UI",system-ui,sans-serif;cursor:pointer}
+.sg-barra button.sg-sec{background:transparent;border:1px solid #adb5bd}
+.sg-barra button.sg-vermelho{background:#fff;color:#8e1628}
+.sg-moldura{position:fixed;inset:0;z-index:2147482400;border:5px solid #d97706;pointer-events:none}
+.sg-chave{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid #dee2e6;border-left:4px solid #adb5bd;border-radius:8px}
+.sg-chave.sg-lig{border-left-color:#d97706;background:#fff8db}
+.sg-chave-t{display:flex;flex-direction:column;font-size:13px}
+.sg-chave-t span{color:#6c757d;font-size:12px}
+.sg-tela.sg-operando{outline:3px solid #d97706}
+.sg-tela.sg-operando video{cursor:crosshair}
+.sg-tela:focus{outline:3px solid #d97706}

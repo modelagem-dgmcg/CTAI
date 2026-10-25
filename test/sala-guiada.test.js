@@ -158,3 +158,12 @@ test('convidar: aviso para quem está fora, mensagem para a equipe da CTAI, recu
   assert.equal((await unidade.get('/api/sala/convites')).json.convites.length, 0, 'quem já entrou não recebe');
   await cond.post('/api/sala/encerrar', { codigo: c.codigo, eu: c.eu });
 });
+
+test('registro de operação vai para a trilha; ação inválida é recusada', async () => {
+  const c = (await cond.post('/api/sala/criar')).json;
+  const ea = (await a.post('/api/sala/entrar', { codigo: c.codigo })).json;
+  assert.equal((await a.post('/api/sala/registro', { codigo: c.codigo, eu: ea.eu, acao: 'operacao_autorizada', com: 'Cleuton' })).status, 200);
+  assert.equal((await a.post('/api/sala/registro', { codigo: c.codigo, eu: ea.eu, acao: 'qualquer_coisa' })).status, 400);
+  assert.equal((await b.post('/api/sala/registro', { codigo: c.codigo, eu: ea.eu, acao: 'operacao_encerrada' })).status, 403, 'só quem está na sala registra');
+  await cond.post('/api/sala/encerrar', { codigo: c.codigo, eu: c.eu });
+});

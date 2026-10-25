@@ -20,6 +20,9 @@
   window.addEventListener('pagehide', () => { saindoDaPagina = true; }); window.addEventListener('beforeunload', () => { saindoDaPagina = true; });
   let tela = null;                // minha tela, quando estou compartilhando
   let quemMostra = '';            // nome de quem está compartilhando comigo
+  let operando = null;            // id de quem eu estou operando (só o app dele)
+  let operador = null;            // { id, nome } de quem opera o meu app
+  let pedido = null;              // id a quem pedi permissão para operar
   const ui = {};
 
   /* ---------- utilidades ---------- */
@@ -117,6 +120,8 @@
       if (!pcs.has(p.id) && est.eu > p.id) ligar(p.id);
     }
     for (const id of [...pcs.keys()]) if (!lista.some((p) => p.id === id)) fecharPc(id);
+    if (operando && !lista.some((p) => p.id === operando && p.online)) { operando = null; desenhar(); }
+    if (operador && !lista.some((p) => p.id === operador.id && p.online)) encerrarOperador(false);
   }
   async function ligar(id) {
     const { pc } = criarPc(id, true);
@@ -127,6 +132,10 @@
     try {
       if (d.tipo === 'apresentando') { if (tela) pararTela(false); quemMostra = d.nome || ''; return; }
       if (d.tipo === 'parou') { esconderTela(de); return; }
+      if (d.tipo === 'ctl-pedir') { receberPedido(de, d); return; }
+      if (d.tipo === 'ctl-resp') { if (pedido !== de) return; pedido = null; if (d.ok) { operando = de; aviso('Você está operando o sistema de ' + nomeDe(de) + '. Clique na imagem da tela dela.'); registrar('operacao_iniciada', nomeDe(de)); } else aviso(nomeDe(de) + ' não permitiu a operação.', true); desenhar(); return; }
+      if (d.tipo === 'ctl-parar') { if (operando === de) { operando = null; pedido = null; aviso(nomeDe(de) + ' encerrou a operação.'); } if (operador && operador.id === de) encerrarOperador(false); desenhar(); return; }
+      if (d.tipo === 'ctl-ev') { if (operador && operador.id === de) aplicar(d); return; }
       if (d.tipo === 'oferta') {
         const velho = pcs.get(de);
         let pc;
@@ -154,20 +163,120 @@
     const r = pcs.get(id); if (!r || r.pc.signalingState !== 'stable') return;
     try { await r.pc.setLocalDescription(afinar(await r.pc.createOffer())); sinalar(id, { tipo: 'oferta', reneg: true, sdp: r.pc.localDescription }); } catch (_) { /* tenta na próxima mudança */ }
   }
+  // ---------- operar o app de outra pessoa (só a aba do sistema, só com a permissão dela) ----------
+  const nomeDe = (id) => (lista.find((x) => x.id === id) || {}).nome || 'participante';
+  const registrar = (acao, com) => { if (est) api('POST', '/api/sala/registro', { codigo: est.codigo, eu: est.eu, acao, com }).catch(() => {}); };
+  function pedirOperar(id) {
+    if (pedido || operando) return;
+    pedido = id; sinalar(id, { tipo: 'ctl-pedir', nome: nomeDe(est.eu) });
+    aviso('Pedido enviado a ' + nomeDe(id) + '. Aguarde a permissão.'); desenhar();
+    setTimeout(() => { if (pedido === id) { pedido = null; aviso(nomeDe(id) + ' não respondeu ao pedido.', true); desenhar(); } }, 60000);
+  }
+  function pararOperar() { if (!operando) return; const id = operando; operando = null; sinalar(id, { tipo: 'ctl-parar' }); registrar('operacao_encerrada', nomeDe(id)); aviso('Você parou de operar.'); desenhar(); }
+  function receberPedido(de, d) {
+    const quem = lista.find((x) => x.id === de);
+    if (!est || !quem || !quem.condutor || operador) { sinalar(de, { tipo: 'ctl-resp', ok: false }); return; } // só quem conduz pode pedir
+    const cx = el('div', 'sg-convite'); cx.setAttribute('role', 'alertdialog');
+    cx.append(el('strong', null, quem.nome + ' pede para operar o seu sistema'),
+      el('p', null, 'Você vai mostrar a aba do sistema. Ele(a) poderá clicar e digitar nela, e você verá tudo acontecer. Senhas não são digitadas por ele(a). Você pode parar a qualquer momento.'));
+    const l = el('div', 'sg-linha');
+    const sim = el('button', null, 'Permitir'); sim.onclick = async () => {
+      cx.remove();
+      const ok = tela ? true : await compartilharTela(true);
+      if (!ok) { sinalar(de, { tipo: 'ctl-resp', ok: false }); return; }
+      operador = { id: de, nome: quem.nome }; desenhar();
+      sinalar(de, { tipo: 'ctl-resp', ok: true }); registrar('operacao_autorizada', quem.nome);
+    };
+    const nao = el('button', 'sg-sec', 'Agora não'); nao.onclick = () => { cx.remove(); sinalar(de, { tipo: 'ctl-resp', ok: false }); };
+    l.append(sim, nao); cx.appendChild(l); document.body.appendChild(cx);
+  }
+  function encerrarOperador(avisarOutro) {
+    if (!operador) return; const o = operador; operador = null;
+    if (avisarOutro) sinalar(o.id, { tipo: 'ctl-parar' });
+    registrar('operacao_encerrada', o.nome); esconderPonteiro(); desenhar();
+  }
+  const VEDADO = '.sg-painel,.sg-botao,.sg-barra,.sg-tela,.sg-convite,.sg-ponteiro,.sg-pagina';
+  function focaveis() {
+    return [...document.querySelectorAll('a[href],button,input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter((n) => !n.disabled && !n.closest(VEDADO) && n.type !== 'hidden' && n.offsetParent !== null);
+  }
+  function aplicar(d) {
+    const alvoEm = () => { const e = document.elementFromPoint(d.x * innerWidth, d.y * innerHeight); return e && !e.closest(VEDADO) ? e : null; };
+    if (d.t === 'mv' || d.t === 'click') {
+      if (ui.ponteiroNome) ui.ponteiroNome.textContent = operador.nome;
+      aoPonteiro({ tipo: d.t === 'click' ? 'clique' : 'mover', alvo: '', fx: null, fy: null, x: d.x, y: d.y, pagina: location.pathname + location.hash });
+    }
+    if (d.t === 'click') {
+      const e = alvoEm(); if (!e) return;
+      const o = { bubbles: true, cancelable: true, view: window, clientX: d.x * innerWidth, clientY: d.y * innerHeight };
+      e.dispatchEvent(new MouseEvent('mousedown', o));
+      const f = e.closest('input,textarea,select,button,a,[tabindex]'); if (f && f.focus) f.focus();
+      e.dispatchEvent(new MouseEvent('mouseup', o));
+      if (e.click) e.click(); else e.dispatchEvent(new MouseEvent('click', o));
+    } else if (d.t === 'wheel') {
+      let e = alvoEm(), rolou = false;
+      while (e && e !== document.body && e !== document.documentElement) {
+        const oy = getComputedStyle(e).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && e.scrollHeight > e.clientHeight) { e.scrollBy({ top: Number(d.dy) || 0 }); rolou = true; break; }
+        e = e.parentElement;
+      }
+      if (!rolou) window.scrollBy({ top: Number(d.dy) || 0 });
+    } else if (d.t === 'key') {
+      const a = document.activeElement; if (!a || a.closest(VEDADO)) return;
+      const k = String(d.key || '');
+      if (k === 'Tab') { const l = focaveis(); if (!l.length) return; const i = l.indexOf(a); const n = l[(i + (d.shift ? -1 : 1) + l.length) % l.length]; n.focus(); return; }
+      const texto = (a.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|file|password|range|color|hidden)$/.test(a.type)) || a.tagName === 'TEXTAREA';
+      if (a.tagName === 'INPUT' && a.type === 'password') return; // senha: só a própria pessoa digita
+      if (texto && !a.readOnly && !a.disabled) {
+        const ini = () => { try { return [a.selectionStart, a.selectionEnd]; } catch (_) { return [null, null]; } };
+        const poe = (t) => { const [i, f] = ini(); if (i === null) a.value += t; else a.setRangeText(t, i, f, 'end'); a.dispatchEvent(new Event('input', { bubbles: true })); };
+        if (k.length === 1) { poe(k); return; }
+        if (k === 'Backspace') { const [i, f] = ini(); if (i === null) a.value = a.value.slice(0, -1); else if (i !== f) a.setRangeText('', i, f, 'end'); else if (i > 0) a.setRangeText('', i - 1, i, 'end'); a.dispatchEvent(new Event('input', { bubbles: true })); return; }
+        if (k === 'Enter' && a.tagName === 'TEXTAREA') { poe('\n'); return; }
+      }
+      if (k === 'Enter' || k === ' ') {
+        const ev = new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true });
+        const livre = a.dispatchEvent(ev);
+        if (livre && k === 'Enter' && a.tagName === 'INPUT' && a.form && texto) { if (a.form.requestSubmit) a.form.requestSubmit(); }
+        else if (livre && (a.tagName === 'BUTTON' || a.tagName === 'A' || a.tagName === 'SUMMARY')) a.click();
+      } else a.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+    }
+  }
+  // Quem opera: o que acontece sobre a imagem da tela dela é enviado como posição relativa (0 a 1) e como teclas.
+  let tOp = 0, opPend = null, opVoo = false;
+  function enviarOp(dados) { if (!operando) return; sinalar(operando, Object.assign({ tipo: 'ctl-ev' }, dados)); }
+  function enviarOpMover(dados) { opPend = dados; if (opVoo) return; opVoo = true; const d = opPend; opPend = null; sinalar(operando, Object.assign({ tipo: 'ctl-ev' }, d)).then(() => { opVoo = false; if (opPend) enviarOpMover(opPend); }); }
+  function posNaImagem(e) {
+    const v = ui.video, vw = v.videoWidth, vh = v.videoHeight; if (!vw || !vh) return null;
+    const b = v.getBoundingClientRect(), esc = Math.min(b.width / vw, b.height / vh), w = vw * esc, h = vh * esc;
+    const x = (e.clientX - (b.left + (b.width - w) / 2)) / w, y = (e.clientY - (b.top + (b.height - h) / 2)) / h;
+    return x < 0 || x > 1 || y < 0 || y > 1 ? null : { x, y };
+  }
+  function ligarOperacao() {
+    ui.video.addEventListener('mousemove', (e) => { if (!operando) return; const t = Date.now(); if (t - tOp < 40) return; tOp = t; const p = posNaImagem(e); if (p) enviarOpMover(Object.assign({ t: 'mv' }, p)); });
+    ui.video.addEventListener('click', (e) => { if (!operando) return; ui.tela.focus(); const p = posNaImagem(e); if (p) enviarOp(Object.assign({ t: 'click' }, p)); });
+    ui.video.addEventListener('wheel', (e) => { if (!operando) return; e.preventDefault(); const p = posNaImagem(e); if (p) enviarOp(Object.assign({ t: 'wheel', dy: Math.max(-600, Math.min(600, e.deltaY)) }, p)); }, { passive: false });
+    ui.tela.addEventListener('keydown', (e) => {
+      if (!operando || e.target !== ui.tela || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key.length === 1 || ['Backspace', 'Enter', 'Tab'].includes(e.key)) { e.preventDefault(); enviarOp({ t: 'key', key: e.key, shift: e.shiftKey }); }
+    });
+  }
   // ---------- compartilhar a tela ----------
-  async function compartilharTela() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { aviso('Este navegador não compartilha tela. Use o Chrome ou o Edge atualizados.', true); return; }
+  async function compartilharTela(soAba) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) { aviso('Este navegador não compartilha tela. Use o Chrome ou o Edge atualizados.', true); return false; }
     let fl;
-    try { fl = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always' }, audio: false }); } catch (_) { aviso('Compartilhamento cancelado. Escolha "Tela inteira" para mostrar o sistema todo.'); return; }
+    try { fl = await navigator.mediaDevices.getDisplayMedia(soAba ? { video: { cursor: 'always' }, audio: false, preferCurrentTab: true, selfBrowserSurface: 'include', surfaceSwitching: 'exclude' } : { video: { cursor: 'always' }, audio: false }); } catch (_) { aviso(soAba ? 'Compartilhamento cancelado. A operação precisa que você mostre a aba do sistema.' : 'Compartilhamento cancelado. Escolha "Tela inteira" para mostrar o sistema todo.'); return false; }
+    if (soAba) { const ds = (fl.getVideoTracks()[0].getSettings() || {}).displaySurface; if (ds && ds !== 'browser') { fl.getTracks().forEach((t) => t.stop()); aviso('Você escolheu a tela inteira ou uma janela. Para operar, escolha a ABA do sistema.', true); return false; } }
     tela = fl; aviso('');
     const meu = (lista.find((x) => x.id === est.eu) || {}).nome || '';
     fl.getVideoTracks()[0].onended = () => pararTela(true);
     for (const p of lista) if (p.id !== est.eu && p.online) sinalar(p.id, { tipo: 'apresentando', nome: meu }); // quem estava mostrando a própria tela para
     for (const r of pcs.values()) r.telaSenders = fl.getTracks().map((t) => r.pc.addTrack(t, fl));
     desenhar();
+    return true;
   }
   function pararTela(avisar) {
     if (!tela) return;
+    if (operador) encerrarOperador(true);
     const fl = tela; tela = null; fl.getTracks().forEach((t) => { t.onended = null; t.stop(); });
     for (const [id, r] of pcs.entries()) { for (const s of r.telaSenders || []) { try { r.pc.removeTrack(s); } catch (_) { /* ok */ } } r.telaSenders = []; if (avisar && est) sinalar(id, { tipo: 'parou' }); }
     desenhar();
@@ -175,7 +284,8 @@
   function mostrarTela(id, fl) {
     if (!ui.tela) return;
     const nome = (lista.find((x) => x.id === id) || {}).nome || quemMostra || 'participante';
-    ui.tela.dataset.de = id; ui.telaNome.textContent = 'Tela de ' + nome; ui.video.srcObject = fl; ui.video.play().catch(() => {}); ui.tela.hidden = false;
+    ui.tela.dataset.de = id; ui.telaNome.textContent = (operando === id ? 'Operando: ' : 'Tela de ') + nome;
+    ui.tela.classList.toggle('sg-operando', operando === id); ui.video.srcObject = fl; ui.video.play().catch(() => {}); ui.tela.hidden = false;
   }
   function esconderTela(id) {
     if (!ui.tela || (id && ui.tela.dataset.de && ui.tela.dataset.de !== id)) return;
@@ -239,6 +349,7 @@
     if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
     if (ctx) { try { ctx.close(); } catch (_) { /* ok */ } ctx = null; }
     clearInterval(timerFala); retirarEmissor(); esconderPonteiro(); limparPagina();
+    operando = null; operador = null; pedido = null;
     est = null; lista = []; mudo = true; guardar(null);
     if (ui.botao) ui.botao.classList.remove('sg-ativo');
     if (ui.som) ui.som.hidden = true;
@@ -258,7 +369,7 @@
   async function sair() {
     if (!est) return;
     if (est.condutor && !confirmando) { // dois cliques: evita encerrar a sala de todos por engano
-      confirmando = true; ui.sair.textContent = 'Clique de novo para encerrar'; setTimeout(() => { confirmando = false; if (ui.sair) ui.sair.textContent = 'Encerrar sala'; }, 4000); return;
+      confirmando = true; [ui.sair, ui.barraSair].forEach((b) => { if (b) b.textContent = 'Clique de novo para encerrar'; }); setTimeout(() => { confirmando = false; if (ui.sair) ui.sair.textContent = 'Encerrar sala'; if (ui.barraSair) ui.barraSair.textContent = 'Encerrar sala'; }, 4000); return;
     }
     confirmando = false;
     try { await api('POST', '/api/sala/sair', { codigo: est.codigo, eu: est.eu }); } catch (_) { /* sai do mesmo jeito */ }
@@ -354,10 +465,30 @@
   }
 
   /* ---------- tela ---------- */
+  function desenharBarra() {
+    if (!ui.barra) return;
+    ui.moldura.hidden = !operador;
+    if (ui.tela) { const op = !!operando && ui.tela.dataset.de === operando; ui.tela.classList.toggle('sg-operando', op); if (op) ui.telaNome.textContent = 'Operando: ' + nomeDe(operando); }
+    if (!est) { ui.barra.hidden = true; return; }
+    ui.barra.hidden = false; ui.barra.classList.toggle('sg-alerta', !!operador); ui.barra.textContent = '';
+    const chip = (t, on) => ui.barra.appendChild(el('span', 'sg-chip' + (on ? ' sg-on' : ''), t));
+    ui.barra.appendChild(el('span', 'sg-ao-vivo', '● Ao vivo'));
+    chip(stream ? (mudo ? 'Microfone desligado' : 'Microfone ligado') : 'Só ouvindo', !mudo && !!stream);
+    if (est.condutor) chip('Apontador ' + (apontador ? 'ligado' : 'desligado'), apontador);
+    if (tela) chip('Sua tela está sendo mostrada', true);
+    if (operando) chip('Você opera o sistema de ' + nomeDe(operando), true);
+    if (operador) chip(operador.nome + ' está operando o seu sistema', true);
+    const painel = el('button', null, 'Painel'); painel.onclick = () => { ui.painel.hidden = !ui.painel.hidden; };
+    ui.barra.appendChild(painel);
+    if (operando) { const b = el('button', 'sg-sec', 'Parar de operar'); b.onclick = pararOperar; ui.barra.appendChild(b); }
+    if (operador) { const b = el('button', 'sg-vermelho', 'PARAR AGORA'); b.onclick = () => encerrarOperador(true); ui.barra.appendChild(b); }
+    ui.barraSair = el('button', 'sg-sec', est.condutor ? 'Encerrar sala' : 'Sair'); ui.barraSair.onclick = () => sair(); ui.barra.appendChild(ui.barraSair);
+  }
   function desenhar() {
     if (!ui.painel) return;
     const p = ui.corpo; p.textContent = '';
-    ui.botao.textContent = est ? 'Sala ' + est.codigo : 'Sala guiada';
+    ui.botao.textContent = est ? 'Ao vivo · ' + est.codigo : 'Ajuda ao vivo';
+    desenharBarra();
     if (ui.ponteiroNome && est) ui.ponteiroNome.textContent = est.condutorNome || (lista.find((x) => x.condutor) || {}).nome || 'Condutor';
     if (!est) {
       p.appendChild(el('p', 'sg-ajuda', 'Entre com o código de 5 letras que quem conduz informou. Use fone de ouvido para evitar eco.'));
@@ -369,16 +500,27 @@
       if (ui.podeCriar) { const c = el('button', 'sg-sec', 'Criar sala (eu conduzo)'); c.onclick = criar; p.appendChild(c); }
     } else {
       p.appendChild(el('div', 'sg-codigo', est.codigo));
-      p.appendChild(el('p', 'sg-ajuda', est.condutor ? 'Você conduz. Passe este código a quem vai acompanhar.' : 'Quem conduz: ' + (est.condutorNome || '') + '. Acompanhe a bolinha na sua tela.'));
+      p.appendChild(el('p', 'sg-ajuda', est.condutor ? 'Você conduz. Passe este código a quem vai acompanhar.' : 'Quem conduz: ' + (est.condutorNome || '') + '.'));
       ui.lista = el('ul', 'sg-lista'); p.appendChild(ui.lista); desenharLista();
-      const mic = el('button', mudo ? '' : 'sg-aberto', stream ? (mudo ? 'Ligar microfone' : 'Desligar microfone') : 'Sem microfone (só ouvindo)');
-      mic.disabled = !stream; mic.onclick = () => alternarMicrofone(); p.appendChild(mic);
+      const chave = (titulo, ligado, texto, acao, desab) => {
+        const l = el('div', 'sg-chave' + (ligado ? ' sg-lig' : '')); const t = el('div', 'sg-chave-t');
+        t.append(el('strong', null, titulo), el('span', null, texto));
+        const b = el('button', ligado ? 'sg-aberto' : '', ligado ? 'Desligar' : 'Ligar'); b.disabled = !!desab; b.onclick = acao;
+        l.append(t, b); p.appendChild(l);
+      };
+      chave('Microfone', !mudo && !!stream, stream ? (mudo ? 'Desligado: ninguém ouve você' : 'Ligado: todos ouvem você') : 'Sem microfone: você só ouve', () => alternarMicrofone(), !stream);
+      if (est.condutor) chave('Apontador', apontador, apontador ? 'Ligado: todos veem sua bolinha' : 'Desligado', () => { apontador = !apontador; if (!apontador && est) api('POST', '/api/sala/ponteiro', { codigo: est.codigo, eu: est.eu, dados: { tipo: 'sumir' } }).catch(() => {}); desenhar(); });
+      chave('Mostrar minha tela', !!tela, tela ? 'Ligado: todos veem sua tela' : 'Desligado', () => (tela ? pararTela(true) : compartilharTela()));
       if (est.condutor) {
-        const l = el('div', 'sg-linha');
-        const ap = el('button', 'sg-sec', 'Apontador: ' + (apontador ? 'ligado' : 'desligado'));
-        ap.onclick = () => { apontador = !apontador; if (!apontador && est) api('POST', '/api/sala/ponteiro', { codigo: est.codigo, eu: est.eu, dados: { tipo: 'sumir' } }).catch(() => {}); desenhar(); };
+        for (const x of lista) {
+          if (x.id === est.eu || !x.online) continue;
+          const ativo = operando === x.id;
+          chave('Operar a tela de ' + x.nome, ativo, ativo ? 'Ligado: você clica e digita no sistema dela' : (pedido === x.id ? 'Aguardando a permissão…' : 'Desligado. Ela precisa permitir'), () => (ativo ? pararOperar() : pedirOperar(x.id)), !!pedido && pedido !== x.id);
+        }
+      } else if (operador) chave('Deixar ' + operador.nome + ' operar', true, 'Ligado: ele(a) clica e digita no seu sistema', () => encerrarOperador(true));
+      if (est.condutor) {
         const si = el('button', 'sg-sec', 'Silenciar todos'); si.onclick = () => api('POST', '/api/sala/silenciar', { codigo: est.codigo, eu: est.eu }).catch((e) => aviso(e.message, true));
-        l.append(ap, si); p.appendChild(l);
+        p.appendChild(si);
         const cv = el('div', 'sg-linha'); const sel = el('select'); sel.setAttribute('aria-label', 'Quem convidar');
         [['online', 'Quem está no sistema agora'], ['equipe', 'Toda a equipe da CTAI'], ['todos', 'Todas as pessoas com acesso']].forEach(([v, t]) => { const o = el('option', null, t); o.value = v; sel.appendChild(o); });
         const bc = el('button', null, 'Convidar'); bc.onclick = async () => { try { const o = await api('POST', '/api/sala/convidar', { codigo: est.codigo, eu: est.eu, quem: sel.value }); aviso(o.convidados ? 'Convite enviado a ' + o.convidados + ' pessoa(s).' : 'Ninguém para convidar nesse grupo agora.'); } catch (e) { aviso(e.message, true); } };
@@ -386,20 +528,20 @@
       } else {
         const lab = el('label', 'sg-seguir'); const cb = el('input'); cb.type = 'checkbox'; cb.checked = seguir; cb.onchange = () => { seguir = cb.checked; };
         lab.append(cb, document.createTextNode(' Acompanhar a tela de quem conduz (dentro da mesma área)')); p.appendChild(lab);
+        const as = el('button', 'sg-sec', 'Assumir a condução'); as.onclick = () => api('POST', '/api/sala/assumir', { codigo: est.codigo, eu: est.eu }).catch((e) => aviso(e.message, true)); p.appendChild(as);
       }
-      const ts = el('button', tela ? 'sg-aberto' : 'sg-sec', tela ? 'Parar de compartilhar a tela' : 'Compartilhar minha tela');
-      ts.onclick = () => (tela ? pararTela(true) : compartilharTela()); p.appendChild(ts);
-      p.appendChild(el('p', 'sg-ajuda', tela ? 'Todos estão vendo a sua tela. Para mostrar o sistema inteiro, mude de janela à vontade: a tela compartilhada acompanha.' : 'Mostra a sua tela a todos da sala. Escolha "Tela inteira" para poder trocar de janela.'));
-      if (!est.condutor) { const as = el('button', 'sg-sec', 'Assumir a condução'); as.onclick = () => api('POST', '/api/sala/assumir', { codigo: est.codigo, eu: est.eu }).catch((e) => aviso(e.message, true)); p.appendChild(as); }
       const det = el('details', 'sg-disp'); det.appendChild(el('summary', null, 'Microfone e fone'));
       det.addEventListener('toggle', () => { if (det.open) preencherDispositivos(det); });
       p.appendChild(det);
-      ui.sair = el('button', 'sg-sair', est.condutor ? 'Encerrar sala' : 'Sair da sala'); ui.sair.onclick = sair; p.appendChild(ui.sair); { const aj = el('a', 'sg-ajuda', 'Como funciona (manual com imagens)'); aj.href = '/ajuda/sala-guiada.html'; aj.target = '_blank'; aj.rel = 'noopener'; aj.style.cssText = 'display:block;margin-top:8px;font-size:13px;color:#d97706;text-align:center'; p.appendChild(aj); }
+      ui.sair = el('button', 'sg-sair', est.condutor ? 'Encerrar sala' : 'Sair da sala'); ui.sair.onclick = () => sair(); p.appendChild(ui.sair); { const aj = el('a', 'sg-ajuda', 'Como funciona (manual com imagens)'); aj.href = '/ajuda/sala-guiada.html'; aj.target = '_blank'; aj.rel = 'noopener'; aj.style.cssText = 'display:block;margin-top:8px;font-size:13px;color:#d97706;text-align:center'; p.appendChild(aj); }
     }
     ui.msg = el('div', 'sg-msg' + (ultimaMsg.ruim ? ' sg-ruim' : ''), ultimaMsg.t); p.appendChild(ui.msg);
   }
+  let assinatura = '';
   function desenharLista() {
     if (!ui.lista || !est) return;
+    const ass = lista.map((x) => x.id + (x.online ? '1' : '0')).join(',');
+    if (ass !== assinatura) { assinatura = ass; desenhar(); return; } // entrou ou saiu alguém: refaz os botões
     ui.lista.textContent = '';
     for (const x of lista) {
       const li = el('li'); li.dataset.id = x.id;
@@ -423,9 +565,9 @@
   }
 
   function montar() {
-    ui.botao = el('button', 'sg-botao', 'Sala guiada'); ui.botao.type = 'button';
-    ui.painel = el('div', 'sg-painel'); ui.painel.hidden = true; ui.painel.setAttribute('role', 'dialog'); ui.painel.setAttribute('aria-label', 'Sala guiada');
-    const topo = el('div', 'sg-topo'); topo.appendChild(el('strong', null, 'Sala guiada'));
+    ui.botao = el('button', 'sg-botao', 'Ajuda ao vivo'); ui.botao.type = 'button';
+    ui.painel = el('div', 'sg-painel'); ui.painel.hidden = true; ui.painel.setAttribute('role', 'dialog'); ui.painel.setAttribute('aria-label', 'Ajuda ao vivo');
+    const topo = el('div', 'sg-topo'); topo.appendChild(el('strong', null, 'Ajuda ao vivo'));
     const fechar = el('button', 'sg-x', '×'); fechar.setAttribute('aria-label', 'Recolher painel'); fechar.onclick = () => { ui.painel.hidden = true; };
     topo.appendChild(fechar);
     ui.corpo = el('div', 'sg-corpo');
@@ -438,14 +580,17 @@
     ui.paginaBtn = el('button', null, 'Ir para lá'); ui.pagina.appendChild(ui.paginaBtn);
     ui.ponteiro = el('div', 'sg-ponteiro'); ui.ponteiro.setAttribute('popover', 'manual'); ui.ponteiro.setAttribute('aria-hidden', 'true');
     ui.ponteiro.append(el('span', 'sg-ponta'), ui.ponteiroNome = el('span', 'sg-etiqueta', ''));
-    ui.tela = el('div', 'sg-tela'); ui.tela.hidden = true;
+    ui.barra = el('div', 'sg-barra'); ui.barra.hidden = true; ui.barra.setAttribute('role', 'status');
+    ui.moldura = el('div', 'sg-moldura'); ui.moldura.hidden = true;
+    ui.tela = el('div', 'sg-tela'); ui.tela.hidden = true; ui.tela.tabIndex = 0;
     const cab = el('div', 'sg-tela-cab'); ui.telaNome = el('strong', null, 'Tela compartilhada');
     const cheia = el('button', null, 'Tela cheia'); cheia.onclick = () => { if (ui.video.requestFullscreen) ui.video.requestFullscreen().catch(() => {}); };
     const rec = el('button', null, 'Esconder'); rec.onclick = () => { ui.tela.hidden = true; };
     cab.append(ui.telaNome, cheia, rec);
     ui.video = document.createElement('video'); ui.video.autoplay = true; ui.video.muted = true; ui.video.setAttribute('playsinline', '');
     ui.tela.append(cab, ui.video);
-    document.body.append(ui.botao, ui.painel, ui.pagina, ui.ponteiro, ui.tela);
+    document.body.append(ui.botao, ui.painel, ui.barra, ui.moldura, ui.pagina, ui.ponteiro, ui.tela);
+    ligarOperacao();
     if (ui.ponteiro.showPopover) { try { ui.ponteiro.showPopover(); ui.ponteiro.dataset.p = '1'; } catch (_) { /* ok */ } }
     desenhar();
   }
@@ -476,7 +621,7 @@
     const c = (o.convites || []).find((x) => !vistos.has(x.codigo)); if (!c) return;
     vistos.add(c.codigo);
     const cx = el('div', 'sg-convite'); cx.setAttribute('role', 'alertdialog');
-    cx.append(el('strong', null, c.de + ' chamou você para a Sala guiada'), el('p', null, 'Você vai ouvir a pessoa e ver o que ela mostrar. Seu microfone começa desligado.'));
+    cx.append(el('strong', null, c.de + ' chamou você para uma Ajuda ao vivo'), el('p', null, 'Você vai ouvir a pessoa e ver o que ela mostrar. Seu microfone começa desligado.'));
     const l = el('div', 'sg-linha');
     const sim = el('button', null, 'Entrar agora'); sim.onclick = async () => { cx.remove(); preparar(); try { await abrir(await api('POST', '/api/sala/entrar', { codigo: c.codigo })); ui.painel.hidden = false; } catch (e) { ui.painel.hidden = false; aviso(e.message, true); } };
     const nao = el('button', 'sg-sec', 'Agora não'); nao.onclick = () => { cx.remove(); api('POST', '/api/sala/convites/recusar', { codigo: c.codigo }).catch(() => {}); };

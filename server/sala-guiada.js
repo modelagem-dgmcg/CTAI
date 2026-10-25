@@ -8,6 +8,7 @@ const express = require('express');
 const crypto = require('crypto');
 const A = require('./auth');
 const config = require('./config');
+const trilha = require('./trilha');
 
 const MAX = Math.max(2, Math.min(16, Number(config.env('CTAI_SALA_MAX', '10')) || 10)); // limite de pessoas (áudio ponto a ponto)
 const DURACAO_MAX_MS = 4 * 3600 * 1000;      // sala fecha sozinha em 4 horas
@@ -237,6 +238,15 @@ module.exports = (db) => {
     for (const q of sala.parts.values()) if (q.id !== p.id) q.mudo = true;
     transmitir(sala, 'silenciar', {}, p.id);
     avisarLista(sala);
+    res.json({ ok: true });
+  });
+
+  // Registro (trilha) de quando alguém autoriza ou encerra a operação do próprio sistema por outra pessoa.
+  r.post('/registro', (req, res) => {
+    const { sala, p } = acharSala(req);
+    const acao = String((req.body && req.body.acao) || '');
+    if (!['operacao_iniciada', 'operacao_autorizada', 'operacao_encerrada'].includes(acao)) throw erro(400, 'Registro inválido.');
+    trilha.registrar(db, { usuario: req.usuario.login, tabela: 'ajuda_ao_vivo', registro: sala.codigo, campo: acao, valor_novo: { com: txt(req.body.com, 80) } });
     res.json({ ok: true });
   });
 
