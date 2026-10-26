@@ -47,7 +47,26 @@
     try {
       stream = await navigator.mediaDevices.getUserMedia(restricoes(devEntrada));
       stream.getAudioTracks().forEach((t) => { t.enabled = !mudo; try { t.contentHint = 'speech'; } catch (_) { /* ok */ } });
-    } catch (e) { stream = null; aviso('Sem acesso ao microfone (' + (e.name === 'NotAllowedError' ? 'permissão negada' : 'não encontrado') + '). Você só vai ouvir.', true); }
+    } catch (e) {
+      stream = null;
+      erroMic = e.name === 'NotAllowedError' || e.name === 'SecurityError' ? 'bloqueado' : e.name === 'NotFoundError' || e.name === 'OverconstrainedError' ? 'ausente' : e.name === 'NotReadableError' ? 'ocupado' : 'outro';
+      aviso(textoErroMic(), true);
+    }
+  }
+  let erroMic = '';
+  function textoErroMic() {
+    if (erroMic === 'bloqueado') return 'O navegador bloqueou o microfone deste site. Clique no cadeado ao lado do endereço, escolha Microfone > Permitir e clique em "Permitir microfone".';
+    if (erroMic === 'ausente') return 'Não encontrei nenhum microfone neste computador. Ligue um fone com microfone e clique em "Permitir microfone".';
+    if (erroMic === 'ocupado') return 'Outro programa está usando o microfone (Teams, Zoom ou outra aba). Feche-o e clique em "Permitir microfone".';
+    return 'Não consegui ligar o microfone. Clique em "Permitir microfone" para tentar de novo.';
+  }
+  // Tenta de novo depois que a pessoa liberou o microfone no navegador, sem sair da sala.
+  async function tentarMicrofone() {
+    await pegarMicrofone();
+    if (!stream) { desenhar(); return; }
+    const trilha = stream.getAudioTracks()[0]; erroMic = ''; aviso('Microfone liberado. Ele está desligado: clique em "Ligar" para falar.');
+    for (const reg of pcs.values()) { const s = reg.audioSender || reg.pc.getSenders().find((x) => !x.track || x.track.kind === 'audio'); if (s) s.replaceTrack(trilha).catch(() => {}); }
+    medir(est.eu, stream); desenhar();
   }
 
   function medir(id, fluxo) {
@@ -75,7 +94,8 @@
     const pc = new RTCPeerConnection({ iceServers: est.ice });
     const reg = { pc, iniciador };
     pcs.set(id, reg);
-    if (stream) stream.getAudioTracks().forEach((t) => pc.addTrack(t, stream)); else pc.addTransceiver('audio', { direction: 'recvonly' });
+    if (stream) stream.getAudioTracks().forEach((t) => { reg.audioSender = pc.addTrack(t, stream); });
+    else reg.audioSender = pc.addTransceiver('audio', { direction: 'sendrecv' }).sender; // sem microfone agora: a vaga fica aberta para ligar depois sem refazer a conexão
     if (tela) reg.telaSenders = tela.getTracks().map((t) => pc.addTrack(t, tela));
     pc.onnegotiationneeded = () => { if (reg.pronto) renegociar(id); };
     pc.onicecandidate = (e) => { if (e.candidate) sinalar(id, { tipo: 'ice', candidato: e.candidate }); };
@@ -517,7 +537,8 @@
         const b = el('button', ligado ? 'sg-aberto' : '', ligado ? 'Desligar' : 'Ligar'); b.disabled = !!desab; b.onclick = acao;
         l.append(t, b); p.appendChild(l);
       };
-      chave('Microfone', !mudo && !!stream, stream ? (mudo ? 'Desligado: ninguém ouve você' : 'Ligado: todos ouvem você') : 'Sem microfone: você só ouve', () => alternarMicrofone(), !stream);
+      if (stream) chave('Microfone', !mudo, mudo ? 'Desligado: ninguém ouve você' : 'Ligado: todos ouvem você', () => alternarMicrofone());
+      else { const l = el('div', 'sg-chave sg-falta'); const t = el('div', 'sg-chave-t'); t.append(el('strong', null, 'Microfone'), el('span', null, erroMic ? textoErroMic() : 'Ainda não liberado. Clique em "Permitir microfone".')); const b = el('button', 'sg-aberto', 'Permitir microfone'); b.onclick = tentarMicrofone; l.append(t, b); p.appendChild(l); }
       if (est.condutor) chave('Apontador', apontador, apontador ? 'Ligado: todos veem sua bolinha' : 'Desligado', () => { apontador = !apontador; if (!apontador && est) api('POST', '/api/sala/ponteiro', { codigo: est.codigo, eu: est.eu, dados: { tipo: 'sumir' } }).catch(() => {}); desenhar(); });
       chave('Mostrar minha tela', !!tela, tela ? 'Ligado: todos veem sua tela' : 'Desligado', () => (tela ? pararTela(true) : compartilharTela()));
       if (est.condutor) {
@@ -641,6 +662,8 @@
 
   // Para conferir se o áudio ligou de verdade (útil quando a rede da SES bloqueia): SalaGuiada.diagnostico() no console.
   function diagnostico() { return [...pcs.entries()].map(([id, r]) => ({ com: (lista.find((x) => x.id === id) || {}).nome || id, conexao: r.pc.connectionState, ice: r.pc.iceConnectionState })); }
-  window.SalaGuiada = { iniciar, sair: sairLocal, diagnostico };
+  // Bytes de áudio recebidos de cada pessoa (se ficar em 0 com a pessoa falando, o áudio não está chegando).
+  async function recebido() { const o = []; for (const [id, r] of pcs.entries()) { let b = 0; try { (await r.pc.getStats()).forEach((x) => { if (x.type === 'inbound-rtp' && x.kind === 'audio') b += x.bytesReceived || 0; }); } catch (_) { /* ok */ } o.push({ com: nomeDe(id), bytes: b }); } return o; }
+  window.SalaGuiada = { iniciar, sair: sairLocal, diagnostico, recebido };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();

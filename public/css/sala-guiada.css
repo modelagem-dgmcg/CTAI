@@ -83,3 +83,5 @@
 @keyframes sg-bate{to{opacity:.55}}
 .sg-siga{background:#d97706;color:#fff;border-radius:999px;padding:2px 12px;font-weight:700}
 @media (prefers-reduced-motion:reduce){.sg-ponteiro .sg-ponta,.sg-seta{animation:none}}
+.sg-chave.sg-falta{border-left-color:#8e1628;background:#fdecee;flex-wrap:wrap}
+.sg-chave.sg-falta .sg-chave-t span{color:#8e1628}
