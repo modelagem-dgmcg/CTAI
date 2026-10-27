@@ -183,11 +183,13 @@
     });
     const barra = h('nav', { class: 'etapas', 'aria-label': 'Etapas desta unidade' }, NOMES.map((nome, i) => h('button', { type: 'button', class: 'etapa-chip ' + txtEstado(i), title: nome, onclick: () => { secoes[i].open = true; secoes[i].scrollIntoView({ behavior: 'smooth', block: 'start' }); } },
       h('span', { class: 'chip-n' }, feitas[i] ? '✔' : String(i + 1)), h('span', { class: 'chip-t' }, nome))));
+    const slotContrato = h('div', { id: 'un-contrato' });
+    if (window.CTAI_CONTRATOS) window.CTAI_CONTRATOS.preencher(slotContrato, id).catch(() => {});
     const seletor = h('select', { id: 'un-tri', 'aria-label': 'Trimestre', onchange: (e) => { guardaTri(id, e.target.value); recarregar(); } }, tris.map((t) => h('option', Object.assign({ value: t }, t === T ? { selected: true } : {}), t)));
     montar(avDup,
       h('div', { class: 'topo' }, h('div', null, h('h1', null, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null), h('p', null, [c.tipo, c.oss, c.numero_cg].filter(Boolean).join(' · '))),
         h('div', { class: 'linha' }, h('label', { for: 'un-tri', class: 'mudo peq', style: 'margin:0' }, 'Trimestre'), seletor, h('button', { type: 'button', class: 'sec', onclick: () => configuracoes(id, recarregar).catch((e) => toast(e.message, true)) }, 'Configurações'))),
-      acessosProv, barra, secoes);
+      acessosProv, slotContrato, barra, secoes);
   }
 
   // Painel de consulta do editor: dados do trimestre e regras do contrato, para conferir sem trocar de janela.

@@ -63,7 +63,7 @@ async function revisar(db, parecerId, usuario) {
   todos.sort((a, b) => ordem.indexOf(a.gravidade) - ordem.indexOf(b.gravidade));
   const salvos = achadosDb.salvar(db, { origem_tipo: 'minuta', origem_id: p.parecer_id, cid: comp ? comp.cid : null, achados: todos, provedor: 'revisão completa · ' + ia.provedor, usuario: usuario.login });
   trilha.registrar(db, { usuario: usuario.login, tabela: 'pareceres', registro: p.parecer_id, campo: 'revisao_completa', valor_novo: { achados: todos.length, busca_externa: ext.ok } });
-  return { achados: todos, salvos, provedor: ia.provedor, tentativas: ia.tentativas, externa: ext, relatorios: { usado: rq.usado, n: rq.relatorios || 0 }, gaocg: { usado: gc.usado, lido_em: gc.lido_em || null, da_copia: !!gc.da_copia }, normasDaUnidade: normas.length };
+  return { achados: todos, salvos, provedor: ia.provedor, tentativas: ia.tentativas, externa: ext, relatorios: { usado: rq.usado, n: rq.relatorios || 0 }, gaocg: { usado: gc.usado, lido_em: gc.lido_em || null, da_copia: !!gc.da_copia, informacao: gc.informacao || null }, normasDaUnidade: normas.length };
 }
 
 module.exports = { revisar, conferenciasLocais };

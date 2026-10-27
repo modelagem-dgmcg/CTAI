@@ -2,7 +2,7 @@
   'use strict';
   // Gestão: painel da superintendente, produção, carteira, usuários e IA. Só superintendente e administrador.
   const { h, api, fmt, toast, janela, confirmar, selo, aviso, tabela, montar } = window.CTAI;
-  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['entregas', 'Entregas por carteira'], ['importar', 'Importar'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
+  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['entregas', 'Entregas por carteira'], ['completude', 'Completude'], ['importar', 'Importar'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
   const kpi = (r, v, nota, tom) => h('div', { class: 'kpi' + (tom ? ' ' + tom : '') }, h('div', { class: 'r' }, r), h('div', { class: 'num-grande' }, String(v)), nota ? h('div', { class: 'r' }, nota) : null);
   const F = { trimestre: '', contrato: '', usuario_id: '' }; // filtros lembrados enquanto a página está aberta
   const qs = (o) => { const p = new URLSearchParams(); for (const k of Object.keys(o)) if (o[k]) p.set(k, o[k]); const s = p.toString(); return s ? '?' + s : ''; };
@@ -288,6 +288,22 @@
         d.sem_responsavel.length ? tabela(cab, d.sem_responsavel.flatMap((u) => (u.entregas.length ? u.entregas.map(linha) : [[u.unidade, '—', '—', selo('sem carteira', 'atencao'), '—', '—']]))) : h('p', { class: 'mudo' }, 'Todas as unidades têm responsável.')));
   }
 
+  // ---------- Completude por carteira ----------
+  // Para cada unidade: trimestres do histórico (confirmado / rascunho / falta) e se o contrato com os termos aditivos já foi lido e confirmado.
+  async function completude() {
+    const d = await api('GET', '/api/gestao/completude');
+    const rotTri = (t) => t.replace(/^(\d{4})-T(\d)$/, '$2º tri/$1');
+    const celula = (e) => (e === 'confirmado' ? selo('confirmado', 'ok') : (e === 'rascunho' ? selo('rascunho', 'atencao') : selo('falta', 'alta')));
+    const contrato = (c) => h('div', null, c.situacao === 'confirmado' ? selo('contrato lido', 'ok') : (c.situacao === 'rascunho' ? selo('contrato: conferir', 'atencao') : selo('contrato não lido', 'alta')),
+      h('div', { class: 'peq mudo' }, c.aditivos_confirmados + ' aditivo(s) confirmado(s)' + (c.rascunhos ? ' · ' + c.rascunhos + ' por conferir' : '') + (c.pasta_consultada ? '' : ' · pasta ainda não consultada')));
+    const cab = [{ t: 'Unidade' }].concat(d.trimestres.map((t) => ({ t: rotTri(t) }))).concat([{ t: 'Contrato e aditivos' }, { t: '' }]);
+    const linha = (u) => [h('strong', null, u.unidade), ...d.trimestres.map((t) => celula(u.trimestres[t])), contrato(u.contrato), u.completo ? selo('completa', 'ok') : ''];
+    montar(...cabecalho('completude'),
+      h('div', { class: 'cartao' }, h('p', { class: 'mudo peq', style: 'margin:0' }, d.resumo.completas + ' de ' + d.resumo.unidades + ' unidade(s) completas · ' + d.resumo.contratos_lidos + ' com o contrato lido e confirmado. Completa = os 4 últimos trimestres encerrados confirmados no Histórico e o contrato confirmado, sem rascunho pendente.')),
+      d.funcionarios.map((f) => h('div', { class: 'cartao' }, h('h3', null, f.nome), f.unidades.length ? tabela(cab, f.unidades.map(linha)) : h('p', { class: 'mudo' }, 'Sem unidades na carteira.'))),
+      d.sem_carteira.length ? h('div', { class: 'cartao' }, h('h3', null, 'Unidades sem carteira'), tabela(cab, d.sem_carteira.map(linha))) : null);
+  }
+
   async function aba() {
     const h2 = location.hash.replace(/^#\/gestao\/?/, '');
     if (!F.lista) { try { F.lista = (await api('GET', '/api/gestao/painel?trimestre=' + (F.trimestre || ''))).trimestres; } catch (_) { F.lista = []; } }
@@ -295,6 +311,7 @@
     if (h2 === 'carteira') return carteira();
     if (h2 === 'importar') return importar();
     if (h2 === 'entregas') return entregas();
+    if (h2 === 'completude') return completude();
     if (h2 === 'usuarios') return usuarios();
     if (h2 === 'acessos') return acessos();
     if (h2 === 'ia') return ia();

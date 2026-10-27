@@ -74,7 +74,7 @@
   // Rotas que este perfil realmente tem (a Ajuda ao vivo usa para não levar ninguém a uma tela que o perfil não acessa).
   let ROTAS_ATIVAS = [];
   const rotaExiste = (hash) => { const h0 = String(hash || '').replace(/^#/, '') || '/'; return ROTAS_ATIVAS.some((padrao) => new RegExp('^' + padrao.replace(/:([a-z]+)/g, '([^/]+)') + '$').test(h0)); };
-  function rotear(rotas, aoMudar) {
+  function rotear(rotas, aoMudar, semRota) {
     ROTAS_ATIVAS = rotas.map((r) => r[0]);
     async function ir() {
       const hash = location.hash.replace(/^#/, '') || '/';
@@ -83,6 +83,7 @@
         const m = re.exec(hash);
         if (m) { const p = {}; nomes.forEach((n, i) => { p[n] = decodeURIComponent(m[i + 1]); }); aoMudar && aoMudar(hash); try { await fn(p); } catch (e) { montar(aviso('erro', e.message)); } window.scrollTo(0, 0); return; }
       }
+      if (semRota) { aoMudar && aoMudar(hash); semRota(hash); return; }
       montar(aviso('erro', 'Página não encontrada.'));
     }
     // Fila: telas lentas não sobrescrevem a tela mais nova.

@@ -476,7 +476,7 @@
       troca(caixaRev, h('p', { class: 'mudo' }, 'Consultando o GAOCG…'));
       try {
         const o = await api('POST', base + '/modelo/gaocg', {});
-        if (!o.encontrada) { troca(caixaRev, aviso('atencao', 'GAOCG conectado, mas não achei esta unidade/contrato no cadastro de lá (conferi pelo número do contrato e pelo nome).')); return; }
+        if (!o.encontrada) { troca(caixaRev, aviso('info', 'Sem dado no GAOCG ainda: não achei esta unidade/contrato no cadastro de lá (conferi pelo número do contrato e pelo nome). Isso não é erro do parecer; a base do GAOCG ainda está sendo alimentada.')); return; }
         troca(caixaRev, aviso('ok', 'GAOCG conectado · ' + (o.da_copia ? 'cópia de ' : 'lido agora, ') + new Date(o.lido_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '. ' + (o.preenchidos.length ? 'Preenchi na seção 3: ' + o.preenchidos.join(', ') + '.' : 'Nada a atualizar na seção 3.')));
         if (o.preenchidos.length) setTimeout(recarregar, 1500);
       } catch (e) { troca(caixaRev, aviso('erro', e.message)); }
@@ -487,7 +487,8 @@
         await api('PUT', base + '/modelo', lerTudo());
         const o = await api('POST', '/api/analista/pareceres/' + P.parecer_id + '/revisao-completa', {});
         const ex = o.externa || {};
-        troca(caixaRev, h('div', { class: 'linha espaco' }, h('span', { class: 'peq mudo' }, o.achados.length + ' achado(s) · ' + o.provedor + (o.relatorios && o.relatorios.usado ? ' · quadros conferidos com ' + o.relatorios.n + ' relatório(s) importado(s)' : '') + (o.gaocg && o.gaocg.usado ? ' · conferido com o GAOCG (' + (o.gaocg.da_copia ? 'cópia de ' : 'lido às ') + new Date(o.gaocg.lido_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + (o.normasDaUnidade ? ' · ' + o.normasDaUnidade + ' norma(s) da unidade consideradas' : '')), COMO_REVISAO(o)),
+        troca(caixaRev, h('div', { class: 'linha espaco' }, h('span', { class: 'peq mudo' }, o.achados.length + ' achado(s) · ' + o.provedor + (o.relatorios && o.relatorios.usado ? ' · quadros conferidos com ' + o.relatorios.n + ' relatório(s) importado(s)' : '') + (o.gaocg && o.gaocg.usado ? ' · conferido com o GAOCG (' + (o.gaocg.da_copia ? 'cópia de ' : 'lido às ') + new Date(o.gaocg.lido_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ')' : '') + (o.gaocg && o.gaocg.informacao ? ' · sem dado no GAOCG ainda' : '') + (o.normasDaUnidade ? ' · ' + o.normasDaUnidade + ' norma(s) da unidade consideradas' : '')), COMO_REVISAO(o)),
+          o.gaocg && o.gaocg.informacao ? aviso('info', o.gaocg.informacao) : null,
           o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'Nenhum achado nas conferências locais e no Analista.'),
           h('h4', null, 'Busca externa (normas e jurisprudência)'),
           ex.ok ? [ex.aviso ? h('p', { class: 'peq mudo' }, ex.aviso) : h('p', { class: 'peq', style: 'white-space:pre-wrap' }, ex.resposta || ''), ex.fontes && ex.fontes.length ? h('ul', { class: 'peq' }, ex.fontes.map((f) => h('li', null, h('a', { href: f.url, target: '_blank', rel: 'noopener noreferrer' }, f.titulo)))) : null]
@@ -766,6 +767,7 @@
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Fontes de dados'), h('p', null, 'De onde o sistema pode buscar informações além da digitação no portal. Hoje só a digitação e o arquivo CSV funcionam; as demais ficam prontas para quando houver acesso.'))),
       aviso('info', h('strong', null, 'Como funciona: '), 'o sistema busca as linhas pela API, confere cada uma (dado pessoal é recusado), e guarda como lote pendente. O gestor da unidade confirma. Só então entram no cálculo. As credenciais ficam no .env do servidor, nunca no banco.'),
       await cartaoGaocg(),
+      await cartaoContratosDrive(),
       r.tipos.map((t) => h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('strong', null, t.nome), selo(t.estado, t.estado === 'ativa' ? 'ok' : 'atencao')), h('p', { class: 'mudo peq', style: 'margin:4px 0 0' }, t.descricao))),
       r.integracoes.map((i) => cartaoIntegracao(i, cs)),
       r.mapeamento ? h('div', { class: 'cartao' }, h('h3', null, 'Mapeamento de campos (versão ' + r.mapeamento.versao + ')'), r.mapeamento.aviso ? aviso('atencao', r.mapeamento.aviso) : null, tabela([{ t: 'Fonte' }, { t: 'Endereço' }, { t: 'Campos', n: true }], r.mapeamento.fontes.map((f) => [f.fonte, f.endpoint, String(f.campos)])), h('p', { class: 'peq mudo' }, 'Arquivo: adapters/mv/mapeamento.json. Cada campo diz de qual campo da API vem e como converter (data, hora, segundos para minutos, sim/não, tabela de valores).')) : null);
@@ -790,7 +792,36 @@
         h('button', { class: 'sec', id: 'gc-testar', onclick: () => agir('Testando', async () => { const o = await api('POST', '/api/gaocg/testar', {}); troca(saida, aviso(o.ok ? 'ok' : 'erro', o.mensagem)); setTimeout(recarregar, 1200); }) }, 'Testar a conexão'),
         h('button', { class: 'sec', id: 'gc-atualizar', onclick: () => agir('Atualizando', async () => { const o = await api('POST', '/api/gaocg/atualizar', {}); troca(saida, aviso('ok', o.total + ' unidade(s) lidas do GAOCG.')); setTimeout(recarregar, 1200); }) }, 'Atualizar cadastro de unidades'),
         ehAdmin() ? h('button', { class: 'sec', onclick: () => agir('Lendo os campos', async () => { const o = await api('GET', '/api/gaocg/campos/api_unidades'); troca(saida, h('p', { class: 'peq' }, 'Campos que o GAOCG devolve em unidades: ' + (o.campos.join(', ') || '(nenhum)'))); }) }, 'Ver campos recebidos') : null) : aviso('info', 'Para ligar: guarde o endereço e a chave logo abaixo (administração) ou use as variáveis GAOCG_API_URL e GAOCG_API_CHAVE da hospedagem.'),
+      eh('admin', 'superintendente') ? h('label', { class: 'peq', style: 'display:flex;gap:8px;align-items:center;margin:8px 0', title: 'Desligado (padrão): unidade que não aparece no GAOCG vira só informação no parecer. Ligado: vira achado MÉDIA.' },
+        h('input', { type: 'checkbox', id: 'gc-completa', checked: !!est.base_completa, onchange: (ev) => agir('Guardando', async () => { await api('PUT', '/api/gaocg/base-completa', { valor: ev.target.checked }); troca(saida, aviso('ok', ev.target.checked ? 'Base do GAOCG marcada como completa: unidade ausente passa a ser achado MÉDIA.' : 'Base do GAOCG ainda incompleta: unidade ausente fica só como informação.')); }) }),
+        'A base do GAOCG já está completa (unidade que não aparece lá vira achado, e não só informação)') : null,
       ehAdmin() ? formGaocg(est, recarregar) : null,
+      saida);
+  }
+  // Contratos e TAs (Drive): só leitura, só a CTAI, só pelo servidor. A chave é opcional (documentos públicos): só se o script exigir.
+  async function cartaoContratosDrive() {
+    const est = await api('GET', '/api/contratos-drive/estado').catch(() => null);
+    if (!est) return null;
+    const saida = h('div', { id: 'cd-saida' });
+    const recarregar = () => integracoes();
+    const quando = (iso) => { try { return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; } };
+    const t = est.teste;
+    const situ = !est.configurada ? ['Não configurado', 'atencao'] : t ? (t.ok ? ['Conectado', 'ok'] : ['Falhou no último teste', 'alta']) : ['Configurado, ainda não testado', 'atencao'];
+    const agir = async (rotulo, fn) => { troca(saida, h('p', { class: 'mudo' }, rotulo + '…')); try { await fn(); } catch (e) { troca(saida, aviso('erro', e.message)); } };
+    const url = h('input', { type: 'url', id: 'cd-url', placeholder: 'https://script.google.com/macros/s/…/exec', autocomplete: 'off' });
+    const chave = h('input', { type: 'password', id: 'cd-chave', placeholder: 'Deixe em branco se o script não exige chave', autocomplete: 'new-password' });
+    const msg = h('div', { id: 'cd-form-msg' });
+    const guardar = async () => { try { const o = await api('PUT', '/api/contratos-drive/config', { url: url.value, chave: chave.value }); chave.value = ''; troca(msg, aviso('ok', 'Guardado' + (o.com_chave ? ' (chave terminada em ' + o.final + ')' : ' (sem chave)') + '. Agora clique em "Testar".')); setTimeout(recarregar, 1500); } catch (e) { troca(msg, aviso('erro', e.message)); } };
+    const origemTxt = est.origem === 'servidor' ? 'O endereço atual vem das variáveis do servidor (CONTRATOS_DRIVE_URL e, se houver, CONTRATOS_DRIVE_CHAVE). O que for digitado aqui só vale se essas variáveis forem removidas.' : est.origem === 'tela' ? 'Endereço guardado na tela' + (est.com_chave ? ', chave terminada em ' + est.chave_final + '.' : ', sem chave.') + ' Para trocar, preencha de novo.' : 'Ainda não há endereço. Preencha e guarde.';
+    return h('div', { class: 'cartao', id: 'cd-cartao' }, h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, 'Contratos e TAs (Drive) · contrato e termos aditivos de cada unidade'), selo(situ[0], situ[1])),
+      h('p', { class: 'mudo peq' }, 'Só leitura e só para a equipe CTAI. Os contratos e termos aditivos são documentos públicos; por isso a chave é opcional. O sistema lê a pasta da diretoria pelo servidor (o navegador nunca chama o script); o endereço e a chave não aparecem em tela nem em log.'),
+      t ? h('p', { class: 'peq' }, 'Último teste: ' + quando(t.em) + (t.ok ? ' · ' + t.ms + ' ms' : '') + ' · ' + t.mensagem) : null,
+      est.configurada ? h('div', { class: 'linha' }, h('button', { class: 'sec', id: 'cd-testar', onclick: () => agir('Testando', async () => { const o = await api('POST', '/api/contratos-drive/testar', {}); troca(saida, aviso(o.ok ? 'ok' : 'erro', o.mensagem)); setTimeout(recarregar, 1500); }) }, 'Testar (lista a pasta de uma unidade)')) : aviso('info', 'Para ligar: cole o endereço do script (termina em /exec) logo abaixo (administração) ou use as variáveis do servidor.'),
+      ehAdmin() ? h('details', { class: 'cartao-interno', open: !est.configurada }, h('summary', null, est.configurada ? 'Trocar o endereço e a chave' : 'Guardar o endereço'),
+        h('p', { class: 'peq mudo' }, origemTxt + ' A chave, se houver, fica cifrada no servidor e nunca volta para a tela.'),
+        h('div', { class: 'campo' }, h('label', { for: 'cd-url' }, 'Endereço do script (termina em /exec)'), url),
+        h('div', { class: 'campo' }, h('label', { for: 'cd-chave' }, 'Chave (opcional, só se o script exigir)'), chave),
+        h('button', { id: 'cd-guardar', onclick: guardar }, 'Guardar'), msg) : null,
       saida);
   }
   function formGaocg(est, recarregar) {
@@ -896,7 +927,9 @@
       EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/alimentar', rotulo: 'Alimentar o Analista' }, { href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }] });
       if (!EU) return;
       window.__eu = EU; META = await api('GET', '/api/meta');
-      rotear([['/', window.CTAI_ALIMENTAR.tela], ['/alimentar', window.CTAI_ALIMENTAR.tela]].concat(window.CTAI_HISTORICO.rotas.filter((r) => r[0] === '/historico/r/:id')).concat(window.CTAI_MENSAGEIRO.rotas), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+      rotear([['/', window.CTAI_ALIMENTAR.tela], ['/alimentar', window.CTAI_ALIMENTAR.tela]].concat(window.CTAI_HISTORICO.rotas.filter((r) => r[0] === '/historico/r/:id')).concat(window.CTAI_MENSAGEIRO.rotas), (hash) => window.__marcarMenu && window.__marcarMenu(hash),
+        // Enquanto o primeiro acesso não termina, as outras telas ainda não existem para esta pessoa: em vez de "Página não encontrada", explica e leva de volta.
+        () => montar(aviso('info', h('strong', null, 'Esta tela abre depois que você alimentar o Analista. '), 'Termine o primeiro acesso (enviar os relatórios e pareceres da sua carteira) e todas as telas ficam liberadas.'), h('p', null, h('a', { class: 'btn', href: '#/alimentar' }, 'Voltar para o Alimentar o Analista'))));
       window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => window.CTAI_MENSAGEIRO.atualizarContador(), 15000);
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
       return;
@@ -907,7 +940,7 @@
     window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); }, 15000);
     if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), document.querySelector('.lateral .nav-linha.fim') || nav); }
     META = await api('GET', '/api/meta');
-    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/unidades', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_ALIMENTAR.rotas).concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_DOCUMENTOS.rotas).concat(window.CTAI_HISTORICO.rotas).concat(window.CTAI_ENSINAR.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/unidades', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_ALIMENTAR.rotas).concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_DOCUMENTOS.rotas).concat(window.CTAI_HISTORICO.rotas).concat(window.CTAI_CONTRATOS.rotas).concat(window.CTAI_ENSINAR.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();

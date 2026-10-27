@@ -9,6 +9,13 @@ const TTL_MS = 6 * 3600 * 1000;
 const agora = () => new Date().toISOString();
 const norm = (s) => String(s === null || s === undefined ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 const ligada = () => criar().ligada;
+const CART = require('./carteira');
+// Opção da administração/superintendência: a base do GAOCG já está completa? (padrão: não)
+const baseCompleta = (db) => CART.cfg(db, 'gaocg_base_completa', 'nao') === 'sim';
+function definirBaseCompleta(db, usuario, valor) {
+  CART.definirCfg(db, usuario.login, 'gaocg_base_completa', valor ? 'sim' : 'nao');
+  return { base_completa: !!valor };
+}
 const IA = require('./ia-config');
 let origem = null; // 'servidor' (variáveis da hospedagem) ou 'tela' (digitado pela administração)
 
@@ -43,7 +50,7 @@ function marcarUso(db, usuario) {
 function estado(db) {
   const e = db.get('SELECT * FROM gaocg_estado WHERE id = 1') || {};
   const cfg = db.get('SELECT final, atualizado_em, atualizado_por FROM gaocg_config WHERE id = 1');
-  return { configurada: ligada(), origem, chave_final: origem === 'tela' && cfg ? cfg.final : null, trocada_em: origem === 'tela' && cfg ? cfg.atualizado_em : null, teste: e.teste_em ? { em: e.teste_em, ok: !!e.teste_ok, ms: e.teste_ms, mensagem: e.teste_msg } : null, ultimo_uso: e.ultimo_uso_em ? { em: e.ultimo_uso_em, por: e.ultimo_uso_por } : null,
+  return { configurada: ligada(), base_completa: baseCompleta(db), origem, chave_final: origem === 'tela' && cfg ? cfg.final : null, trocada_em: origem === 'tela' && cfg ? cfg.atualizado_em : null, teste: e.teste_em ? { em: e.teste_em, ok: !!e.teste_ok, ms: e.teste_ms, mensagem: e.teste_msg } : null, ultimo_uso: e.ultimo_uso_em ? { em: e.ultimo_uso_em, por: e.ultimo_uso_por } : null,
     copias: db.all('SELECT endpoint, filtros, total, lido_em FROM gaocg_cache ORDER BY lido_em DESC LIMIT 20') };
 }
 
@@ -123,7 +130,11 @@ async function conferirParecer(db, c, textoModelo, usuario) {
   if (!ligada() && !db.get('SELECT 1 FROM gaocg_cache WHERE endpoint = ?', 'api_unidades')) return { achados: [], usado: false };
   let u;
   try { u = await unidadeDoContrato(db, c.identificacao.contrato_id, usuario); } catch (e) { return { achados: [mk('BAIXA', 'GAOCG indisponível', 'GAOCG', 'Não foi possível conferir com o cadastro do GAOCG agora: ' + e.message, 'Tente de novo mais tarde.')], usado: false }; }
-  if (!u.encontrada) return { achados: [mk('MÉDIA', 'Unidade não encontrada no GAOCG', c.identificacao.unidade, 'Não achei esta unidade/contrato no cadastro do GAOCG (por número do contrato nem por nome).', 'Confira o número do contrato e o nome da unidade nos dois cadastros.')], usado: true, lido_em: u.lido_em };
+  if (!u.encontrada) {
+    // Enquanto a base do GAOCG não estiver completa, unidade ausente é só informação ("ainda sem dado"), não achado. Com a opção "base completa" ligada, volta a ser achado MÉDIA.
+    if (baseCompleta(db)) return { achados: [mk('MÉDIA', 'Unidade não encontrada no GAOCG', c.identificacao.unidade, 'Não achei esta unidade/contrato no cadastro do GAOCG (por número do contrato nem por nome).', 'Confira o número do contrato e o nome da unidade nos dois cadastros.')], usado: true, lido_em: u.lido_em };
+    return { achados: [], usado: true, nao_encontrada: true, informacao: 'Sem dado no GAOCG ainda: esta unidade não aparece no cadastro lido (a base do GAOCG ainda não está completa). Nada foi conferido com o GAOCG.', lido_em: u.lido_em, da_copia: u.da_copia };
+  }
   const d = u.dados, out = [];
   const textoNorm = norm(textoModelo);
   if (d.oss && !textoNorm.includes(norm(d.oss))) out.push(mk('MÉDIA', 'OSS diferente do GAOCG', String(d.oss), 'O GAOCG registra a OSS "' + d.oss + '", que não aparece no texto do parecer.', 'Confirme o nome da OSS.'));
@@ -135,4 +146,4 @@ async function conferirParecer(db, c, textoModelo, usuario) {
   return { achados: out, usado: true, lido_em: u.lido_em, da_copia: u.da_copia };
 }
 
-module.exports = { carregar, salvarConfig, estado, testar, ler, campos, unidadeDoContrato, conferirParecer, dadosDaUnidade, casar, campo, ligada };
+module.exports = { baseCompleta, definirBaseCompleta, carregar, salvarConfig, estado, testar, ler, campos, unidadeDoContrato, conferirParecer, dadosDaUnidade, casar, campo, ligada };

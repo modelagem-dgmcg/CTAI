@@ -14,9 +14,9 @@ const { erro } = A;
 const avisos = { aoCriar: null };
 const TIPOS = {
   envio: 'Relatório recebido', reenvio: 'Reenvio / correção', resposta: 'Resposta da unidade', prazo_vencer: 'Prazo a vencer', prazo_vencido: 'Prazo vencido',
-  minuta: 'Minuta aguardando conferência', sem_gestor: 'Unidade sem gestor', sem_carteira: 'Unidade sem carteira', redirecionado: 'Redirecionado', acesso_provisorio: 'Acesso provisório pedido',
+  minuta: 'Minuta aguardando conferência', sem_gestor: 'Unidade sem gestor', sem_carteira: 'Unidade sem carteira', redirecionado: 'Redirecionado', acesso_provisorio: 'Acesso provisório pedido', aditivo_novo: 'Novo aditivo na pasta',
 };
-const URGENCIA = { prazo_vencido: 90, prazo_vencer: 70, resposta: 60, minuta: 55, acesso_provisorio: 58, reenvio: 52, envio: 50, redirecionado: 45, sem_carteira: 42, sem_gestor: 40 };
+const URGENCIA = { prazo_vencido: 90, prazo_vencer: 70, resposta: 60, minuta: 55, acesso_provisorio: 58, reenvio: 52, aditivo_novo: 48, envio: 50, redirecionado: 45, sem_carteira: 42, sem_gestor: 40 };
 const PERFIS_CAIXA = ['criador', 'colega', 'superintendente', 'admin'];
 const agora = () => new Date().toISOString();
 const hoje = () => PZ.dataLocal();

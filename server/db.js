@@ -213,6 +213,37 @@ CREATE TABLE IF NOT EXISTS gaocg_estado (
 CREATE TABLE IF NOT EXISTS gaocg_config (
   id INTEGER PRIMARY KEY CHECK (id = 1), url TEXT NOT NULL, chave_cifrada TEXT NOT NULL, final TEXT, atualizado_em TEXT NOT NULL, atualizado_por TEXT
 );
+-- Contratos e TAs (Drive): endereço do script de leitura (e chave OPCIONAL, cifrada com CTAI_SEGREDO). A variável da hospedagem, se existir, vale mais.
+CREATE TABLE IF NOT EXISTS contratos_drive_config (
+  id INTEGER PRIMARY KEY CHECK (id = 1), url TEXT NOT NULL, chave_cifrada TEXT, final TEXT, atualizado_em TEXT NOT NULL, atualizado_por TEXT
+);
+CREATE TABLE IF NOT EXISTS contratos_drive_estado (
+  id INTEGER PRIMARY KEY CHECK (id = 1), teste_em TEXT, teste_ok INTEGER, teste_ms INTEGER, teste_msg TEXT
+);
+-- Cópia curta (1 h) da lista de arquivos por termo, para não varrer a pasta toda a cada clique.
+CREATE TABLE IF NOT EXISTS contratos_drive_cache (
+  termo TEXT PRIMARY KEY, arquivos TEXT NOT NULL, lido_em TEXT NOT NULL
+);
+-- O que já se viu da pasta de cada unidade: serve para avisar quando aparece arquivo novo ou alterado. A primeira consulta só estabelece a base (sem aviso).
+CREATE TABLE IF NOT EXISTS contrato_pasta (
+  contrato_id TEXT NOT NULL, drive_id TEXT NOT NULL, nome TEXT, caminho TEXT, tipo TEXT, url TEXT, atualizado_em TEXT, visto_em TEXT NOT NULL, PRIMARY KEY (contrato_id, drive_id)
+);
+CREATE TABLE IF NOT EXISTS contrato_pasta_estado (
+  contrato_id TEXT PRIMARY KEY, verificado_em TEXT NOT NULL, termo TEXT, total INTEGER, pasta_atualizada_em TEXT
+);
+-- Quadro do contrato e de cada termo aditivo, por unidade: nasce 'rascunho' (proposta da IA ou em branco); só vale depois que a pessoa da carteira confirma.
+CREATE TABLE IF NOT EXISTS contrato_docs (
+  doc_id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, drive_id TEXT NOT NULL, nome TEXT, caminho TEXT, url TEXT, drive_atualizado_em TEXT,
+  tipo TEXT NOT NULL DEFAULT 'contrato', numero_aditivo INTEGER, data_doc TEXT, objeto TEXT, vigencia_inicio TEXT, vigencia_fim TEXT, valor_total TEXT, muda TEXT,
+  estado TEXT NOT NULL DEFAULT 'rascunho', origem TEXT NOT NULL DEFAULT 'manual', provedor TEXT, hash TEXT, texto TEXT, truncado INTEGER NOT NULL DEFAULT 0, substitui_id INTEGER,
+  criado_por TEXT, criado_em TEXT NOT NULL, atualizado_em TEXT, confirmado_por TEXT, confirmado_em TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_contrato_docs ON contrato_docs (contrato_id, estado);
+CREATE TABLE IF NOT EXISTS contrato_pontos (
+  ponto_id INTEGER PRIMARY KEY AUTOINCREMENT, doc_id INTEGER NOT NULL, categoria TEXT NOT NULL, titulo TEXT NOT NULL, valor TEXT, descricao TEXT, efeito TEXT NOT NULL DEFAULT 'novo',
+  trecho TEXT, verificada INTEGER NOT NULL DEFAULT 0, ordem INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS ix_contrato_pontos ON contrato_pontos (doc_id);
 CREATE TABLE IF NOT EXISTS msg_anexos (
   anexo_id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, mime TEXT NOT NULL, tamanho INTEGER NOT NULL, dados BLOB NOT NULL, criado_em TEXT NOT NULL
 );

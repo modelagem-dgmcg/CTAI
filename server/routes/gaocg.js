@@ -10,6 +10,7 @@ module.exports = (db) => {
   const equipe = (u) => { if (!['admin', 'criador', 'superintendente'].includes(u.perfil)) throw A.erro(403, 'Sem permissão.'); };
   r.get('/estado', (req, res) => res.json(G.estado(db)));
   r.put('/config', (req, res) => { if (req.usuario.perfil !== 'admin') throw A.erro(403, 'Só a administração guarda a chave.'); res.json(G.salvarConfig(db, req.usuario, req.body)); });
+  r.put('/base-completa', (req, res) => { equipe(req.usuario); if (req.usuario.perfil === 'criador') throw A.erro(403, 'Sem permissão.'); res.json(G.definirBaseCompleta(db, req.usuario, !!(req.body && req.body.valor))); });
   r.post('/testar', async (req, res) => { equipe(req.usuario); res.json(await G.testar(db, req.usuario)); });
   r.post('/atualizar', async (req, res) => {
     equipe(req.usuario);

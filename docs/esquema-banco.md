@@ -50,3 +50,9 @@ Uma linha por registro ou correção do número do documento no SEI de uma vers�
 - Mudança de regra com competência já fechada cria nova versão e não altera a fechada.
 - Média de tempo a menos de 5% do limite e amostra menor que 10 casos geram alerta.
 - Cobertura dos relatórios de tempo abaixo de 90% do BID gera alerta.
+
+## Contratos e TAs (Drive)
+- `contratos_drive_config` (endereço do script e chave opcional cifrada), `contratos_drive_estado` (último teste), `contratos_drive_cache` (lista de arquivos por termo, 1 h).
+- `contrato_pasta` / `contrato_pasta_estado`: o que já se viu da pasta de cada unidade (base do aviso de arquivo novo ou alterado).
+- `contrato_docs` (um quadro por documento lido: tipo, nº do aditivo, data, objeto, vigência, valor, "o que muda", estado rascunho → confirmado → substituido) e `contrato_pontos` (valores, repasses, metas, indicadores, descontos/art. 15-A, com efeito novo/altera/revoga/mantém e trecho de origem).
+

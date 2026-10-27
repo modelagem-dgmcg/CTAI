@@ -74,3 +74,23 @@ test('só o administrador vê os nomes dos campos; consulta fora da lista é rec
   assert.ok(c.campos.includes('OSS'));
   assert.equal((await adm.get('/api/gaocg/campos/api_usuarios')).status, 400);
 });
+
+test('unidade que ainda não está no GAOCG vira informação (não achado); com "base completa" ligada volta a ser achado MÉDIA', async () => {
+  process.env.GAOCG_API_CHAVE = 'chave-fake';
+  await a.put('/api/ctai/pareceres/' + id + '/modelo', { secoes: { introducao: 'Texto qualquer sem número de contrato.' } });
+  S.db.run("UPDATE contratos SET numero_cg = '1/1999', unidade = 'Unidade Sem Correspondente' WHERE contrato_id = 'DEMO-UPA'");
+  try {
+    let rv = (await a.post('/api/analista/pareceres/' + id + '/revisao-completa', {})).json;
+    assert.ok(!rv.achados.some((x) => x.tipo === 'Unidade não encontrada no GAOCG'), 'por padrão não é achado');
+    assert.match(rv.gaocg.informacao, /Sem dado no GAOCG ainda/);
+    assert.equal((await a.get('/api/gaocg/estado')).json.base_completa, false);
+    assert.equal((await a.put('/api/gaocg/base-completa', { valor: true })).status, 403, 'só administração e superintendência');
+    const adm = cliente(S.base); await adm.entrar('admin');
+    assert.equal((await adm.put('/api/gaocg/base-completa', { valor: true })).json.base_completa, true);
+    rv = (await a.post('/api/analista/pareceres/' + id + '/revisao-completa', {})).json;
+    const x = rv.achados.find((y) => y.tipo === 'Unidade não encontrada no GAOCG');
+    assert.ok(x && x.gravidade === 'MÉDIA', 'com a base completa, ausência é achado MÉDIA');
+    assert.equal(rv.gaocg.informacao, null);
+    await adm.put('/api/gaocg/base-completa', { valor: false });
+  } finally { S.db.run("UPDATE contratos SET numero_cg = '9/2099', unidade = 'UPA Demonstração' WHERE contrato_id = 'DEMO-UPA'"); }
+});

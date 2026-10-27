@@ -98,6 +98,7 @@ module.exports = (db) => {
   });
 
   // ---------- Carteira ----------
+  r.get('/completude', (req, res) => res.json(require('../completude').painel(db)));
   r.get('/carteira', (req, res) => res.json({
     funcionarios: CART.porFuncionario(db), unidades: db.all('SELECT contrato_id, unidade, demo, tipo, municipio FROM contratos ORDER BY demo, unidade').map((c) => Object.assign(c, { demo: !!c.demo, responsaveis: CART.responsaveis(db, c.contrato_id), sem_gestor: G.semGestor(db, c.contrato_id) })),
     semCarteira: CART.semCarteira(db), estrita: CART.estrita(db),

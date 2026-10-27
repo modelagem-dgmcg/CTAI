@@ -91,6 +91,16 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 - Quadros 01/02 mostram "Dados de produção não conectados" enquanto vazios; o aviso some quando entram linhas.
 - Título "Sistema CTAI" centralizado na entrada.
 
+## Contratos e TAs (Drive) — 27/10/2026
+- Adaptador adapters/contratos-drive + server/contratos-drive.js: lê, SÓ pelo servidor, a pasta da diretoria por um Apps Script de leitura (listar por termo e ler Google Doc). Endereço e chave (OPCIONAL: contratos são públicos) por CONTRATOS_DRIVE_URL / CONTRATOS_DRIVE_CHAVE ou digitados em Integrações (cifrados com CTAI_SEGREDO, nunca devolvidos). Código do script e passo a passo: docs/CONTRATOS-DRIVE.md.
+- Tela da unidade: bloco "Contrato e atualizações" (lista em ordem contrato → aditivos, "pasta atualizada em", Abrir no Drive, Ler e montar o quadro). Leitura mascara o texto, a IA propõe o quadro com trecho de origem (sem IA, quadro em branco), nasce rascunho, a pessoa da carteira confirma (tabelas contrato_docs e contrato_pontos). "O que vale hoje" aplica contrato + aditivos em ordem e fica marcado como proposta até tudo estar confirmado.
+- Aviso na Caixa de entrada (tipo "Novo aditivo na pasta") quando surge arquivo novo ou alterado na pasta da unidade; conferido ao abrir a unidade e no Testar (sem agendador). Primeira consulta só fixa a base.
+- GAOCG: unidade ausente agora é informação ("Sem dado no GAOCG ainda"); opção "base do GAOCG completa" (padrão: não) devolve o achado MÉDIA.
+- Gestão > Completude: por carteira, trimestres do Histórico (confirmado/rascunho/falta) e contrato lido e confirmado.
+- Primeiro acesso: telas fora do menu liberado deixam de mostrar "Página não encontrada" e explicam que abrem depois do Alimentar o Analista (provável origem do aviso que a Juliana via).
+- "Zerar dados" inclui as tabelas novas; a configuração do Drive é mantida. Testes: test/contratos-drive.test.js (servidor falso test/fake-drive.js) e e2e test/e2e/contratos-drive.js com a UPAE Palmares.
+- Pendente: o texto exato das pastas/arquivos reais pode pedir ajuste fino da busca por nome (termos em server/contratos-drive.js: termosDaUnidade e classificar); só Google Docs são lidos (PDF/Word só abrem no Drive).
+
 ## GAOCG — leitura (22/10/2026)
 - Adaptador adapters/gaocg (só leitura; consultas permitidas: api_unidades, api_sof, api_notasEmpenho, api_recibos), cópia local de 6 h e estado da conexão. Ligado por GAOCG_API_URL e GAOCG_API_CHAVE (só no painel da hospedagem).
 - Status em Integrações (conectado / não configurado / falhou, último teste e última leitura) e, de forma discreta, no parecer: o botão "Preencher identificação pelo GAOCG" e a revisão completa mostram "conectado, lido às HH:MM" só quando usam.

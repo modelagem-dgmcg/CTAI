@@ -27,11 +27,12 @@ const OPERACIONAIS = [
   ['caixa_historico', 'Histórico da Caixa de entrada'], ['caixa_destinos', 'Destinatários da Caixa de entrada'], ['caixa_itens', 'Itens da Caixa de entrada'], ['caixa_substituicoes', 'Ausências na Caixa de entrada'],
   ['msg', 'Mensagens da equipe'], ['msg_anexos', 'Anexos das mensagens'], ['carteira', 'Carteiras (unidades por analista)'], ['importacoes', 'Importações em lote'],
   ['hist_indicadores', 'Histórico: indicadores'], ['hist_achados', 'Histórico: achados'], ['hist_recomendacoes', 'Histórico: recomendações'], ['hist_relatorios', 'Histórico: relatórios'],
+  ['contrato_pontos', 'Contratos e TAs: pontos do quadro'], ['contrato_docs', 'Contratos e TAs: quadros lidos (rascunho e confirmado)'], ['contrato_pasta', 'Contratos e TAs: arquivos já vistos na pasta'], ['contrato_pasta_estado', 'Contratos e TAs: última consulta por unidade'], ['contratos_drive_cache', 'Contratos e TAs: cópia temporária da lista de arquivos'],
   ['alimentar_fila', 'Fila do "Alimentar o Analista"'], ['alimentar_liberacao', 'Liberações do "Alimentar o Analista"'],
   ['gaocg_cache', 'Cópia temporária de consultas ao GAOCG'], ['integracao_log', 'Registro das integrações'],
 ];
 const MANTIDOS = [
-  'Usuários reais da equipe CTAI (administração, superintendência, analistas, conferentes)', 'Configurações: IA (provedores e chaves), GAOCG, Gestão CTAI',
+  'Usuários reais da equipe CTAI (administração, superintendência, analistas, conferentes)', 'Configurações: IA (provedores e chaves), GAOCG, Contratos e TAs (Drive), Gestão CTAI',
   'Regras do IGQ, regras por contrato e decisões da CTAI', 'Normas, ensinos ("Ensinar ao Sistema") e modelos de documento',
   'A definição dos contratos reais (nome, número, vigência), sem nenhum dado de mês, ficha ou envio',
   'Trilha de auditoria e registro de acessos (nunca são apagados)',

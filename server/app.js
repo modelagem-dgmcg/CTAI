@@ -35,6 +35,8 @@ function criarApp(db) {
   app.use('/api/caixa', require('./routes/caixa')(db));
   require('./gaocg').carregar(db);
   app.use('/api/gaocg', require('./routes/gaocg')(db));
+  require('./contratos-drive').carregar(db);
+  app.use('/api/contratos-drive', require('./routes/contratos-drive')(db));
   app.use('/api/mensageiro', require('./routes/mensageiro')(db));
   app.use('/api/sala', require('./sala-guiada')(db));
   app.use('/api/provisorios', require('./provisorios')(db));
