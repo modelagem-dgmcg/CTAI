@@ -1,7 +1,9 @@
 'use strict';
 // Extrai texto de relatórios importados: PDF (com texto), Word (.docx), Excel (.xlsx), CSV e TXT. Não faz OCR de PDF escaneado.
+// O texto devolvido já vem MASCARADO (server/mascara.js), então nada pessoal é guardado nem enviado à IA.
 const JSZip = require('jszip');
 const { erro } = require('./auth');
+const { mascarar } = require('./mascara');
 
 const MAX_ARQUIVO = 4 * 1024 * 1024;
 const MAX_TEXTO = 400000;
@@ -55,7 +57,9 @@ async function extrair(nome, buf) {
   } catch (e) { if (e.status) throw e; throw erro(400, 'Não consegui ler o arquivo (' + String(e.message || e).slice(0, 80) + ').'); }
   const texto = String(r.texto || '').replace(/\u0000/g, '').slice(0, MAX_TEXTO);
   if (texto.replace(/\s+/g, '').length < 80) throw erro(422, 'O arquivo não tem texto legível. Se for PDF escaneado, o sistema não faz OCR: use o arquivo original (Word/Excel/PDF com texto).');
-  return { texto, paginas: r.paginas || null, tipo: ext };
+  // O texto sai já mascarado (CPF, CNS, telefone, nome de paciente...). O arquivo original nunca é guardado.
+  const m = mascarar(texto);
+  return { texto: m.texto, paginas: r.paginas || null, tipo: ext, mascarados: m.mascarados };
 }
 
 module.exports = { extrair, MAX_ARQUIVO, TIPOS };

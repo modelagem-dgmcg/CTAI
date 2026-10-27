@@ -27,6 +27,7 @@ const OPERACIONAIS = [
   ['caixa_historico', 'Histórico da Caixa de entrada'], ['caixa_destinos', 'Destinatários da Caixa de entrada'], ['caixa_itens', 'Itens da Caixa de entrada'], ['caixa_substituicoes', 'Ausências na Caixa de entrada'],
   ['msg', 'Mensagens da equipe'], ['msg_anexos', 'Anexos das mensagens'], ['carteira', 'Carteiras (unidades por analista)'], ['importacoes', 'Importações em lote'],
   ['hist_indicadores', 'Histórico: indicadores'], ['hist_achados', 'Histórico: achados'], ['hist_recomendacoes', 'Histórico: recomendações'], ['hist_relatorios', 'Histórico: relatórios'],
+  ['alimentar_fila', 'Fila do "Alimentar o Analista"'], ['alimentar_liberacao', 'Liberações do "Alimentar o Analista"'],
   ['gaocg_cache', 'Cópia temporária de consultas ao GAOCG'], ['integracao_log', 'Registro das integrações'],
 ];
 const MANTIDOS = [

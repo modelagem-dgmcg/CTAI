@@ -42,6 +42,7 @@ function criarApp(db) {
   app.use('/api/documentos', require('./documentos')(db));
   app.use('/api/analista', require('./routes/analista')(db));
   app.use('/api/historico', require('./routes/historico')(db));
+  app.use('/api/alimentar', require('./routes/alimentar')(db));
   app.use('/api/integracoes', require('./routes/integracoes')(db));
   app.use('/api/admin', require('./routes/admin')(db));
   require('./ia-config').instalar(db);

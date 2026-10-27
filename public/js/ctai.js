@@ -887,13 +887,27 @@
     const meta0 = await api('GET', '/api/meta').catch(() => null);
     window.__semPainel = !!(me0 && ['criador', 'colega'].includes(me0.usuario.perfil) && meta0 && !meta0.painelAnalista);
     window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Fontes de dados' }, { href: '#/trilha', rotulo: 'Auditoria' }] : [];
-    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/unidades', rotulo: 'Unidades' }].concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/pareceres', rotulo: 'Editor de Documentos' }, { href: '#/historico', rotulo: 'Histórico' }, { href: '#/ensinar', rotulo: 'Ensinar ao Sistema' }]).concat(window.__soGestao || []).concat([{ href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }]) });
+    // Primeiro acesso: quem tem carteira e ainda não tem histórico confirmado só vê "Alimentar o Analista".
+    if (me0 && me0.usuario.trocar_senha) { await window.CTAI.trocarSenha(true); if (window.SalaGuiada) window.SalaGuiada.iniciar(); } // senha provisória primeiro: a API fica bloqueada até a troca
+    const alim0 = await api('GET', '/api/alimentar/estado').catch(() => null);
+    const travado = !!(alim0 && alim0.trava);
+    const itemAlim = alim0 && alim0.unidades && alim0.unidades.length ? [{ href: '#/alimentar', rotulo: 'Alimentar o Analista' }] : [];
+    if (travado) {
+      EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/alimentar', rotulo: 'Alimentar o Analista' }, { href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }] });
+      if (!EU) return;
+      window.__eu = EU; META = await api('GET', '/api/meta');
+      rotear([['/', window.CTAI_ALIMENTAR.tela], ['/alimentar', window.CTAI_ALIMENTAR.tela]].concat(window.CTAI_HISTORICO.rotas.filter((r) => r[0] === '/historico/r/:id')).concat(window.CTAI_MENSAGEIRO.rotas), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+      window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => window.CTAI_MENSAGEIRO.atualizarContador(), 15000);
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+      return;
+    }
+    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/unidades', rotulo: 'Unidades' }].concat([{ href: '#/caixa', rotulo: 'Caixa de entrada' }, { href: '#/pareceres', rotulo: 'Editor de Documentos' }, { href: '#/historico', rotulo: 'Histórico' }].concat(itemAlim).concat([{ href: '#/ensinar', rotulo: 'Ensinar ao Sistema' }])).concat(window.__soGestao || []).concat([{ href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }]) });
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_CAIXA.atualizarContador(); window.CTAI_MENSAGEIRO.atualizarContador(); }, 15000);
     if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), document.querySelector('.lateral .nav-linha.fim') || nav); }
     META = await api('GET', '/api/meta');
-    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/unidades', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_DOCUMENTOS.rotas).concat(window.CTAI_HISTORICO.rotas).concat(window.CTAI_ENSINAR.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', window.__semPainel ? () => { location.replace('#/caixa'); } : painel], ['/unidades', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_ALIMENTAR.rotas).concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_DOCUMENTOS.rotas).concat(window.CTAI_HISTORICO.rotas).concat(window.CTAI_ENSINAR.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();

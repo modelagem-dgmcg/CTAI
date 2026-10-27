@@ -275,6 +275,7 @@ let base;
     await ir(sup, '#/gestao/carteira', 'text=Quem acompanha cada unidade');
     await sup.click('#cart-ed-colega1'); await sup.waitForSelector('dialog[open] #ck-DEMO-UPA'); await sup.check('#ck-DEMO-UPA'); await sup.fill('#ck-motivo', 'Distribuição inicial'); await dialogo(sup, 'Salvar carteira'); await sup.waitForSelector('text=Carteira atualizada.');
     await sup.click('#cart-ed-cleuton'); await sup.waitForSelector('dialog[open] #ck-UPA-OLINDA'); await sup.check('#ck-UPA-OLINDA'); await sup.check('#ck-DEMO-UPA'); await dialogo(sup, 'Salvar carteira'); await sup.waitForSelector('text=Carteira atualizada.');
+    for (const lg of ['colega1', 'cleuton']) S.db.run('INSERT OR REPLACE INTO alimentar_liberacao (usuario_id, liberado_em, por, motivo) SELECT usuario_id, ?, ?, ? FROM usuarios WHERE login = ?', new Date().toISOString(), 'e2e', 'fluxo do Console sem o primeiro acesso (testado em alimentar.js)', lg);
     await sup.waitForSelector('#conteudo >> text=Histórico de mudanças'); await limpa(sup); await sup.setViewportSize({ width: 1280, height: 1000 }); await sup.screenshot({ path: path.join(CAP, '19-gestao-carteira.png') });
     await ir(sup, '#/gestao', 'text=Alertas'); await sup.waitForSelector('.un-card');
     assert.match(await sup.textContent('#conteudo'), /Responsável: .*Colega conferente 1/);

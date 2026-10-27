@@ -87,22 +87,31 @@ function criarManual(db, usuario, d) {
   });
 }
 
-// Importação: lê o arquivo, propõe com IA (se houver) e deixa em rascunho para conferência.
+// Importação: lê o arquivo (já mascarado), propõe com IA (se houver) e deixa em rascunho para conferência.
 async function importar(db, usuario, d) {
   const c = exigirUnidade(db, usuario, d.contrato_id);
-  const cab = validarCabeca(d);
+  validarCabeca(d);
   const nome = txt(String(d.nome || 'relatorio').replace(/[\\/\r\n"]/g, '_'), 120);
   const buf = Buffer.from(String(d.base64 || ''), 'base64');
   const ex = await X.extrair(nome, buf);
+  return importarTexto(db, usuario, Object.assign({}, d, { contrato_id: c.contrato_id, nome, texto: ex.texto, paginas: ex.paginas, mascarados: ex.mascarados }));
+}
+
+// Mesmo caminho, a partir de texto que já foi lido e mascarado (usado também pela tela "Alimentar o Analista").
+async function importarTexto(db, usuario, d) {
+  const c = exigirUnidade(db, usuario, d.contrato_id);
+  const cab = validarCabeca(d);
+  const nome = txt(String(d.nome || 'relatorio').replace(/[\\/\r\n"]/g, '_'), 120);
+  const ex = { texto: String(d.texto || ''), paginas: d.paginas || null, mascarados: d.mascarados || {} };
   const hash = U.sha256(ex.texto);
   const igual = db.get('SELECT hist_id, trimestre FROM hist_relatorios WHERE contrato_id = ? AND hash = ?', c.contrato_id, hash);
-  if (igual) throw erro(409, 'Este arquivo já foi importado para esta unidade (trimestre ' + igual.trimestre + ').');
+  if (igual) { const e = erro(409, 'Este arquivo já foi importado para esta unidade (trimestre ' + igual.trimestre + ').'); e.hist_id = igual.hist_id; throw e; }
   const propor = d.semIA ? { ok: false, motivo: 'Leitura por IA não usada. Preencha à mão.' } : await require('../modules/analista/propor-historico').propor({ texto: ex.texto, unidade: c.unidade, trimestre: cab.trimestre });
   const id = db.tx(() => {
     const id2 = Number(db.run('INSERT INTO hist_relatorios (contrato_id, trimestre, documento_tipo, numero_parecer, nome_arquivo, hash, paginas, texto, igq, desconto_pct, desconto_valor, estado, origem, provedor, observacao, criado_por, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
       c.contrato_id, cab.trimestre, cab.documento_tipo, cab.numero_parecer, nome, hash, ex.paginas, ex.texto, propor.ok ? propor.igq : null, propor.ok ? propor.desconto_pct : null, propor.ok ? propor.desconto_valor : null, 'rascunho', propor.ok ? 'ia' : 'manual', propor.ok ? propor.provedor : null, cab.observacao, usuario.login, agora(), agora()).lastInsertRowid);
     if (propor.ok) gravarFilhos(db, id2, propor);
-    trilha.registrar(db, { usuario: usuario.login, tabela: 'hist_relatorios', registro: id2, campo: 'importacao', valor_novo: { contrato: c.contrato_id, trimestre: cab.trimestre, arquivo: nome, caracteres: ex.texto.length, leitura: propor.ok ? propor.provedor : 'sem IA' } });
+    trilha.registrar(db, { usuario: usuario.login, tabela: 'hist_relatorios', registro: id2, campo: 'importacao', valor_novo: { contrato: c.contrato_id, trimestre: cab.trimestre, arquivo: nome, caracteres: ex.texto.length, leitura: propor.ok ? propor.provedor : 'sem IA', mascarados: ex.mascarados || {} } });
     return id2;
   });
   return { hist_id: id, ia: { ok: !!propor.ok, provedor: propor.ok ? propor.provedor : null, motivo: propor.ok ? null : propor.motivo, truncado: !!propor.truncado } };
@@ -235,4 +244,4 @@ async function restaurarDoEspelho(db, usuario) {
   return { ok: true, relatorios: n };
 }
 
-module.exports = { criarManual, importar, obter, salvar, confirmar, excluirRascunho, mudarSituacao, unidade, carteira, avisosDaUnidade, confirmadosDe, espelharAgora, restaurarDoEspelho, TRI, TIPOS_DOC, SITUACOES };
+module.exports = { criarManual, importar, importarTexto, exigirUnidade, filhos, obter, salvar, confirmar, excluirRascunho, mudarSituacao, unidade, carteira, avisosDaUnidade, confirmadosDe, espelharAgora, restaurarDoEspelho, TRI, TIPOS_DOC, SITUACOES };

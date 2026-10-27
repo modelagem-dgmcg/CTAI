@@ -110,3 +110,8 @@ Números: `npm test` = **113 testes, 0 falhas**. `npm run e2e` = fluxo completo 
 - Novas dependências: unpdf (PDF) e jszip (Word/Excel).
 - Entrada da unidade: /unidade sem login abre “Portal da Unidade” (login com ?entrar=unidade); login da CTAI ali recebe aviso com link ao Console, em vez de cair no Console.
 - Menu: uma entrada só, **Redator CTAI**, com abas (Pareceres, Fila de achados, Relatório trimestral, Conferência com o acervo, Ler arquivo ou texto, Normas por unidade); ‘Ler’ ganhou importar arquivo. Tela de login: ‘Analista CTAI’.
+
+## Mascaramento e Alimentar o Analista — 27/10/2026
+- Pronto e testado: server/mascara.js (npm test), fila de primeiro acesso (test/alimentar.test.js) e tela (test/e2e/alimentar.js).
+- Depende de você: chave de IA válida (Gestão CTAI > IA) para leitura automática; sem ela os rascunhos vêm em branco.
+- Limites: arquivos enviados ficam só em memória até serem lidos (reiniciar o Render perde a fila; os itens viram "com problema" e é só reenviar); PDF escaneado sem OCR; máscara de nomes é heurística.

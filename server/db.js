@@ -216,6 +216,14 @@ CREATE TABLE IF NOT EXISTS gaocg_config (
 CREATE TABLE IF NOT EXISTS msg_anexos (
   anexo_id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, mime TEXT NOT NULL, tamanho INTEGER NOT NULL, dados BLOB NOT NULL, criado_em TEXT NOT NULL
 );
+-- "Alimentar o Analista": fila de arquivos do primeiro acesso. O arquivo original nunca é guardado (fica só na memória até ser lido);
+-- o texto (já mascarado) só fica aqui enquanto a pessoa não indica unidade e trimestre.
+CREATE TABLE IF NOT EXISTS alimentar_fila (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, usuario_id INTEGER NOT NULL, lote TEXT, nome TEXT NOT NULL, tamanho INTEGER, estado TEXT NOT NULL DEFAULT 'fila', motivo TEXT,
+  contrato_id TEXT, trimestre TEXT, documento_tipo TEXT, texto TEXT, paginas INTEGER, mascarados TEXT, hist_id INTEGER, ia_ok INTEGER, criado_em TEXT NOT NULL, atualizado_em TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_alim_fila ON alimentar_fila (usuario_id, estado);
+CREATE TABLE IF NOT EXISTS alimentar_liberacao (usuario_id INTEGER PRIMARY KEY, liberado_em TEXT NOT NULL, por TEXT NOT NULL, motivo TEXT);
 -- Histórico dos relatórios e pareceres anteriores, por unidade e trimestre. Nasce como 'rascunho' e só vira 'confirmado' quando a pessoa da carteira confere.
 CREATE TABLE IF NOT EXISTS hist_relatorios (
   hist_id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, documento_tipo TEXT NOT NULL DEFAULT 'parecer', numero_parecer TEXT,

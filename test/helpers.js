@@ -29,7 +29,7 @@ function cliente(base) {
     async req(metodo, url, corpo, extra) {
       const h = Object.assign({ 'content-type': 'application/json', 'x-ctai': '1' }, extra && extra.headers);
       if (cookie) h.cookie = cookie;
-      const r = await fetch(base + url, { method: metodo, headers: h, body: corpo === undefined ? undefined : JSON.stringify(corpo) });
+      const r = await fetch(base + url, { method: metodo, headers: h, body: extra && extra.raw ? extra.raw : (corpo === undefined ? undefined : JSON.stringify(corpo)) });
       const sc = r.headers.get('set-cookie');
       if (sc) cookie = sc.split(';')[0];
       const buffer = Buffer.from(await r.arrayBuffer());
@@ -37,6 +37,8 @@ function cliente(base) {
       if ((r.headers.get('content-type') || '').includes('json')) { try { json = JSON.parse(buffer.toString('utf8')); } catch (_) { /* nada */ } }
       return { status: r.status, json, buffer, headers: r.headers };
     },
+    // Envio de arquivo cru (como a tela faz): nome no cabeçalho, bytes no corpo.
+    upload: (u, nome, buf) => c.req('POST', u, undefined, { raw: buf, headers: { 'content-type': 'application/octet-stream', 'x-nome-arquivo': encodeURIComponent(nome) } }),
     get: (u) => c.req('GET', u), post: (u, b) => c.req('POST', u, b === undefined ? {} : b), put: (u, b) => c.req('PUT', u, b), patch: (u, b) => c.req('PATCH', u, b), del: (u) => c.req('DELETE', u),
     // Entra, troca a senha temporária e entra de novo.
     async entrar(login, senha) {

@@ -139,3 +139,15 @@ Em **Administração** (e também em **Gestão CTAI > IA**) fica o **rack de cha
 - A chave fica cifrada no servidor (precisa de `CTAI_SEGREDO` com 16 ou mais caracteres) e nunca volta para a tela: só aparecem os 4 últimos caracteres. Tudo (cadastro, troca, suspensão, teste) fica na trilha, sem a chave.
 - O teste envia só a pergunta "responda OK", sem nenhum dado de unidade. Para dados reais, a nuvem só recebe texto mascarado e só com a aprovação do jurídico registrada.
 - Quem usa o Analista CTAI não vê nada disso: a tela dele mostra apenas os achados.
+
+## Primeiro acesso: Alimentar o Analista
+Quem é criador ou colega, tem carteira de unidades e ainda não tem nenhum relatório confirmado no Histórico vê **só** a tela "Alimentar o Analista" (e o "Falar com a equipe"). Administração e superintendência, e quem não tem carteira, não são travados.
+1. Solte vários arquivos (ZIP, PDF, Word, Excel, CSV, TXT; até 4 MB cada, ZIP até 40 MB). PDF escaneado, só imagem, não é lido.
+2. O sistema lê um por vez, mascara dados pessoais, identifica a unidade e o trimestre (pelo nome ou texto do arquivo) e monta um rascunho do Histórico. Se não achar, pede a unidade e o trimestre na própria linha.
+3. Cada arquivo mostra o andamento, o que foi mascarado (só contagens) e as divergências (IA não leu, nota ausente, itens sem trecho verificado, soma diferente da nota, trimestre repetido).
+4. Aprove os selecionados ou todos sem divergência; abra um a um quando precisar. Só o confirmado entra nos cruzamentos.
+5. "Pular os que deram problema" descarta os que falharam. "Concluir e abrir o menu completo" libera o menu. A administração também pode liberar uma pessoa (POST /api/alimentar/liberar-usuario).
+Sem chave de IA válida, os arquivos viram rascunho em branco para preencher à mão (a tela avisa).
+
+## Mascaramento de dados pessoais
+Antes de guardar qualquer texto extraído e antes de enviar à IA, o sistema troca CPF, CNS, RG, telefone, e-mail, data de nascimento, prontuário/BAM, endereço residencial e nomes de pacientes (depois de "paciente", "usuário", "Sr./Sra.", "acompanhante", "nome:") por marcadores como [CPF] e [PACIENTE]. Mantém CNPJ, nome de unidade/OSS, valores, número de processo SEI e datas de competência. Havendo chave de IA, uma segunda passada procura nomes que restaram. O arquivo original nunca é gravado; a trilha guarda só a contagem por tipo. Limite: é heurística, pode deixar passar nomes sem rótulo. Remova dados de paciente antes de enviar quando der.
