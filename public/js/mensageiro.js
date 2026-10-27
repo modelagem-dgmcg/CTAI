@@ -3,6 +3,8 @@
   // Mensageiro da equipe: texto e anexos, uma conversa por pessoa.
   const { h, api, toast, montar, aviso, fmt } = window.CTAI;
   const ESTADO = { login: null };
+  const VIVO = { login: null, hist: null, pintar: null, sig: '' };
+  const assinatura = (ms) => ms.length + ':' + (ms.length ? (ms[ms.length - 1].id || ms[ms.length - 1].criado_em) : '');
   const hora = (iso) => { try { return new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; } };
   const kb = (n) => (n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB');
   const PERFIL = { admin: 'Administração', criador: 'Analista', colega: 'Conferente', superintendente: 'Superintendência' };
@@ -66,8 +68,10 @@
       const d = await api('GET', '/api/mensageiro/conversa/' + encodeURIComponent(login));
       const p = c.contatos.find((x) => x.login === login); if (p) p.naoLidas = 0;
       pintarContatos(); atualizarContador();
-      const hist = h('div', { class: 'msg-hist', id: 'msg-hist' }, d.mensagens.length ? d.mensagens.map((m) => h('div', { class: 'msg-b' + (m.meu ? ' meu' : '') },
-        m.grupo ? h('small', { class: 'grupo-tag' }, 'Para: ' + m.grupo) : null, m.texto || null, m.anexo ? h('div', null, h('a', { href: '/api/mensageiro/anexo/' + m.anexo.id, download: m.anexo.nome }, '📎 ' + m.anexo.nome), ' ', h('small', null, kb(m.anexo.tamanho))) : null, h('small', null, hora(m.criado_em)))) : h('p', { class: 'mudo' }, 'Sem mensagens ainda.'));
+      const pintarMsgs = (msgs) => msgs.length ? msgs.map((m) => h('div', { class: 'msg-b' + (m.meu ? ' meu' : '') },
+        m.grupo ? h('small', { class: 'grupo-tag' }, 'Para: ' + m.grupo) : null, m.texto || null, m.anexo ? h('div', null, h('a', { href: '/api/mensageiro/anexo/' + m.anexo.id, download: m.anexo.nome }, '📎 ' + m.anexo.nome), ' ', h('small', null, kb(m.anexo.tamanho))) : null, h('small', null, hora(m.criado_em)))) : h('p', { class: 'mudo' }, 'Sem mensagens ainda.');
+      const hist = h('div', { class: 'msg-hist', id: 'msg-hist' }, pintarMsgs(d.mensagens));
+      VIVO.login = login; VIVO.hist = hist; VIVO.pintar = pintarMsgs; VIVO.sig = assinatura(d.mensagens);
       const texto = h('textarea', { id: 'msg-texto', rows: 2, placeholder: 'Escreva a mensagem…', 'aria-label': 'Mensagem' });
       const arq = h('input', { type: 'file', id: 'msg-arquivo', accept: '.pdf,.docx,.xlsx,.csv,.txt,.png,.jpg,.jpeg', 'aria-label': 'Anexar documento' });
       const enviar = async () => {
@@ -84,6 +88,30 @@
       hist.scrollTop = hist.scrollHeight;
     }
     pintarContatos();
+    // Atualização ao vivo: enquanto a tela está aberta, confere a cada 3 s se chegou mensagem (e ao voltar para a aba).
+    VIVO.login = null; VIVO.hist = null;
+    let ocupado = false;
+    const tic = async () => {
+      if (ocupado || document.hidden) return;
+      ocupado = true;
+      try {
+        const novos = (await api('GET', '/api/mensageiro/contatos')).contatos;
+        if (ESTADO.login && !String(ESTADO.login).startsWith('analista:') && VIVO.hist && VIVO.login === ESTADO.login) {
+          const d = await api('GET', '/api/mensageiro/conversa/' + encodeURIComponent(ESTADO.login));
+          const s = assinatura(d.mensagens);
+          if (s !== VIVO.sig) {
+            const perto = VIVO.hist.scrollHeight - VIVO.hist.scrollTop - VIVO.hist.clientHeight < 80;
+            VIVO.sig = s; VIVO.hist.replaceChildren(...[].concat(VIVO.pintar(d.mensagens)));
+            if (perto) VIVO.hist.scrollTop = VIVO.hist.scrollHeight;
+          }
+          const ativo = novos.find((x) => x.login === ESTADO.login); if (ativo) ativo.naoLidas = 0;
+        }
+        c.contatos = novos; pintarContatos(); atualizarContador();
+      } catch (_) { /* tenta de novo no próximo ciclo */ } finally { ocupado = false; }
+    };
+    const relogio = setInterval(() => { if (!document.body.contains(painel)) { clearInterval(relogio); document.removeEventListener('visibilitychange', aoVoltar); return; } tic(); }, 3000);
+    const aoVoltar = () => { if (!document.hidden) tic(); };
+    document.addEventListener('visibilitychange', aoVoltar);
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Falar com a equipe'), h('p', null, 'Conversa com a equipe, com texto e documentos anexos.'))), h('div', { class: 'msg-grade' }, col, painel));
     atualizarContador();
   }
