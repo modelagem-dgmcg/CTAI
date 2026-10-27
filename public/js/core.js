@@ -92,7 +92,25 @@
   }
   // Troca o conteúdo de um elemento aceitando listas (replaceChildren não aceita arrays).
   function troca(el, ...c) { el.replaceChildren(); add(el, c); return el; }
-  function montar(...c) { const el = document.getElementById('conteudo'); el.replaceChildren(); add(el, c); el.focus && el.focus({ preventScroll: true }); }
+  // "← Voltar" automático nas telas de detalhe (as que não estão no menu e não trazem migalha ou botão de voltar próprio).
+  const ABAS_DE_TELA = ['gestao', 'analista'];
+  function precisaVoltar(el) {
+    const hash = (location.hash.replace(/^#/, '') || '/').split('?')[0];
+    const segs = hash.split('/').filter(Boolean);
+    if (!segs.length) return false;
+    const menu = Array.from(document.querySelectorAll('.lateral a.nav')).map((a) => (a.getAttribute('data-h') || '').replace(/^#/, ''));
+    if (menu.includes(hash)) return false;
+    if (segs.length === 1 && menu.some((m) => m.split('/')[1] === segs[0])) return false;
+    if (ABAS_DE_TELA.includes(segs[0])) return false;
+    if (el.querySelector('.migalha, .voltar')) return false;
+    return !Array.from(el.querySelectorAll('a, button')).some((x) => /^\s*(←\s*)?voltar/i.test(x.textContent || ''));
+  }
+  function botaoVoltar() {
+    const hash = (location.hash.replace(/^#/, '') || '/').split('?')[0];
+    const pai = '#' + (hash.split('/').filter(Boolean).slice(0, -1).map((s) => '/' + s).join('') || '/');
+    return h('a', { class: 'voltar', href: pai, onclick: (ev) => { if (history.length > 1) { ev.preventDefault(); history.back(); } } }, '← Voltar');
+  }
+  function montar(...c) { const el = document.getElementById('conteudo'); el.replaceChildren(); add(el, c); if (precisaVoltar(el)) el.insertBefore(botaoVoltar(), el.firstChild); el.focus && el.focus({ preventScroll: true }); }
   // Cartões recolhíveis: no primeiro acesso (cada login) ficam todos fechados; o que a pessoa abre fica aberto até o próximo login ou até ela fechar.
   const CH_ABERTOS = 'ctai_abertos';
   const lerAbertos = () => { try { return JSON.parse(localStorage.getItem(CH_ABERTOS) || '[]'); } catch (_) { return []; } };

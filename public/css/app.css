@@ -27,6 +27,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .topo p{margin:0;color:var(--cinza)}
 .migalha{font-size:13px;color:var(--cinza);margin-bottom:6px}
 .migalha a{text-decoration:none}
+.voltar{display:inline-block;margin:0 0 10px;padding:6px 12px;border:1px solid var(--borda,#d8d4cb);border-radius:8px;font-size:15px;font-weight:600;text-decoration:none;color:var(--escuro);background:#fff}
+.voltar:hover{border-color:#d97706;color:#92400e}
 .faixa-demo{background:#FFF3DC;border:1px solid #E8C98A;color:#6b4208;border-radius:8px;padding:8px 12px;font-size:13.5px;margin-bottom:14px}
 .cartao{background:var(--papel);border:1px solid var(--borda);border-radius:var(--r);box-shadow:var(--sombra);padding:18px 20px;margin-bottom:16px}
 .cartao>h2:first-child,.cartao>h3:first-child{margin-top:0}

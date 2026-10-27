@@ -11,7 +11,7 @@
     "start": "node --no-warnings server/index.js",
     "test": "node --no-warnings --test \"test/*.test.js\"",
     "mock-mv": "node adapters/mv/mock-server.js",
-    "e2e": "node --no-warnings test/e2e/run.js && node --no-warnings test/e2e/ajuda-ao-vivo.js && node --no-warnings test/e2e/historico.js && node --no-warnings test/e2e/mensageiro.js"
+    "e2e": "node --no-warnings test/e2e/run.js && node --no-warnings test/e2e/ajuda-ao-vivo.js && node --no-warnings test/e2e/historico.js && node --no-warnings test/e2e/mensageiro.js && node --no-warnings test/e2e/voltar.js"
   },
   "dependencies": {
     "express": "^5.1.0",
