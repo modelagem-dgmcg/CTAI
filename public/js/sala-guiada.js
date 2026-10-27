@@ -13,6 +13,8 @@
   const audios = new Map();       // id -> <audio>
   const medidores = new Map();    // id -> { an, buf }
   const tentativas = new Map();   // id -> número de refações
+  const semAudio = new Set();     // ids com quem o áudio não ligou depois de várias tentativas
+  let vigia = null;
   let ctx = null, timerFala = null;
   let apontador = true, seguir = true, ultimo = null, voando = false, pendMover = null, dialogosAbertos = 0;
   let devEntrada = '', devSaida = '', confirmando = false;
@@ -92,7 +94,7 @@
   function criarPc(id, iniciador) {
     fecharPc(id);
     const pc = new RTCPeerConnection({ iceServers: est.ice });
-    const reg = { pc, iniciador };
+    const reg = { pc, iniciador, desde: Date.now() };
     pcs.set(id, reg);
     if (stream) stream.getAudioTracks().forEach((t) => { reg.audioSender = pc.addTrack(t, stream); });
     else reg.audioSender = pc.addTransceiver('audio', { direction: 'sendrecv' }).sender; // sem microfone agora: a vaga fica aberta para ligar depois sem refazer a conexão
@@ -115,14 +117,42 @@
       medir(id, fluxo);
     };
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'connected') { tentativas.set(id, 0); reg.pronto = true; if (tela) renegociar(id); }
+      if (pc.connectionState === 'connected') { tentativas.set(id, 0); semAudio.delete(id); reg.pronto = true; if (tela) renegociar(id); }
+      if (pc.connectionState === 'disconnected' && iniciador) setTimeout(() => { if (pcs.get(id) === reg && pc.connectionState === 'disconnected') { try { pc.restartIce(); } catch (_) { /* ok */ } } }, 3000);
+      if (est) { desenharBarra(); desenharLista(); }
       if (pc.connectionState === 'failed' && pcs.get(id) === reg) {
         fecharPc(id);
         const n = (tentativas.get(id) || 0) + 1; tentativas.set(id, n);
-        if (n <= 5) setTimeout(sincronizar, 1500 * n); else aviso('Não consegui ligar o áudio com uma das pessoas. Pode ser bloqueio de rede.', true);
+        if (n <= 5) setTimeout(sincronizar, 1500 * n); else falhaAudio(id);
       }
     };
     return reg;
+  }
+  // Estado simples do áudio com cada pessoa: ok, conectando ou falhou.
+  function estadoAudio(id) {
+    if (semAudio.has(id)) return 'falhou';
+    const r = pcs.get(id); if (!r) return 'conectando';
+    return r.pc.connectionState === 'connected' ? 'ok' : (r.pc.connectionState === 'failed' ? 'falhou' : 'conectando');
+  }
+  function falhaAudio(id) {
+    if (semAudio.has(id)) return;
+    semAudio.add(id);
+    aviso('Não consegui ligar o áudio com ' + nomeDe(id) + '. Quase sempre é bloqueio da rede (a conexão de voz usa portas que alguns firewalls fecham). Peça à TI para liberar UDP ou configurar um servidor TURN (CTAI_SALA_ICE). A tela e o apontador continuam funcionando.', true);
+    desenharBarra(); desenharLista();
+  }
+  // A cada 3 s: refaz a conexão que ficou presa (um sinal perdido deixa tudo "conectando" para sempre) e reabre o som se o navegador o travou.
+  function vigiar() {
+    clearInterval(vigia);
+    vigia = setInterval(() => {
+      if (!est) return;
+      for (const [id, r] of [...pcs.entries()]) {
+        if (r.pc.connectionState === 'connected' || !r.iniciador || Date.now() - r.desde < 12000) continue;
+        fecharPc(id);
+        const n = (tentativas.get(id) || 0) + 1; tentativas.set(id, n);
+        if (n <= 4) setTimeout(sincronizar, 300); else falhaAudio(id);
+      }
+      for (const a of audios.values()) if (a.paused && a.srcObject && ui.som) ui.som.hidden = false;
+    }, 3000);
   }
   function fecharPc(id) {
     if (ui.tela && ui.tela.dataset.de === id) esconderTela(id);
@@ -136,8 +166,8 @@
     if (!est) return;
     for (const p of lista) {
       if (p.id === est.eu) continue;
-      if (!p.online) { fecharPc(p.id); continue; }
-      if (!pcs.has(p.id) && est.eu > p.id) ligar(p.id);
+      if (!p.online) { fecharPc(p.id); semAudio.delete(p.id); tentativas.delete(p.id); continue; }
+      if (!pcs.has(p.id) && est.eu > p.id && !semAudio.has(p.id)) ligar(p.id);
     }
     for (const id of [...pcs.keys()]) if (!lista.some((p) => p.id === id)) fecharPc(id);
     if (operando && !lista.some((p) => p.id === operando && p.online)) { operando = null; desenhar(); }
@@ -355,7 +385,7 @@
     es.addEventListener('silenciar', () => { if (!mudo) { alternarMicrofone(true); aviso('Quem conduz silenciou a sala. Ligue seu microfone para falar.'); } });
     es.addEventListener('encerrada', (e) => { const m = ler(e).motivo; sairLocal(); aviso(m || 'A sala foi encerrada.'); });
     es.onerror = () => { if (saindoDaPagina) return; if (es && es.readyState === 2) { sairLocal(); aviso('A conexão com a sala caiu e não voltou. Entre de novo com o código.', true); } };
-    ouvirFala(); instalarEmissor();
+    ouvirFala(); vigiar(); instalarEmissor();
     ui.botao.classList.add('sg-ativo');
   }
 
@@ -365,7 +395,7 @@
     esconderTela();
     for (const id of [...pcs.keys()]) fecharPc(id);
     for (const a of audios.values()) a.remove();
-    audios.clear(); medidores.clear(); pend.clear(); tentativas.clear();
+    audios.clear(); medidores.clear(); pend.clear(); tentativas.clear(); semAudio.clear(); clearInterval(vigia);
     if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
     if (ctx) { try { ctx.close(); } catch (_) { /* ok */ } ctx = null; }
     clearInterval(timerFala); retirarEmissor(); esconderPonteiro(); limparPagina();
@@ -502,6 +532,11 @@
     const chip = (t, on) => ui.barra.appendChild(el('span', 'sg-chip' + (on ? ' sg-on' : ''), t));
     ui.barra.appendChild(el('span', 'sg-ao-vivo', '● Ao vivo'));
     chip(stream ? (mudo ? 'Microfone desligado' : 'Microfone ligado') : 'Só ouvindo', !mudo && !!stream);
+    { const outros = lista.filter((x) => x.id !== est.eu && x.online);
+      if (outros.length) {
+        const ruins = outros.filter((x) => estadoAudio(x.id) === 'falhou'), ok = outros.filter((x) => estadoAudio(x.id) === 'ok');
+        chip(ruins.length ? 'Áudio com falha: ' + ruins.map((x) => x.nome).join(', ') : (ok.length === outros.length ? 'Áudio conectado' : 'Áudio conectando…'), !ruins.length && ok.length === outros.length);
+      } }
     if (est.condutor) chip('Apontador ' + (apontador ? 'ligado' : 'desligado'), apontador);
     else if (seguindoAgora) ui.barra.appendChild(el('span', 'sg-siga', '👆 ' + (est.condutorNome || 'Quem conduz') + ' está mostrando. Siga a bolinha'));
     if (tela) chip('Sua tela está sendo mostrada', true);
@@ -570,12 +605,12 @@
   let assinatura = '';
   function desenharLista() {
     if (!ui.lista || !est) return;
-    const ass = lista.map((x) => x.id + (x.online ? '1' : '0')).join(',');
+    const ass = lista.map((x) => x.id + (x.online ? '1' : '0') + (x.id === est.eu ? '' : estadoAudio(x.id))).join(',');
     if (ass !== assinatura) { assinatura = ass; desenhar(); return; } // entrou ou saiu alguém: refaz os botões
     ui.lista.textContent = '';
     for (const x of lista) {
       const li = el('li'); li.dataset.id = x.id;
-      li.append(el('span', 'sg-nome', x.nome + (x.id === est.eu ? ' (você)' : '') + (x.condutor ? ' · conduz' : '')), el('span', 'sg-estado', !x.online ? 'sem conexão' : (x.mudo ? 'mudo' : 'microfone aberto')));
+      li.append(el('span', 'sg-nome', x.nome + (x.id === est.eu ? ' (você)' : '') + (x.condutor ? ' · conduz' : '')), el('span', 'sg-estado', !x.online ? 'sem conexão' : (x.mudo ? 'mudo' : 'microfone aberto') + (x.id === est.eu ? '' : ' · áudio ' + ({ ok: 'conectado', conectando: 'conectando…', falhou: 'com falha' })[estadoAudio(x.id)])));
       ui.lista.appendChild(li);
     }
     if (ui.ponteiroNome) ui.ponteiroNome.textContent = est.condutorNome || (lista.find((x) => x.condutor) || {}).nome || 'Condutor';
@@ -661,9 +696,9 @@
   setInterval(verConvites, 8000);
 
   // Para conferir se o áudio ligou de verdade (útil quando a rede da SES bloqueia): SalaGuiada.diagnostico() no console.
-  function diagnostico() { return [...pcs.entries()].map(([id, r]) => ({ com: (lista.find((x) => x.id === id) || {}).nome || id, conexao: r.pc.connectionState, ice: r.pc.iceConnectionState })); }
+  function diagnostico() { return [...pcs.entries()].map(([id, r]) => ({ com: (lista.find((x) => x.id === id) || {}).nome || id, conexao: r.pc.connectionState, ice: r.pc.iceConnectionState, audio: estadoAudio(id) })); }
   // Bytes de áudio recebidos de cada pessoa (se ficar em 0 com a pessoa falando, o áudio não está chegando).
   async function recebido() { const o = []; for (const [id, r] of pcs.entries()) { let b = 0; try { (await r.pc.getStats()).forEach((x) => { if (x.type === 'inbound-rtp' && x.kind === 'audio') b += x.bytesReceived || 0; }); } catch (_) { /* ok */ } o.push({ com: nomeDe(id), bytes: b }); } return o; }
-  window.SalaGuiada = { iniciar, sair: sairLocal, diagnostico, recebido };
+  window.SalaGuiada = { iniciar, sair: sairLocal, diagnostico, recebido, estadoAudio };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
 })();

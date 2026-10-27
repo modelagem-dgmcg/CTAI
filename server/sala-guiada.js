@@ -26,7 +26,7 @@ const podeConduzir = () => true;
 void condutoresExtras;
 
 function iceServers() {
-  const lista = [{ urls: 'stun:stun.l.google.com:19302' }];
+  const lista = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
   const extra = String(config.env('CTAI_SALA_ICE', '')).trim(); // JSON com servidores TURN/STUN da ATI, se houver
   if (extra) { try { const j = JSON.parse(extra); if (Array.isArray(j)) return j; } catch (_) { /* usa o padrão */ } }
   return lista;

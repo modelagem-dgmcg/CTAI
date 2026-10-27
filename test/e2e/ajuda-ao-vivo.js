@@ -44,6 +44,12 @@ const SENHA = 'Senha@12345';
     // o microfone liberado depois chega mesmo a quem está na sala (áudio recebido pela outra pessoa)
     await eu.click('.sg-chave:has-text("Microfone") button:has-text("Ligar")');
     await ela.waitForFunction(async () => (await window.SalaGuiada.recebido()).some((x) => x.bytes > 1000), null, { timeout: 15000 });
+    // indicador de áudio: as duas pessoas veem "Áudio conectado" e o som está tocando de verdade
+    for (const pg of [eu, ela]) {
+      await pg.waitForSelector('.sg-barra .sg-chip.sg-on:has-text("Áudio conectado")', { timeout: 15000 });
+      await pg.waitForFunction(() => { const a = document.querySelector('audio'); return a && a.srcObject && !a.paused && a.srcObject.getAudioTracks().some((t) => t.readyState === 'live'); }, null, { timeout: 8000 });
+    }
+    assert.match(await ela.textContent('.sg-painel'), /áudio conectado/);
     // alvo de teste na tela dela
     await ela.evaluate(() => { const i = document.createElement('input'); i.id = 'alvo-teste'; i.style.cssText = 'position:fixed;left:300px;top:200px;width:300px;height:40px;z-index:10;font-size:20px'; document.body.appendChild(i); window.__c = 0; i.addEventListener('click', () => { window.__c++; }); });
     // pede a permissão
