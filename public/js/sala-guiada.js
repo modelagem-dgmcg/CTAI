@@ -498,8 +498,13 @@
     if (m.pagina && m.pagina !== aqui) {
       esconderPonteiro();
       const [cam, ...resto] = m.pagina.split('#');
-      if (seguir && cam === location.pathname && resto.length) { location.hash = '#' + resto.join('#'); return; }
-      ui.pagina.hidden = false; ui.paginaBtn.onclick = () => { location.href = m.pagina; };
+      const destino = '#' + resto.join('#');
+      const temRota = !(window.CTAI && window.CTAI.rotaExiste) || cam !== location.pathname || !resto.length || window.CTAI.rotaExiste(destino);
+      if (temRota && seguir && cam === location.pathname && resto.length) { location.hash = destino; return; }
+      ui.pagina.hidden = false;
+      if (ui.paginaTxt) ui.paginaTxt.textContent = temRota ? 'Quem conduz está em outra tela. ' : 'Quem conduz está numa tela que o seu perfil não acessa. Siga pela explicação em voz. ';
+      ui.paginaBtn.hidden = !temRota;
+      ui.paginaBtn.onclick = () => { location.href = m.pagina; };
       return;
     }
     limparPagina();
@@ -641,7 +646,7 @@
     ui.painel.append(topo, ui.som, ui.corpo, ui.audios);
     ui.botao.onclick = () => { ui.painel.hidden = !ui.painel.hidden; };
     ui.pagina = el('div', 'sg-pagina'); ui.pagina.hidden = true;
-    ui.pagina.appendChild(el('span', null, 'Quem conduz está em outra tela. '));
+    ui.paginaTxt = el('span', null, 'Quem conduz está em outra tela. '); ui.pagina.appendChild(ui.paginaTxt);
     ui.paginaBtn = el('button', null, 'Ir para lá'); ui.pagina.appendChild(ui.paginaBtn);
     ui.ponteiro = el('div', 'sg-ponteiro'); ui.ponteiro.setAttribute('popover', 'manual'); ui.ponteiro.setAttribute('aria-hidden', 'true');
     ui.ponteiro.append(el('span', 'sg-ponta'), ui.ponteiroNome = el('span', 'sg-etiqueta', ''));

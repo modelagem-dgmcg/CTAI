@@ -71,7 +71,11 @@
       h('thead', null, h('tr', null, cols.map((c) => h('th', { class: c.n ? 'n' : '' }, c.t)))),
       h('tbody', null, linhas.length ? linhas.map((l) => h('tr', null, l.map((c, i) => h('td', { class: cols[i] && cols[i].n ? 'n' : '' }, c)))) : h('tr', null, h('td', { colspan: cols.length, class: 'vazio' }, (opc && opc.vazio) || 'Nada por aqui ainda.')))));
   }
+  // Rotas que este perfil realmente tem (a Ajuda ao vivo usa para não levar ninguém a uma tela que o perfil não acessa).
+  let ROTAS_ATIVAS = [];
+  const rotaExiste = (hash) => { const h0 = String(hash || '').replace(/^#/, '') || '/'; return ROTAS_ATIVAS.some((padrao) => new RegExp('^' + padrao.replace(/:([a-z]+)/g, '([^/]+)') + '$').test(h0)); };
   function rotear(rotas, aoMudar) {
+    ROTAS_ATIVAS = rotas.map((r) => r[0]);
     async function ir() {
       const hash = location.hash.replace(/^#/, '') || '/';
       for (const [padrao, fn] of rotas) {
@@ -145,5 +149,5 @@
       try { await api('POST', '/api/auth/trocar-senha', { atual: a.value, nova: n.value }); toast('Senha trocada.'); return; } catch (e) { msg.textContent = e.message; }
     }
   }
-  window.CTAI = { h, api, fmt, toast, janela, perguntar, confirmar, selo, seloGrav, aviso, tabela, rotear, montar, troca, casca, trocarSenha, add, recolher, esquecerAbertos };
+  window.CTAI = { rotaExiste, h, api, fmt, toast, janela, perguntar, confirmar, selo, seloGrav, aviso, tabela, rotear, montar, troca, casca, trocarSenha, add, recolher, esquecerAbertos };
 })();
