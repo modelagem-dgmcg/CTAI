@@ -843,9 +843,43 @@
       window.CTAI_USUARIO_FORM({ perfis: u.perfis, contratos: u.contratos, setores: META.setores, endpoint: '/api/admin/usuarios', aoCriar: admin }),
       window.CTAI_RACK_IA(),
       h('div', { class: 'cartao' }, h('h3', null, 'Backup do banco'), h('p', { class: 'peq mudo' }, 'Baixa uma cópia consistente do banco (usuários, envios, pareceres, trilha). Os PDFs gerados ficam no disco do servidor. Guarde o arquivo em local seguro.'), h('a', { class: 'btn sec', id: 'bk-baixar', href: '/api/admin/backup' }, 'Baixar backup do banco')),
+      h('div', { class: 'cartao' }, h('h3', null, 'Zerar dados e começar com dados reais'), h('p', { class: 'peq mudo' }, 'Apaga os dados de demonstração e de teste (contratos e usuários de demonstração, meses, fichas, envios, pareceres, histórico, caixa de entrada, mensagens, carteiras), mantendo a equipe, as configurações, as regras e a trilha de auditoria. Mostra o que será apagado antes e guarda uma cópia do banco.'), h('button', { class: 'perigo', id: 'zr-abrir', onclick: () => zerarDados().catch((e) => toast(e.message, true)) }, 'Zerar dados de demonstração...')),
       h('div', { class: 'cartao' }, h('h3', null, 'Dados de demonstração'), h('p', { class: 'peq mudo' }, 'O contrato "UPA Demonstração" tem dados fictícios (marcados na tela e no PDF). Você pode recriá-los ou apagá-los por completo; o contrato real não é tocado.'),
         h('div', { class: 'linha' }, h('button', { class: 'sec', onclick: async () => { if (await confirmar('Recriar os dados fictícios?', 'Apaga o que foi feito no contrato de demonstração e recria do zero.', 'Recriar', true)) { await api('POST', '/api/admin/demo/recarregar', {}); toast('Demonstração recriada.'); } } }, 'Recriar a demonstração'),
           h('button', { class: 'perigo', onclick: async () => { const t = await perguntar('Apagar a demonstração', 'Digite APAGAR para confirmar', { texto: 'Apaga o contrato de demonstração e desativa os usuários dele.' }); if (t === 'APAGAR') { await api('POST', '/api/admin/demo/apagar', { confirmar: 'APAGAR' }); toast('Demonstração apagada.'); admin(); } else if (t) toast('Texto diferente de APAGAR.', true); } }, 'Apagar a demonstração'))));
+  }
+
+  // Zerar dados de demonstração e de teste: prévia, ZERAR + senha, cópia feita antes, resultado com download.
+  async function zerarDados() {
+    const pv = await api('GET', '/api/admin/zerar/previa');
+    const lista = (itens) => h('ul', { class: 'peq' }, itens.length ? itens.map((x) => h('li', null, x)) : h('li', { class: 'mudo' }, 'nada'));
+    const conf = h('input', { type: 'text', id: 'zr-conf', placeholder: 'Digite ZERAR', autocomplete: 'off' });
+    const senha = h('input', { type: 'password', id: 'zr-senha', autocomplete: 'current-password' });
+    const msg = h('div', { class: 'msg-erro', id: 'zr-msg' });
+    const corpo = h('div', null,
+      aviso('atencao', h('strong', null, 'Isto não tem volta pela tela. '), 'Antes de apagar, o sistema guarda uma cópia do banco no servidor e oferece o download. A trilha de auditoria não é apagada.'),
+      h('h3', null, 'Será apagado'), lista(pv.apagar.map((x) => x.nome + ': ' + x.n)),
+      h('p', { class: 'peq' }, h('strong', null, 'Contratos de demonstração: '), pv.contratosApagados.join(', ') || 'nenhum'),
+      h('p', { class: 'peq' }, h('strong', null, 'Usuários de demonstração: '), pv.usuariosApagados.join(', ') || 'nenhum'),
+      h('p', { class: 'peq' }, 'PDFs gerados no servidor: ' + pv.pdfs + ' (ficam guardados numa pasta datada, fora do caminho do sistema).'),
+      h('h3', null, 'Será mantido'), lista(pv.mantidos),
+      h('p', { class: 'peq' }, h('strong', null, 'Contratos reais (só a definição): '), pv.contratosMantidos.join(', ') || 'nenhum'),
+      h('p', { class: 'peq' }, h('strong', null, 'Usuários mantidos: '), pv.usuariosMantidos.join(', ') || 'nenhum'),
+      h('div', { class: 'campo' }, h('label', { for: 'zr-conf' }, 'Para confirmar, digite ZERAR'), conf),
+      h('div', { class: 'campo' }, h('label', { for: 'zr-senha' }, 'Sua senha de administrador'), senha), msg);
+    const r = await janela('Zerar dados de demonstração', corpo, [{ rotulo: 'Cancelar', valor: null, sec: true }, { rotulo: 'Apagar e começar do zero', valor: 'ok', perigo: true, validar: async () => {
+      msg.textContent = '';
+      if (conf.value !== 'ZERAR') { msg.textContent = 'Digite ZERAR para confirmar.'; return false; }
+      if (!senha.value) { msg.textContent = 'Digite a sua senha.'; return false; }
+      return true; } }]);
+    if (r !== 'ok') return;
+    try {
+      const o = await api('POST', '/api/admin/zerar', { confirmar: conf.value, senha: senha.value });
+      await janela('Dados zerados', h('div', null, aviso('ok', 'Pronto. O sistema está limpo para receber os dados reais.'),
+        h('p', null, 'Cópia feita antes de apagar: ', h('a', { id: 'zr-baixar', href: '/api/admin/zerar/backup/' + encodeURIComponent(o.backup) }, 'baixar ' + o.backup)),
+        h('p', { class: 'peq' }, 'Próximo passo: Gestão CTAI > Importar, para carregar a carteira real.')), [{ rotulo: 'Entendi', valor: 'ok' }]);
+      admin();
+    } catch (e) { toast(e.message, true); }
   }
 
   async function iniciar() {

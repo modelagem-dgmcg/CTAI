@@ -79,6 +79,16 @@ Quando quiser `ctai.dgmcg.com.br`:
 
 O `render.yaml` liga a **atualização automática**: a cada mudança enviada à branch **main** do GitHub, o Render refaz o sistema e troca a versão sozinho (alguns minutos, com uma breve indisponibilidade). Os dados ficam no disco e **não se perdem** nas atualizações. Para pausar as atualizações: **serviço > Settings > Auto-Deploy > Off**.
 
+## Zerar os dados de demonstração e começar com dados reais
+
+Na SES, como admin: **Administração > Zerar dados e começar com dados reais**. A tela mostra o que será apagado e o que será mantido. Para confirmar, digite **ZERAR** e a sua senha. Antes de apagar, o sistema guarda uma cópia do banco no servidor (`backup-antes-de-zerar-DATA.sqlite`) e oferece o download no fim.
+
+- **Apaga:** contrato e usuários de demonstração, meses, fichas, linhas, envios, pareceres, achados, histórico, Caixa de entrada, mensagens, documentos e carteiras. Os PDFs gerados são movidos para uma pasta datada (`arquivados-antes-de-zerar-DATA`), fora do caminho do sistema.
+- **Mantém:** administração, superintendência e analistas reais; chaves de IA e do GAOCG; configurações da Gestão; regras, decisões, normas, ensinos e modelos de documento; a definição dos contratos reais (sem nenhum dado de mês); e a **trilha de auditoria**, que registra o evento `zerar_demo` com quem, quando e as contagens.
+- **Como o apagamento é permitido:** os gatilhos do banco protegem envios, linhas e versões de contrato real. Dentro de uma única transação, os contratos são marcados como demonstração só pelo tempo da limpeza e voltam ao normal no fim; se algo falhar, tudo é desfeito.
+- **Usuários considerados de demonstração:** os do contrato de demonstração, os com login terminado em `.demo` e os cujo nome tem "demonstração", "(demo)" ou "conferente N". Os outros ficam. A prévia lista nomes antes de apagar.
+- **Depois de zerar:** Gestão CTAI > Importar, para carregar a carteira real.
+
 ## Backup
 
 Os dados (banco, PDFs gerados) ficam no **disco persistente** `/dados`.

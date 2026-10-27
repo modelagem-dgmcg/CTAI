@@ -75,6 +75,8 @@ Registro que só cresce, com a cadeia de códigos. A faixa verde diz "Cadeia ín
 ## 10. Administração (admin)
 Usuários (criar, redefinir senha, ativar/desativar), saúde do sistema, e **dados de demonstração**: recriar ou apagar (digite `APAGAR`). Apagar só mexe no contrato fictício.
 
+**Zerar dados e começar com dados reais.** Em Administração, o cartão "Zerar dados e começar com dados reais" mostra o que será apagado (contrato e usuários de demonstração, meses, fichas, envios, pareceres, histórico, Caixa de entrada, mensagens, carteiras) e o que será mantido (equipe real, configurações, regras, decisões e a trilha de auditoria). Para confirmar, digite **ZERAR** e a sua senha. O sistema guarda uma cópia do banco antes e oferece o download. **Depois de zerar: Gestão CTAI > Importar, para carregar a carteira real.**
+
 
 ## Checklist de recebimento e prazos
 

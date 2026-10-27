@@ -52,6 +52,17 @@ module.exports = (db) => {
     res.json({ ok: true });
   });
 
+  // Zerar dados de demonstração e de teste (prévia, execução com ZERAR + senha, download da cópia feita antes).
+  const ZR = require('../zerar');
+  r.get('/zerar/previa', (req, res) => res.json(ZR.contar(db, req.usuario)));
+  r.post('/zerar', (req, res) => res.json(ZR.zerar(db, req.usuario, req.body)));
+  r.get('/zerar/backup/:nome', (req, res) => {
+    const f = ZR.caminhoBackup(req.params.nome);
+    trilha.registrar(db, { usuario: req.usuario.login, tabela: 'sistema', registro: 'banco', campo: 'backup', valor_novo: 'baixado: ' + req.params.nome });
+    res.setHeader('Content-Type', 'application/octet-stream'); res.setHeader('Content-Disposition', 'attachment; filename="' + req.params.nome + '"');
+    res.send(require('fs').readFileSync(f));
+  });
+
   // Cópia consistente do banco (sem parar o sistema) para baixar como backup. Só administrador, só de dentro (a exposição bloqueia /api/admin por fora).
   r.get('/backup', (req, res) => {
     const fs = require('fs'), path = require('path');
