@@ -24,6 +24,11 @@ module.exports = (db) => {
   const contratoDe = (req) => req.usuario.perfil === 'admin' ? (req.query.contrato || 'DEMO-UPA') : req.usuario.contrato_id;
   const comp = (req) => { const c = D.competenciaPorCid(db, req.params.cid); D.exigirContrato(req.usuario, c.contrato_id); return c; };
 
+  // Funcionário de setor vê só o que é do(s) seu(s) setor(es); gestor da unidade e admin veem tudo.
+  const restrito = (req) => req.usuario.perfil === 'setor_unidade';
+  const meusSetores = (req) => A.setoresDe(req.usuario);
+  const soGestor = (req, msg) => { if (restrito(req)) throw erro(403, msg || 'Esta parte é do gestor da unidade.'); };
+
   // ---------- Equipe da unidade (só o gestor da unidade; nunca outra unidade nem a CTAI) ----------
   const EQ = require('../equipe');
   const gestor = (req) => { if (req.usuario.perfil !== 'gestor_unidade') throw erro(403, 'Só o gestor da unidade cuida da equipe.'); return req.usuario; };
@@ -41,7 +46,9 @@ module.exports = (db) => {
     const lista = db.all('SELECT cid, competencia_id, status, mes_implantacao, processo_sei FROM competencias WHERE contrato_id = ? ORDER BY competencia_id DESC', contrato).map((k) => {
       const f = D.fichasDaCompetencia(db, k.cid);
       const ult = D.ultimoEnvio(db, k.cid);
-      return Object.assign(k, { mes_implantacao: !!k.mes_implantacao, fichasProntas: Object.values(f).filter((x) => x.status === 'pronta').length, fichasTotal: F.SETORES.length, versaoEnvio: ult ? ult.versao : null, seiAlertas: SEI.resumoAlertas(db, k.cid), prazos: PZ.daCompetencia(db, k) });
+      const meus = restrito(req) ? meusSetores(req) : null;
+      const fs = Object.values(f).filter((x) => !meus || meus.includes(x.setor));
+      return Object.assign(k, { mes_implantacao: !!k.mes_implantacao, fichasProntas: fs.filter((x) => x.status === 'pronta').length, fichasTotal: meus ? meus.length : F.SETORES.length, versaoEnvio: meus ? null : (ult ? ult.versao : null), seiAlertas: meus ? null : SEI.resumoAlertas(db, k.cid), prazos: PZ.daCompetencia(db, k) });
     });
     res.json({ contrato: Object.assign(c, { demo: !!c.demo }), competencias: lista });
   });
@@ -55,10 +62,14 @@ module.exports = (db) => {
     const envios = db.all('SELECT envio_id, versao, motivo, enviado_por, enviado_em, hash_snapshot, pdf_hash FROM envios WHERE cid = ? ORDER BY versao DESC', c.cid);
     const sei = SEI.canais(db, c.cid);
     const lotes = db.all("SELECT * FROM lotes_api WHERE cid = ? AND status = 'pendente'", c.cid);
+    const meus = restrito(req) ? meusSetores(req) : null;
+    if (meus) {
+      for (const f of Object.keys(contagem)) if (!meus.includes(F.FONTES[f].setor)) delete contagem[f];
+    }
     res.json({
       competencia: { cid: c.cid, competencia_id: c.competencia_id, status: c.status, mes_implantacao: c.mes_implantacao, unidade: c.unidade, oss: c.oss, demo: c.demo },
-      setores: F.SETORES.map((st) => ({ id: st.id, nome: st.nome, resumo: st.resumo, indicadores: st.indicadores, fontes: st.fontes, status: s.fichas[st.id].status, atualizado_por: s.fichas[st.id].atualizado_por, atualizado_em: s.fichas[st.id].atualizado_em })),
-      prazos: PZ.daCompetencia(db, c), contagem, consolidado: s.consolidado, pontos: s.pontos, avisos: s.avisos, bloqueios: s.bloqueios, envios, sei, lotes,
+      setores: F.SETORES.filter((st) => !meus || meus.includes(st.id)).map((st) => ({ id: st.id, nome: st.nome, resumo: st.resumo, indicadores: st.indicadores, fontes: st.fontes, status: s.fichas[st.id].status, atualizado_por: s.fichas[st.id].atualizado_por, atualizado_em: s.fichas[st.id].atualizado_em })),
+      prazos: PZ.daCompetencia(db, c), contagem, consolidado: meus ? null : s.consolidado, pontos: meus ? null : s.pontos, avisos: meus ? [] : s.avisos, bloqueios: meus ? [] : s.bloqueios, envios: meus ? [] : envios, sei: meus ? null : sei, lotes: meus ? [] : lotes,
       voce: { perfil: req.usuario.perfil, setor: req.usuario.setor, setores: A.setoresDe(req.usuario), podeEnviar: req.usuario.perfil === 'gestor_unidade' || req.usuario.perfil === 'admin' },
     });
   });
@@ -67,6 +78,7 @@ module.exports = (db) => {
     const c = comp(req);
     const st = F.setor(req.params.setor);
     if (!st) throw erro(404, 'Setor desconhecido.');
+    if (restrito(req) && !meusSetores(req).includes(st.id)) throw erro(403, 'Esta ficha é de outro setor.');
     const f = D.fichasDaCompetencia(db, c.cid)[st.id];
     res.json({ setor: st, campos: F.camposDoSetor(st.id), ficha: f, podeEditar: req.usuario.perfil === 'gestor_unidade' || req.usuario.perfil === 'admin' || A.setoresDe(req.usuario).includes(st.id) });
   });
@@ -164,10 +176,11 @@ module.exports = (db) => {
   });
   r.post('/achados/:id/responder', (req, res) => { achadosDb.responder(db, req.params.id, req.usuario, req.body && req.body.resposta); res.json({ ok: true }); });
 
-  r.get('/fontes', (req, res) => res.json({ fontes: Object.entries(F.FONTES).map(([id, f]) => ({ id, nome: f.nome, setor: f.setor, indicadores: f.indicadores, ajuda: f.ajuda, colunas: f.colunas })), colunasProibidas: L.COLUNAS_PROIBIDAS }));
+  r.get('/fontes', (req, res) => res.json({ fontes: Object.entries(F.FONTES).filter(([, f]) => !restrito(req) || meusSetores(req).includes(f.setor)).map(([id, f]) => ({ id, nome: f.nome, setor: f.setor, indicadores: f.indicadores, ajuda: f.ajuda, colunas: f.colunas })), colunasProibidas: L.COLUNAS_PROIBIDAS }));
 
   r.get('/fontes/:fonte/modelo.csv', (req, res) => {
     if (!F.FONTES[req.params.fonte]) throw erro(404, 'Fonte desconhecida.');
+    D.exigirSetor(req.usuario, F.FONTES[req.params.fonte].setor);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename="modelo-' + req.params.fonte + '.csv"');
     res.send(L.modeloCSV(req.params.fonte));
@@ -184,6 +197,7 @@ module.exports = (db) => {
     const c = comp(req);
     const f = F.FONTES[req.params.fonte];
     if (!f) throw erro(404, 'Fonte desconhecida.');
+    D.exigirSetor(req.usuario, f.setor);
     const total = db.get('SELECT COUNT(*) AS n FROM linhas_rascunho WHERE cid = ? AND fonte = ?', c.cid, req.params.fonte).n;
     const linhas = db.all('SELECT id, protocolo, data_inicio, hora_inicio, data_fim, hora_fim, minutos, categoria, dados, origem, confirmada FROM linhas_rascunho WHERE cid = ? AND fonte = ? ORDER BY id LIMIT 300', c.cid, req.params.fonte).map((l) => Object.assign(l, { dados: D.json(l.dados, {}) }));
     res.json({ fonte: Object.assign({ id: req.params.fonte }, f), total, linhas });
@@ -228,6 +242,7 @@ module.exports = (db) => {
 
   // ---------- Conferir e enviar ----------
   r.get('/competencias/:cid/conferir', (req, res) => {
+    soGestor(req, 'A conferência geral é do gestor da unidade.');
     const c = comp(req);
     const s = E.situacaoAntesDoEnvio(db, c.cid);
     res.json({ avisos: s.avisos, bloqueios: s.bloqueios, consolidado: s.consolidado, pontos: s.pontos, regras: s.regras.indicadores.map((i) => ({ id: i.id, nome: i.nome, max: i.max })) });
@@ -253,6 +268,7 @@ module.exports = (db) => {
     const e = db.get('SELECT * FROM envios WHERE envio_id = ?', Number(req.params.id));
     if (!e) throw erro(404, 'Envio não encontrado.');
     D.exigirContrato(req.usuario, D.competenciaPorCid(db, e.cid).contrato_id);
+    soGestor(req, 'O relatório enviado é do gestor da unidade.');
     const p = E.lerPdf(db, e.envio_id);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename="' + p.envio.pdf_arquivo + '"');

@@ -55,7 +55,7 @@
       h('div', { class: 'aviso info' }, sintese(), ' ', h('a', { href: '/api/unidade/formularios/pdf', target: '_blank', rel: 'noopener' }, 'Formulários em branco para imprimir (PDF)')),
       h('div', { class: 'grade' }, INFO.competencias.map((k) => h('div', { class: 'cartao' },
         h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, fmt.comp(k.competencia_id)), k.mes_implantacao ? selo('implantação', 'atencao') : null),
-        h('p', { class: 'mudo peq' }, k.versaoEnvio ? 'Enviado (versão ' + k.versaoEnvio + ') · situação: ' + k.status : 'Ainda não enviado'),
+        ehGestor() ? h('p', { class: 'mudo peq' }, k.versaoEnvio ? 'Enviado (versão ' + k.versaoEnvio + ') · situação: ' + k.status : 'Ainda não enviado') : null,
         k.prazos ? h('p', { class: 'peq' }, seloPrazo(k.prazos.sei, 'SEI'), ' ', seloPrazo(k.prazos.simas, 'SIMAS')) : null,
         k.seiAlertas ? h('p', { class: 'peq' }, selo('SEI pendente', 'atencao'), ' o vínculo com o documento no SEI pede atenção. Abra o mês.') : null,
         h('div', { class: 'barra', role: 'img', 'aria-label': k.fichasProntas + ' de ' + k.fichasTotal + ' fichas prontas' }, h('i', { style: 'width:' + Math.round((k.fichasProntas / k.fichasTotal) * 100) + '%' })),
@@ -86,7 +86,7 @@
 
   // ---------- Competência ----------
   function abas(cid, ativa) {
-    return h('div', { class: 'abas' }, [['', 'Resumo'], ['/enviar', 'Conferir e enviar'], ['/envios', 'Envios']].map(([p, r]) => h('a', { href: '#/c/' + cid + p, class: ativa === p ? 'ativo' : '' }, r)));
+    return h('div', { class: 'abas' }, [['', 'Resumo'], ['/enviar', 'Conferir e enviar'], ['/envios', 'Envios']].filter(([p]) => ehGestor() || p === '').map(([p, r]) => h('a', { href: '#/c/' + cid + p, class: ativa === p ? 'ativo' : '' }, r)));
   }
   async function cabecalho(cid, aba) {
     const d = await api('GET', '/api/unidade/competencias/' + cid);
