@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // Página da unidade: uma tela corrida, em sequência (linha de montagem), que abre em aba própria.
-  // Receber → Conferir → Decidir → Produzir → Conferir novamente → Registrar no SEI.
+  // Importar Arquivos → Conferir → Decidir → Produzir → Conferir novamente → Registrar no SEI.
   // Tudo é calculado dos dados que já existem; o sistema marca sozinho cada etapa como feita.
   const { h, api, fmt, toast, janela, perguntar, selo, aviso, tabela, montar } = window.CTAI;
   const EU = () => window.__eu || {};
@@ -119,7 +119,7 @@
     const botaoNovaJanela = (hash, rot) => h('button', { type: 'button', onclick: () => janelaNova(hash) }, rot);
 
     const conteudos = [
-      // 1. Receber
+      // 1. Importar Arquivos
       () => [K.length ? tabela([{ t: 'Mês' }, { t: 'Situação' }, { t: 'Envio' }, { t: 'Recebido em' }, { t: 'Prazos' }, { t: '' }],
         K.map((k) => [fmt.comp(k.competencia_id) + (k.mes_implantacao ? ' (implantação)' : ''), selo(k.status), k.versaoEnvio ? 'v' + k.versaoEnvio : h('span', { class: 'mudo' }, 'não enviou'), fmt.data(k.recebido_em),
           k.prazos ? selo(k.prazos.texto, k.prazos.nivel === 'alta' ? 'alta' : (k.prazos.nivel === 'atencao' ? 'atencao' : (k.prazos.nivel === 'ok' ? 'ok' : ''))) : '—', link('/c/' + k.cid, 'Abrir o mês')]))
@@ -173,7 +173,7 @@
       (rv.pedidos || []).map((x) => h('div', { class: 'linha espaco', style: 'border-top:1px solid #e5e7eb;padding:8px 0' },
         h('div', null, h('strong', null, x.nome), ' · ' + x.setor + ' · ' + x.formulario, h('div', null, 'Justificativa do gestor: ' + x.justificativa), h('div', { class: 'mudo peq' }, 'Apagado em ' + fmt.data(x.expira_em) + ' se ninguém concordar' + (x.status === 'discordado' ? ' · você já respondeu que não concorda' : ''))),
         h('div', { class: 'linha' }, h('button', { type: 'button', onclick: () => decidirAcesso(x, true) }, 'Concordo'), h('button', { type: 'button', class: 'sec', onclick: () => decidirAcesso(x, false) }, 'Não concordo'))))) : null;
-    const NOMES = ['Receber', 'Conferir', 'Decidir', 'Produzir', 'Conferir novamente', 'Registrar no SEI'];
+    const NOMES = ['Importar Arquivos', 'Conferir', 'Decidir', 'Produzir', 'Conferir novamente', 'Registrar no SEI'];
     const secoes = NOMES.map((nome, i) => {
       const aberta = i === atualIdx || (atualIdx === -1 && i === 5);
       const det = h('details', Object.assign({ class: 'etapa ' + txtEstado(i), id: 'etapa-' + i }, aberta ? { open: true } : {}),

@@ -149,7 +149,7 @@ let base;
     await cri.selectOption('#ck-v', 'com divergências'); await cri.fill('#ck-o', 'Relatório da comissão chegou sem a ata da revisão.');
     await dialogo(cri, 'Salvar'); await cri.waitForSelector('text=decidido por cleuton', { timeout: 6000 });
     await cri.setViewportSize({ width: 1280, height: 1500 }); await cri.evaluate(() => window.scrollTo(0, 0)); await limpa(cri); await cri.screenshot({ path: path.join(CAP, '17-ctai-checklist.png' ) }); await cri.setViewportSize({ width: 1280, height: 860 });
-    await ir(cri, '#/', 'text=Unidades'); assert.ok(await cri.locator('a.un-linha').count() >= 1, 'lista de unidades'); await ir(cri, '#/u/DEMO-UPA', 'text=Receber'); assert.match(await cri.textContent('#conteudo'), /Prazos/);
+    await ir(cri, '#/', 'text=Unidades'); assert.ok(await cri.locator('a.un-linha').count() >= 1, 'lista de unidades'); await ir(cri, '#/u/DEMO-UPA', 'text=Importar Arquivos'); assert.match(await cri.textContent('#conteudo'), /Prazos/);
     log('prazos informados pela unidade e checklist de recebimento editado pela CTAI');
     for (const [k, v] of [['desconto_modo', 'faixa'], ['vermelho', 'faixa']]) await api(cri, 'PUT', '/api/ctai/contratos/DEMO-UPA/decisoes/' + k, { valor: v, justificativa: 'Teste ponta a ponta' });
     await ir(cri, '#/pareceres', '.rec-cab:has-text("Novo parecer")');
@@ -237,7 +237,7 @@ let base;
     await cri.waitForSelector('text=Nova versão no sistema depois do SEI');
     await limpa(cri); await cri.screenshot({ path: path.join(CAP, '8-ctai-alerta-sei.png') });
     await ir(cri, '#/c/' + cid06, 'text=Recálculo'); assert.match(await cri.textContent('#conteudo'), /Sistema × SEI/);
-    await ir(cri, '#/u/DEMO-UPA', 'text=Receber'); await cri.selectOption('#un-tri', '2026-T2'); await cri.waitForSelector('text=SEI: 1 alerta(s)');
+    await ir(cri, '#/u/DEMO-UPA', 'text=Importar Arquivos'); await cri.selectOption('#un-tri', '2026-T2'); await cri.waitForSelector('text=SEI: 1 alerta(s)');
     // Configurações da unidade: senha errada não derruba a sessão; com a senha certa e o motivo, grava
     await cri.click('button:has-text("Configurações") >> nth=0'); await cri.waitForSelector('dialog[open] .cfg');
     await cri.fill('dialog textarea[placeholder^="Ex.:"]', 'TA 5 mudou a meta'); await cri.fill('dialog input[type=password]', 'errada'); await cri.click('dialog button:has-text("Salvar alteração")');
