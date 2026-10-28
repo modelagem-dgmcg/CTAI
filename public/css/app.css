@@ -353,3 +353,46 @@ input.al-num{width:96px;text-align:right;padding:6px 8px}
   .al-anel-barra,.al-barra i,.al-ic,.al-item,.al-zona{transition:none}
   .al-item[data-estado=lendo] .al-ic,.al-item[data-estado=lido] .al-tick{animation:none}
 }
+
+/* Importar Arquivos (etapa 1 da página da unidade) */
+.imp-corpo>*+*{margin-top:12px}
+.imp-zona{padding:22px 18px}
+.imp-modelo,.imp-proposta{padding:14px 18px}
+.imp-confere{padding:16px 18px}
+.imp-resumo{font:700 21px/1.3 "Segoe UI",system-ui,sans-serif;color:var(--escuro);margin:8px 0 12px}
+.imp-lista{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.imp-item{display:flex;gap:12px;align-items:flex-start;padding:9px 8px;border-radius:8px;border-bottom:1px solid #eef0f2;min-height:50px}
+.imp-ic{flex:none;width:30px;height:30px;border-radius:50%;border:3px solid #adb5bd;display:grid;place-items:center;color:#fff;transition:background .3s,border-color .3s}
+.imp-item[data-estado=completo] .imp-ic{background:var(--ok);border-color:var(--ok)}
+.imp-item[data-estado=completo] .al-tick{stroke-dasharray:24;stroke-dashoffset:0;animation:al-traco .45s ease-out}
+.imp-item[data-estado=parcial] .imp-ic{background:var(--ambar);border-color:var(--ambar)}
+.imp-item[data-estado=falta] .imp-ic{background:var(--verm);border-color:var(--verm)}
+.imp-item[data-estado=opcional] .imp-nm{font-weight:400;color:#495057}
+.imp-tx{min-width:0;flex:1}
+.imp-nm{font-size:17px;line-height:1.35;font-weight:600;color:var(--escuro);word-break:break-word}
+.imp-tag{display:inline-block;margin-left:6px;padding:1px 9px;border-radius:99px;font-size:13px;font-weight:600;background:#e9ecef;color:#495057;vertical-align:1px}
+.imp-tag.ext{background:#dbeafe;color:#0b3a7a}
+.imp-cont{display:inline-block;margin-left:8px;font-variant-numeric:tabular-nums;font-weight:700;color:#7a4a05}
+.imp-item[data-estado=completo] .imp-cont{color:#0f5132}
+.imp-meses{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.imp-mes{padding:2px 12px;border-radius:99px;font-size:14.5px;border:1px solid var(--borda);background:#fff;color:#495057}
+.imp-mes.ok{background:#d1e7dd;border-color:#a3cfbb;color:#0f5132;font-weight:600}
+.imp-ext{display:grid;gap:6px;margin-top:6px}
+.imp-slot{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.imp-slot-chk{display:flex;align-items:center;gap:6px;font-size:16px;min-width:110px}
+.imp-slot-chk input{width:20px;height:20px}
+.imp-obs{flex:1;min-width:200px}
+.imp-arq{margin-top:3px}
+.imp-avulsos{margin-top:16px;padding-top:12px;border-top:1px solid var(--borda)}
+.imp-avulso{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid #eef0f2}
+.imp-ed-item{border:1px solid var(--borda);border-radius:var(--r);padding:10px 12px;margin:10px 0;background:#fafbfc}
+.imp-ed-linha{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px}
+.imp-ed-nome{flex:1;min-width:220px}
+.imp-ed-nome input,.imp-ed label input[type=text]{width:100%}
+.imp-ed-chk{display:flex;align-items:center;gap:6px;font-size:16px}
+.imp-ed-trecho{margin:4px 0 0}
+.imp-est h3{font-size:16px;margin:12px 0 4px}
+@media(max-width:700px){.imp-resumo{font-size:18px}.imp-slot-chk{min-width:0}}
+@media(prefers-reduced-motion:reduce){.imp-ic{transition:none}.imp-item[data-estado=completo] .al-tick{animation:none}}
+dialog:has(.imp-ed),dialog:has(.imp-est){max-width:880px}
+dialog:has(.imp-ed) .corpo,dialog:has(.imp-est) .corpo{max-height:72vh;overflow:auto}

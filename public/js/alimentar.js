@@ -65,6 +65,27 @@
     throw ultimo || new Error('Não consegui enviar ' + nome + '.');
   }
 
+  // Lê o PDF (ou o HTML do SEI) na máquina da analista e mascara ANTES de o texto sair dela. Devolve { carga } (o que vai ao servidor) ou { fallback }.
+  async function lerLocal(nome, ext, blob, aoPagina) {
+    let texto, paginas = null, semTexto = [];
+    try {
+      if (ext === 'pdf') {
+        const r = await window.CTAI_LEITOR_PDF.lerPdf(blob, { aoPagina });
+        if (!r.suficiente) return { fallback: 'fallback-sem-texto' };
+        texto = r.texto; paginas = r.paginas; semTexto = r.paginasSemTexto;
+      } else {
+        texto = window.CTAI_TEXTO.htmlDeBytes(new Uint8Array(await blob.arrayBuffer()));
+      }
+    } catch (e) { try { console.warn('Leitura no navegador falhou:', nome, e && e.message); } catch (_) { /* sem console */ } return { fallback: e && e.codigo === 'tempo' ? 'fallback-tempo' : 'fallback-erro' }; }
+    let cortado = false;
+    if (texto.length > TEXTO_MAX) { texto = texto.slice(0, TEXTO_MAX); cortado = true; }
+    const m = window.CTAI_MASCARA.mascarar(texto); // mascara ANTES de sair da máquina
+    return { carga: { texto: m.texto, hash: await sha256Hex(m.texto), paginas, paginasSemTexto: semTexto, mascarados: m.mascarados, cortado } };
+  }
+  async function sha256Hex(txt) {
+    try { if (!window.crypto || !window.crypto.subtle) return null; const b = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt)); return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, '0')).join(''); } catch (_) { return null; }
+  }
+
   async function tela() {
     let est = null, assinaturaBase = '', assinaturaTopo = '', timer = null;
     let enviandoId = null, mensagemEnvio = '', trabalhando = false, parar = false, aguardando = [];
@@ -135,30 +156,14 @@
 
     // Lê o PDF (ou o HTML do SEI) na máquina, mascara aqui mesmo e envia só o texto. Devolve { enviado } ou { enviado: false, fallback }.
     async function lerNoNavegador(id, nome, ext, blob, rotulo) {
-      let texto, paginas = null, semTexto = [];
       fase = 'Lendo na sua máquina'; dizer('Lendo ' + rotulo + ' na sua máquina...'); desenharPainel();
-      try {
-        if (ext === 'pdf') {
-          let ult = 0;
-          const r = await window.CTAI_LEITOR_PDF.lerPdf(blob, { aoPagina: (n, t) => { const agora = Date.now(); if (agora - ult < 250 && n < t) return; ult = agora; fase = 'Lendo na sua máquina (página ' + n + ' de ' + t + ')'; desenharPainel(); } });
-          if (!r.suficiente) return { enviado: false, fallback: 'fallback-sem-texto' };
-          texto = r.texto; paginas = r.paginas; semTexto = r.paginasSemTexto;
-        } else {
-          texto = window.CTAI_TEXTO.htmlDeBytes(new Uint8Array(await blob.arrayBuffer()));
-        }
-      } catch (e) { try { console.warn('Leitura no navegador falhou:', nome, e && e.message); } catch (_) { /* sem console */ } return { enviado: false, fallback: e && e.codigo === 'tempo' ? 'fallback-tempo' : 'fallback-erro' }; }
-      let cortado = false;
-      if (texto.length > TEXTO_MAX) { texto = texto.slice(0, TEXTO_MAX); cortado = true; }
-      const m = window.CTAI_MASCARA.mascarar(texto); // mascara ANTES de sair da máquina
+      let ult = 0;
+      const r = await lerLocal(nome, ext, blob, (n, t) => { const agora = Date.now(); if (agora - ult < 250 && n < t) return; ult = agora; fase = 'Lendo na sua máquina (página ' + n + ' de ' + t + ')'; desenharPainel(); });
+      if (!r.carga) return { enviado: false, fallback: r.fallback };
       fase = 'Enviando texto'; dizer('Enviando o texto de ' + rotulo + '...'); desenharPainel();
-      const carga = { texto: m.texto, hash: await sha256Hex(m.texto), paginas, paginasSemTexto: semTexto, mascarados: m.mascarados, cortado };
-      try { await enviarTexto(id, nome, carga, dizer); return { enviado: true }; }
+      try { await enviarTexto(id, nome, r.carga, dizer); return { enviado: true }; }
       catch (e) { if (e.fatal && !/sessão/.test(e.message)) return { enviado: false, fallback: 'fallback-erro' }; throw e; } // o servidor recusou o texto: tenta o arquivo inteiro
     }
-    async function sha256Hex(txt) {
-      try { if (!window.crypto || !window.crypto.subtle) return null; const b = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt)); return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, '0')).join(''); } catch (_) { return null; }
-    }
-
     async function registrarEEnviar(zip, itens) {
       dizer('Preparando a leitura...');
       let reg;
@@ -457,5 +462,7 @@
     }, 1200);
   }
 
-  window.CTAI_ALIMENTAR = { rotas: [['/alimentar', tela]], tela };
+  // Peças que a página da unidade (Importar Arquivos) reaproveita: ZIP aberto no navegador, PDF lido na máquina, só texto sobe.
+  const base = { carregarJSZip, lerLocal, enviarArquivo, enviarTexto, bonito, IGNORADOS, LIMITE_MB, num, dorme };
+  window.CTAI_ALIMENTAR = { rotas: [['/alimentar', tela]], tela, base };
 })();

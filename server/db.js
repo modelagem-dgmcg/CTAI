@@ -270,6 +270,35 @@ CREATE TABLE IF NOT EXISTS gaveta_numeros (
   UNIQUE (doc_id, chave)
 );
 CREATE INDEX IF NOT EXISTS ix_gaveta_num ON gaveta_numeros (contrato_id, mes);
+-- Importar Arquivos (etapa 1 da página da unidade): relatório-modelo (trimestre anterior, assinado no SEI), lista de conferência da unidade (versionada),
+-- arquivos recebidos no trimestre (texto já mascarado; o original nunca é guardado), checks manuais (fonte externa) e a conclusão da importação.
+CREATE TABLE IF NOT EXISTS imp_modelos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, trimestre TEXT, nome_arquivo TEXT, hash TEXT NOT NULL, paginas INTEGER, caracteres INTEGER, texto TEXT, mascarados TEXT,
+  estrutura TEXT, ia INTEGER NOT NULL DEFAULT 0, ativo INTEGER NOT NULL DEFAULT 1, criado_por TEXT NOT NULL, criado_em TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_imp_modelos ON imp_modelos (contrato_id, ativo);
+CREATE TABLE IF NOT EXISTS imp_listas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, versao INTEGER NOT NULL, estado TEXT NOT NULL, origem TEXT NOT NULL, modelo_id INTEGER, nota TEXT,
+  criada_por TEXT NOT NULL, criada_em TEXT NOT NULL, atualizada_em TEXT, confirmada_por TEXT, confirmada_em TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_imp_listas ON imp_listas (contrato_id, estado);
+CREATE TABLE IF NOT EXISTS imp_itens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, lista_id INTEGER NOT NULL, ordem INTEGER NOT NULL, codigo TEXT NOT NULL, nome TEXT NOT NULL, obrigatorio INTEGER NOT NULL DEFAULT 1,
+  periodicidade TEXT NOT NULL DEFAULT 'mensal', origem TEXT NOT NULL DEFAULT 'unidade', padroes TEXT, padroes_texto TEXT, palavras TEXT, trecho TEXT, confianca TEXT,
+  a_partir_de TEXT, fonte_ia INTEGER NOT NULL DEFAULT 0, UNIQUE (lista_id, codigo)
+);
+CREATE TABLE IF NOT EXISTS imp_arquivos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, mes TEXT, item_codigo TEXT, casamento TEXT, nome_arquivo TEXT, hash TEXT NOT NULL, paginas INTEGER,
+  caracteres INTEGER, texto TEXT, gaveta_id INTEGER, mascarados TEXT, aviso TEXT, criado_por TEXT NOT NULL, criado_em TEXT NOT NULL, UNIQUE (contrato_id, trimestre, hash)
+);
+CREATE INDEX IF NOT EXISTS ix_imp_arq ON imp_arquivos (contrato_id, trimestre);
+CREATE TABLE IF NOT EXISTS imp_checks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, item_codigo TEXT NOT NULL, mes TEXT NOT NULL DEFAULT '', observacao TEXT,
+  marcado_por TEXT NOT NULL, marcado_em TEXT NOT NULL, UNIQUE (contrato_id, trimestre, item_codigo, mes)
+);
+CREATE TABLE IF NOT EXISTS imp_conclusoes (
+  contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, concluida_em TEXT NOT NULL, por TEXT NOT NULL, faltantes TEXT, observacao TEXT, PRIMARY KEY (contrato_id, trimestre)
+);
 CREATE TABLE IF NOT EXISTS alimentar_liberacao (usuario_id INTEGER PRIMARY KEY, liberado_em TEXT NOT NULL, por TEXT NOT NULL, motivo TEXT);
 -- Histórico dos relatórios e pareceres anteriores, por unidade e trimestre. Nasce como 'rascunho' e só vira 'confirmado' quando a pessoa da carteira confere.
 CREATE TABLE IF NOT EXISTS hist_relatorios (
@@ -340,7 +369,7 @@ const COLUNAS_NOVAS = {
   msg: ['grupo TEXT'],
   contratos: ['tipo TEXT', 'municipio TEXT', 'criado_por TEXT', 'criado_em TEXT'],
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
-  alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER', 'origem TEXT'],
+  alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER', 'origem TEXT', 'imp_trimestre TEXT', 'imp_modelo INTEGER'],
   achados: ['encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
 };
 function migrar(db) {

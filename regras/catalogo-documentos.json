@@ -8,7 +8,8 @@
     "obrigatorio": "true: aparece como falta quando não chega; false: só é avisado como opcional",
     "a_partir_de": "mês (AAAA-MM) em que o documento passa a ser esperado",
     "partes": "o mesmo documento pode vir em partes (ex.: I e II); basta uma para constar como recebido",
-    "extrator": "leitura automática de números que o sistema sabe fazer (a analista confere e confirma)"
+    "extrator": "leitura automática de números que o sistema sabe fazer (a analista confere e confirma)",
+    "papel": "modelo: documento que a CTAI produz (o parecer do trimestre anterior vira o relatório-modelo); não entra na lista de conferência de Importar Arquivos"
   },
   "tipos": {
     "UPAE": {
@@ -54,7 +55,7 @@
       "descricao": "Modelo da UPA Olinda: a unidade envia documentos todo mês (checklist de recebimento da Secretaria) e a CTAI faz um parecer por trimestre. O envio de relatórios e pareceres segue como já funciona (rascunho do Histórico, conferido e aprovado pela analista).",
       "base": "Itens mensais: core/obrigatorios.js. Indicadores: regras/igq_v1.json.",
       "documentos": [
-        { "codigo": "parecer", "nome": "Parecer trimestral da CTAI", "obrigatorio": true, "periodicidade": "trimestral", "padroes_nome": ["parecer"], "padroes_texto": ["parecer"], "extrair": "Nota total (IGQ), indicadores, achados, recomendações e desconto." },
+        { "codigo": "parecer", "nome": "Parecer trimestral da CTAI", "obrigatorio": true, "periodicidade": "trimestral", "papel": "modelo", "padroes_nome": ["parecer"], "padroes_texto": ["parecer"], "extrair": "Nota total (IGQ), indicadores, achados, recomendações e desconto." },
         { "codigo": "relatorio_oss", "nome": "Relatório da OSS", "obrigatorio": false, "periodicidade": "mensal", "padroes_nome": ["relatorio"], "padroes_texto": [], "extrair": "Indicadores declarados pela OSS." }
       ]
     },

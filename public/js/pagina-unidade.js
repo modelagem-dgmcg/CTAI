@@ -3,11 +3,13 @@
   // Página da unidade: uma tela corrida, em sequência (linha de montagem), que abre em aba própria.
   // Importar Arquivos → Conferir → Decidir → Produzir → Conferir novamente → Registrar no SEI.
   // Tudo é calculado dos dados que já existem; o sistema marca sozinho cada etapa como feita.
+  // A etapa 1 não depende de envio da unidade pela internet: a analista solta aqui os arquivos baixados do SEI (ver public/js/importar.js).
   const { h, api, fmt, toast, janela, perguntar, selo, aviso, tabela, montar } = window.CTAI;
   const EU = () => window.__eu || {};
 
   const triDe = (comp) => { const [a, m] = String(comp).split('-'); return a + '-T' + Math.ceil(Number(m) / 3); };
   const mesesDe = (t) => { const [a, q] = t.split('-T'); const n = Number(q); return [0, 1, 2].map((i) => a + '-' + String(3 * (n - 1) + 1 + i).padStart(2, '0')); };
+  const triEncerrado = () => { const d = new Date(); let a = d.getFullYear(), q = Math.ceil((d.getMonth() + 1) / 3) - 1; if (q < 1) { q = 4; a--; } return a + '-T' + q; }; // último trimestre já fechado (hoje, em outubro/2026: 2026-T3)
   const triAtual = () => { const d = new Date(); return d.getFullYear() + '-T' + Math.ceil((d.getMonth() + 1) / 3); };
   const guardaTri = (id, v) => { try { if (v) sessionStorage.setItem('ctai_tri_' + id, v); return sessionStorage.getItem('ctai_tri_' + id); } catch (_) { return null; } };
 
@@ -93,8 +95,8 @@
 
     const pareceres = rp.pareceres.filter((x) => x.contrato_id === id);
     const comDados = [...new Set(c.competencias.map((k) => triDe(k.competencia_id)).concat(pareceres.map((x) => x.trimestre)))].sort().reverse();
-    const tris = [...new Set(comDados.concat([triAtual()]))].sort().reverse();
-    const T = (tris.includes(guardaTri(id)) ? guardaTri(id) : (comDados[0] || triAtual())); // começa no trimestre mais recente que tem dados
+    const tris = [...new Set(comDados.concat([triAtual(), triEncerrado()]))].sort().reverse();
+    const T = (tris.includes(guardaTri(id)) ? guardaTri(id) : triEncerrado()); // abre no último trimestre encerrado: é o que a analista monta agora
     const K = c.competencias.filter((k) => triDe(k.competencia_id) === T);
     const docs = (rd.documentos || []).filter((x) => !x.trimestre || x.trimestre === T);
     const Pa = pareceres.find((x) => x.trimestre === T) || null;
@@ -102,32 +104,36 @@
     const euCriador = Pa && Pa.criador_id === EU().usuario_id;
     const recarregar = () => pagina(p);
 
+    let imp = await api('GET', '/api/importar/unidade/' + encodeURIComponent(id) + '/' + T).catch(() => null); // lista de conferência e arquivos do trimestre
     const div = K.reduce((n, k) => n + (k.divergenciasAbertas || 0), 0);
-    const recebido = K.length > 0 && K.every((k) => k.versaoEnvio);
     const alertasSei = K.reduce((n, k) => n + (k.seiAlertas || 0), 0);
-    const conferido = recebido && div === 0 && alertasSei === 0;
     const decidido = !c.semRegras && !c.decisoesAbertas;
     const produzido = !!(Pa && V);
     const revisado = !!(V && V.status === 'autorizada');
     const noSei = !!(Pa && Pa.status === 'anexado ao SEI');
-    const feitas = [recebido, conferido, decidido, produzido, revisado, noSei];
-    const atualIdx = feitas.indexOf(false);
+    let recebido, conferido, feitas, atualIdx;
+    const calcular = () => {
+      recebido = !!(imp && imp.feita); // todos os itens obrigatórios com check, ou "Concluir importação"
+      const numerosPendentes = imp && imp.numeros ? imp.numeros.propostos : 0;
+      conferido = recebido && div === 0 && alertasSei === 0 && numerosPendentes === 0;
+      feitas = [recebido, conferido, decidido, produzido, revisado, noSei];
+      atualIdx = feitas.indexOf(false);
+    };
+    calcular();
 
     const txtEstado = (i) => (feitas[i] ? 'feita' : (i === atualIdx ? 'agora' : 'depois'));
     const seloEtapa = (i) => selo(txtEstado(i) === 'feita' ? '✔ feita' : (txtEstado(i) === 'agora' ? 'a fazer agora' : 'mais adiante'), txtEstado(i) === 'feita' ? 'ok' : (txtEstado(i) === 'agora' ? 'atencao' : ''));
     const link = (hash, rot, cls) => h('a', { class: cls || '', href: '#' + hash }, rot);
     const botaoNovaJanela = (hash, rot) => h('button', { type: 'button', onclick: () => janelaNova(hash) }, rot);
 
+    const slotImportar = h('div', { id: 'un-importar' });
     const conteudos = [
-      // 1. Importar Arquivos
-      () => [K.length ? tabela([{ t: 'Mês' }, { t: 'Situação' }, { t: 'Envio' }, { t: 'Recebido em' }, { t: 'Prazos' }, { t: '' }],
-        K.map((k) => [fmt.comp(k.competencia_id) + (k.mes_implantacao ? ' (implantação)' : ''), selo(k.status), k.versaoEnvio ? 'v' + k.versaoEnvio : h('span', { class: 'mudo' }, 'não enviou'), fmt.data(k.recebido_em),
-          k.prazos ? selo(k.prazos.texto, k.prazos.nivel === 'alta' ? 'alta' : (k.prazos.nivel === 'atencao' ? 'atencao' : (k.prazos.nivel === 'ok' ? 'ok' : ''))) : '—', link('/c/' + k.cid, 'Abrir o mês')]))
-        : aviso('info', 'A unidade ainda não abriu nenhum mês deste trimestre.'),
-      recebido ? null : h('p', { class: 'mudo peq' }, 'Esta etapa fica feita quando todos os meses do trimestre tiverem envio recebido.')],
+      // 1. Importar Arquivos: soltar o ZIP/PDF/Word do SEI, lista de conferência com check por item
+      () => [slotImportar],
       // 2. Conferir
-      () => [K.length ? tabela([{ t: 'Mês' }, { t: 'Divergências abertas', n: true }, { t: 'Sistema × SEI' }, { t: '' }], K.map((k) => [fmt.comp(k.competencia_id), String(k.divergenciasAbertas || 0), k.seiAlertas ? h('a', { href: '#/c/' + k.cid + '/envios', title: 'Alerta entre o sistema e o SEI' }, selo('SEI: ' + k.seiAlertas + ' alerta(s)', 'atencao')) : '—', link('/c/' + k.cid, 'Conferir')])) : aviso('info', 'Sem meses para conferir ainda.'),
-        h('p', { class: 'mudo peq' }, 'Fica feita quando não houver divergência aberta nem alerta entre o sistema e o SEI nos meses do trimestre.')],
+      () => [K.length ? tabela([{ t: 'Mês' }, { t: 'Divergências abertas', n: true }, { t: 'Sistema × SEI' }, { t: '' }], K.map((k) => [fmt.comp(k.competencia_id), String(k.divergenciasAbertas || 0), k.seiAlertas ? h('a', { href: '#/c/' + k.cid + '/envios', title: 'Alerta entre o sistema e o SEI' }, selo('SEI: ' + k.seiAlertas + ' alerta(s)', 'atencao')) : '—', link('/c/' + k.cid, 'Conferir')])) : aviso('info', 'Este trimestre não tem meses abertos pelo portal da unidade. A conferência segue pelos arquivos importados e pelos números lidos.'),
+        imp && imp.numeros && imp.numeros.propostos ? aviso('atencao', h('strong', null, imp.numeros.propostos + ' número(s) lido(s) esperando a sua conferência. '), h('a', { href: '#/alimentar' }, 'Conferir em Alimentar o Analista')) : null,
+        h('p', { class: 'mudo peq' }, 'Fica feita quando a importação estiver feita, sem divergência aberta, sem alerta entre o sistema e o SEI e sem número lido esperando conferência.')],
       // 3. Decidir
       () => [h('div', { class: 'linha espaco' }, h('div', null, c.semRegras ? selo('sem regra cadastrada', 'atencao') : (c.regra && c.regra.conferida ? selo('regra conferida', 'ok') : selo('regra a conferir', 'atencao')), ' ', c.decisoesAbertas ? selo(c.decisoesAbertas + ' dúvida(s) de regra em aberto', 'atencao') : selo('sem dúvidas em aberto', 'ok')),
         h('div', { class: 'linha' }, link('/regras/' + id, c.decisoesAbertas ? 'Decidir as dúvidas' : 'Ver regras e decisões', 'btn sec'), h('button', { type: 'button', class: 'sec', onclick: () => configuracoes(id, recarregar).catch((e) => toast(e.message, true)) }, 'Configurações'))),
@@ -183,6 +189,17 @@
     });
     const barra = h('nav', { class: 'etapas', 'aria-label': 'Etapas desta unidade' }, NOMES.map((nome, i) => h('button', { type: 'button', class: 'etapa-chip ' + txtEstado(i), title: nome, onclick: () => { secoes[i].open = true; secoes[i].scrollIntoView({ behavior: 'smooth', block: 'start' }); } },
       h('span', { class: 'chip-n' }, feitas[i] ? '✔' : String(i + 1)), h('span', { class: 'chip-t' }, nome))));
+    const repintar = () => {
+      secoes.forEach((det, i) => {
+        det.className = 'etapa ' + txtEstado(i);
+        const sm = det.querySelector('summary');
+        sm.querySelector('.etapa-n').textContent = feitas[i] ? '✔' : String(i + 1);
+        sm.querySelector('.etapa-s').replaceChildren(seloEtapa(i));
+      });
+      barra.querySelectorAll('.etapa-chip').forEach((b, i) => { b.className = 'etapa-chip ' + txtEstado(i); b.querySelector('.chip-n').textContent = feitas[i] ? '✔' : String(i + 1); });
+    };
+    if (window.CTAI_IMPORTAR) window.CTAI_IMPORTAR.preencher(slotImportar, { contratoId: id, tri: T, estado: imp,
+      aoMudar: (novo, recarga) => { if (recarga) { recarregar(); return; } imp = novo; calcular(); repintar(); } }).catch((e) => { slotImportar.replaceChildren(aviso('erro', e.message)); });
     const slotContrato = h('div', { id: 'un-contrato' });
     if (window.CTAI_CONTRATOS) window.CTAI_CONTRATOS.preencher(slotContrato, id).catch(() => {});
     const seletor = h('select', { id: 'un-tri', 'aria-label': 'Trimestre', onchange: (e) => { guardaTri(id, e.target.value); recarregar(); } }, tris.map((t) => h('option', Object.assign({ value: t }, t === T ? { selected: true } : {}), t)));

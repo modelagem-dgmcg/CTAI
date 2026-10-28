@@ -127,7 +127,17 @@ function registrarLote(db, usuario, corpo) {
   const zip = corpo.zip ? nomeLimpo(corpo.zip) : null;
   const lote = agora() + '#' + Math.random().toString(36).slice(2, 6);
   const meus = CART.doUsuario(db, usuario.usuario_id);
-  const unZip = zip ? unidadeDe(db, meus, zip, '') : null;
+  // Destino fixo (página da unidade, Importar Arquivos): a unidade e o trimestre já vêm definidos; nada é adivinhado pelo nome.
+  const dest = corpo.destino && typeof corpo.destino === 'object' ? corpo.destino : null;
+  let impUn = null, impTri = null, impModelo = 0;
+  if (dest) {
+    impUn = G.exigirUnidade(db, usuario, dest.contrato_id);
+    impTri = String(dest.trimestre || '');
+    if (!C.TRI_OK.test(impTri)) throw erro(400, 'Trimestre inválido.');
+    impModelo = dest.modelo ? 1 : 0;
+    if (impModelo && lista.length !== 1) throw erro(400, 'O relatório do trimestre anterior é um arquivo só.');
+  }
+  const unZip = zip && !dest ? unidadeDe(db, meus, zip, '') : null;
   const itens = [];
   for (const a of lista) {
     const nome = nomeLimpo(a && a.nome); const tam = Math.max(0, Number(a && a.tamanho) || 0);
@@ -138,18 +148,19 @@ function registrarLote(db, usuario, corpo) {
     else if (tam > X.MAX_ARQUIVO) { estado = 'problema'; motivo = 'Arquivo grande demais (' + X.MB(tam) + ' MB; o limite é ' + X.MB(X.MAX_ARQUIVO) + ' MB).'; }
     // identificação antecipada pelo nome (a leitura do texto confirma ou corrige depois)
     let contrato = null, codigo = null, parte = null;
-    const un = estado === 'espera' ? (unidadeDe(db, meus, nome, '') || unZip) : null;
-    if (un) {
+    const un = dest ? (estado === 'espera' ? { contrato_id: impUn.contrato_id } : null) : (estado === 'espera' ? (unidadeDe(db, meus, nome, '') || unZip) : null);
+    if (un && !dest) {
       contrato = un.contrato_id;
       const c = db.get('SELECT * FROM contratos WHERE contrato_id = ?', contrato);
       if (c && G.usaGaveta(c)) { const id = C.identificar(G.catalogoDe(c), nome, ''); if (id) { codigo = id.codigo; parte = id.parte; } }
     }
-    const mes = estado === 'espera' ? C.mesDoNome(nome) : null;
-    const id = Number(db.run('INSERT INTO alimentar_fila (usuario_id, lote, nome, tamanho, estado, motivo, contrato_id, mes, codigo, parte, zip_nome, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      usuario.usuario_id, lote, nome, tam, estado, motivo, contrato, mes, codigo, parte, zip, agora(), agora()).lastInsertRowid);
+    if (un && dest) contrato = un.contrato_id;
+    const mes = estado === 'espera' && !dest ? C.mesDoNome(nome) : null;
+    const id = Number(db.run('INSERT INTO alimentar_fila (usuario_id, lote, nome, tamanho, estado, motivo, contrato_id, mes, codigo, parte, zip_nome, imp_trimestre, imp_modelo, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      usuario.usuario_id, lote, nome, tam, estado, motivo, contrato, mes, codigo, parte, zip, impTri, impTri ? impModelo : null, agora(), agora()).lastInsertRowid);
     itens.push({ id, nome, estado });
   }
-  trilha.registrar(db, { usuario: usuario.login, tabela: 'alimentar_fila', registro: itens[0].id, campo: 'lote_registrado', valor_novo: { arquivos: itens.length, zip } });
+  trilha.registrar(db, { usuario: usuario.login, tabela: 'alimentar_fila', registro: itens[0].id, campo: 'lote_registrado', valor_novo: { arquivos: itens.length, zip, importar: impUn ? { contrato: impUn.contrato_id, trimestre: impTri, modelo: !!impModelo } : null } });
   return { lote, itens };
 }
 
@@ -219,6 +230,8 @@ async function umArquivo(db, item) {
   let texto = ex.texto; let mascarados = ex.mascarados || {};
   // Reforço opcional: segunda passada pela IA para nomes de pacientes que escaparam das regras fixas.
   if (iaPronta()) { const r = await M.reforcarComIA(texto); if (r.usada) { texto = r.texto; if (r.nomes) mascarados = M.somar(mascarados, { 'nome (IA)': r.nomes }); } }
+  // Veio da página da unidade (Importar Arquivos): guarda o texto, casa com a lista de conferência e não passa pelo Histórico.
+  if (item.imp_trimestre) { await require('./importar').daFila(db, u, item, ex, texto, mascarados, (campos) => set(db, item.id, campos)); return; }
   const meus = CART.doUsuario(db, u.usuario_id);
   const lote = loteDe(db, item);
   let un = unidadeDe(db, meus, item.nome, texto);
@@ -390,7 +403,7 @@ function painel(db, u, linhas) {
 function estado(db, u) {
   const t = trava(db, u);
   encerrarParados(db, u.usuario_id);
-  const brutos = db.all('SELECT * FROM alimentar_fila WHERE usuario_id = ? AND estado <> ? ORDER BY id DESC LIMIT 600', u.usuario_id, 'descartado').reverse();
+  const brutos = db.all('SELECT * FROM alimentar_fila WHERE usuario_id = ? AND estado <> ? AND imp_trimestre IS NULL ORDER BY id DESC LIMIT 600', u.usuario_id, 'descartado').reverse();
   const itens = brutos.map((i) => {
     const c = i.contrato_id ? db.get('SELECT unidade FROM contratos WHERE contrato_id = ?', i.contrato_id) : null;
     let masc = {}; try { masc = JSON.parse(i.mascarados || '{}'); } catch (_) { /* vazio */ }

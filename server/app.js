@@ -46,6 +46,7 @@ function criarApp(db) {
   app.use('/api/historico', require('./routes/historico')(db));
   app.use('/api/alimentar', require('./routes/alimentar')(db));
   app.use('/api/gaveta', require('./routes/gaveta')(db));
+  app.use('/api/importar', require('./routes/importar')(db));
   app.use('/api/integracoes', require('./routes/integracoes')(db));
   app.use('/api/admin', require('./routes/admin')(db));
   require('./ia-config').instalar(db);
