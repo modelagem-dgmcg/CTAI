@@ -1,0 +1,70 @@
+{
+  "versao": 1,
+  "atualizado_em": "2026-10-27",
+  "aviso": "Catálogo de documentos esperados por TIPO de unidade. Serve para o sistema dizer o que chegou e o que falta; nunca bloqueia o envio. Para mudar a lista, edite este arquivo (um item por documento) e publique uma nova versão.",
+  "como_ler": {
+    "padroes_nome": "textos procurados no NOME do arquivo (sem acento, minúsculas, pontuação vira espaço)",
+    "padroes_texto": "textos procurados no começo do CONTEÚDO, só quando o nome não resolve",
+    "obrigatorio": "true: aparece como falta quando não chega; false: só é avisado como opcional",
+    "a_partir_de": "mês (AAAA-MM) em que o documento passa a ser esperado",
+    "partes": "o mesmo documento pode vir em partes (ex.: I e II); basta uma para constar como recebido",
+    "extrator": "leitura automática de números que o sistema sabe fazer (a analista confere e confirma)"
+  },
+  "tipos": {
+    "UPAE": {
+      "rotulo": "UPAE",
+      "periodicidade": "mensal",
+      "fluxo": "gaveta",
+      "descricao": "Relatório Mensal (RM) da OSS e anexos, um conjunto por mês. O trimestre é calculado juntando os três meses.",
+      "base": "Amostras reais de jul, ago e set/2026 (UPAE Escada, CG 021/2022). Anexos 12 a 15 entram a partir de set/2026 (10º Termo Aditivo).",
+      "documentos": [
+        { "codigo": "oficio_envio", "nome": "Ofício de envio do Relatório Mensal", "obrigatorio": true, "padroes_nome": [], "padroes_texto": ["encaminhar o relatorio mensal", "assunto rm \\d{1,2} 20\\d{2}"], "extrair": "Número do ofício, mês de referência e data de envio." },
+        { "codigo": "oficio_justificativa", "nome": "Ofício de justificativa de metas", "obrigatorio": false, "observacao": "Só existe quando alguma meta não foi atingida.", "padroes_nome": ["justificativa"], "padroes_texto": ["justificativa para o nao atingimento"], "extrator": "oficio_justificativa", "extrair": "Consultas, ostomizados e sessões de reabilitação: ofertados, regulados, realizados e % de cumprimento; motivo alegado." },
+        { "codigo": "despacho", "nome": "Despacho", "obrigatorio": false, "observacao": "Aparece quando a OSS complementa ou corrige a justificativa.", "padroes_nome": ["\\bdespacho\\b"], "padroes_texto": [], "extrator": "oficio_justificativa", "extrair": "Mesmos números do ofício de justificativa, quando houver." },
+        { "codigo": "anexo_I", "nome": "Anexo I - Relatório Mensal (RM)", "obrigatorio": true, "padroes_nome": ["\\banexo i\\b"], "padroes_texto": [], "extrator": "producao_rm", "extrair": "Indicadores de produção: meta mensal, ofertado, realizado e % da meta, por indicador (inclui o quadro TEA). Indicadores de qualidade: satisfação, queixas, CNES." },
+        { "codigo": "anexo_II", "nome": "Anexo II - Planilha de Monitoramento (DGAIS)", "obrigatorio": true, "padroes_nome": ["\\banexo ii\\b"], "padroes_texto": [], "extrair": "Planilha de monitoramento: produção por especialidade e por dia." },
+        { "codigo": "anexo_III", "nome": "Anexo III - Escala Médica / OCI", "obrigatorio": true, "padroes_nome": ["\\banexo iii\\b"], "padroes_texto": [], "extrair": "Escala dos médicos por especialidade e dados de OCI." },
+        { "codigo": "anexo_IV", "nome": "Anexo IV - BID", "obrigatorio": true, "padroes_nome": ["\\banexo iv\\b"], "padroes_texto": [], "extrair": "Boletim de produção (BID): atendimentos por tipo e especialidade." },
+        { "codigo": "anexo_V", "nome": "Anexo V - SIA/SUS e OCI", "obrigatorio": true, "padroes_nome": ["\\banexo v\\b"], "padroes_texto": [], "extrair": "Produção faturada no SIA/SUS e atendimentos de OCI." },
+        { "codigo": "anexo_VI", "nome": "Anexo VI - Cadastro de profissionais (CNES)", "obrigatorio": true, "padroes_nome": ["\\banexo vi\\b"], "padroes_texto": [], "extrair": "Profissionais cadastrados no CNES." },
+        { "codigo": "anexo_VII", "nome": "Anexo VII - Planilha de profissionais (CNES)", "obrigatorio": true, "padroes_nome": ["\\banexo vii\\b"], "padroes_texto": [], "extrair": "Lista de profissionais que atuam na unidade." },
+        { "codigo": "anexo_1", "nome": "Anexo 1 - Atividades da Ouvidoria", "obrigatorio": true, "padroes_nome": ["\\banexo 1\\b(?! \\d)"], "padroes_texto": [], "extrair": "Manifestações recebidas, tipos, prazos e resolução." },
+        { "codigo": "anexo_1_1", "nome": "Anexo 1.1 - NPS/CSAT ou Relatório Geral da Ouvidoria", "obrigatorio": true, "observacao": "Vem como NPS/CSAT ou como Relatório Geral, conforme o mês.", "padroes_nome": ["\\banexo 1 1\\b"], "padroes_texto": [], "extrair": "Satisfação dos usuários (NPS/CSAT) ou relatório geral da Ouvidoria." },
+        { "codigo": "anexo_1_2", "nome": "Anexo 1.2 - Relatório de comentários", "obrigatorio": false, "padroes_nome": ["\\banexo 1 2\\b"], "padroes_texto": [], "extrair": "Comentários dos usuários." },
+        { "codigo": "anexo_2", "nome": "Anexo 2 - Matriciamento", "obrigatorio": true, "padroes_nome": ["\\banexo 2\\b(?! \\d)"], "padroes_texto": [], "extrair": "Atendimentos de matriciamento às equipes de Saúde da Família, por município." },
+        { "codigo": "anexo_3", "nome": "Anexo 3 - Supervisão do Cuidado", "obrigatorio": true, "padroes_nome": ["\\banexo 3\\b(?! \\d)"], "padroes_texto": [], "extrair": "Supervisões do cuidado nas UBS, por município." },
+        { "codigo": "anexo_4", "nome": "Anexo 4 - Programas Especiais", "obrigatorio": true, "padroes_nome": ["\\banexo 4\\b(?! \\d)"], "padroes_texto": [], "extrair": "Programas especiais (ex.: ostomizados) e seus números." },
+        { "codigo": "anexo_5", "nome": "Anexo 5 - Comissão de Óbito", "obrigatorio": true, "padroes_nome": ["\\banexo 5\\b(?! \\d)"], "padroes_texto": [], "extrair": "Ata da reunião ordinária: data, pauta, presentes." },
+        { "codigo": "anexo_6", "nome": "Anexo 6 - Comissão de Prontuários", "obrigatorio": true, "padroes_nome": ["\\banexo 6\\b(?! \\d)"], "padroes_texto": [], "extrair": "Ata da reunião ordinária: data, pauta, presentes." },
+        { "codigo": "anexo_7", "nome": "Anexo 7 - CFTP", "obrigatorio": true, "padroes_nome": ["\\banexo 7\\b(?! \\d)"], "padroes_texto": [], "extrair": "Ata da Comissão de Farmácia e Terapêutica: data, pauta, presentes." },
+        { "codigo": "anexo_8", "nome": "Anexo 8 - CCIH", "obrigatorio": true, "padroes_nome": ["\\banexo 8\\b(?! \\d)"], "padroes_texto": [], "extrair": "Relatório de controle de infecção." },
+        { "codigo": "anexo_9", "nome": "Anexo 9 - NSP", "obrigatorio": true, "padroes_nome": ["\\banexo 9\\b(?! \\d)"], "padroes_texto": [], "extrair": "Núcleo de Segurança do Paciente: notificações e ações." },
+        { "codigo": "anexo_10", "nome": "Anexo 10 - Projeto de Cuidadores", "obrigatorio": true, "padroes_nome": ["\\banexo 10\\b"], "padroes_texto": [], "extrair": "Atividades do projeto de cuidadores." },
+        { "codigo": "anexo_11", "nome": "Anexo 11 - Educação Permanente", "obrigatorio": true, "observacao": "Pode vir em duas partes (I e II).", "partes": ["I", "II"], "parte_regex": "permanente (ii|i)\\b", "padroes_nome": ["\\banexo 11\\b"], "padroes_texto": [], "extrair": "Capacitações realizadas, participantes e carga horária." },
+        { "codigo": "anexo_12", "nome": "Anexo 12 - Plano Terapêutico Singular", "obrigatorio": true, "a_partir_de": "2026-09", "observacao": "Passa a ser exigido a partir de set/2026 (10º Termo Aditivo).", "padroes_nome": ["\\banexo 12\\b"], "padroes_texto": [], "extrair": "Planos terapêuticos singulares elaborados." },
+        { "codigo": "anexo_13", "nome": "Anexo 13 - Contrarreferência", "obrigatorio": true, "a_partir_de": "2026-09", "observacao": "Passa a ser exigido a partir de set/2026 (10º Termo Aditivo).", "padroes_nome": ["\\banexo 13\\b"], "padroes_texto": [], "extrair": "Contrarreferências emitidas." },
+        { "codigo": "anexo_14", "nome": "Anexo 14 - Tempo de execução de exame", "obrigatorio": true, "a_partir_de": "2026-09", "observacao": "Passa a ser exigido a partir de set/2026 (10º Termo Aditivo).", "padroes_nome": ["\\banexo 14\\b"], "padroes_texto": [], "extrair": "Tempo entre pedido e execução, por exame." },
+        { "codigo": "anexo_15", "nome": "Anexo 15 - Tempo de entrega de laudo", "obrigatorio": true, "a_partir_de": "2026-09", "observacao": "Passa a ser exigido a partir de set/2026 (10º Termo Aditivo).", "padroes_nome": ["\\banexo 15\\b"], "padroes_texto": [], "extrair": "Tempo entre execução e entrega do laudo." }
+      ]
+    },
+    "UPA": {
+      "rotulo": "UPA",
+      "periodicidade": "mensal",
+      "fluxo": "parecer_trimestral",
+      "descricao": "Modelo da UPA Olinda: a unidade envia documentos todo mês (checklist de recebimento da Secretaria) e a CTAI faz um parecer por trimestre. O envio de relatórios e pareceres segue como já funciona (rascunho do Histórico, conferido e aprovado pela analista).",
+      "base": "Itens mensais: core/obrigatorios.js. Indicadores: regras/igq_v1.json.",
+      "documentos": [
+        { "codigo": "parecer", "nome": "Parecer trimestral da CTAI", "obrigatorio": true, "periodicidade": "trimestral", "padroes_nome": ["parecer"], "padroes_texto": ["parecer"], "extrair": "Nota total (IGQ), indicadores, achados, recomendações e desconto." },
+        { "codigo": "relatorio_oss", "nome": "Relatório da OSS", "obrigatorio": false, "periodicidade": "mensal", "padroes_nome": ["relatorio"], "padroes_texto": [], "extrair": "Indicadores declarados pela OSS." }
+      ]
+    },
+    "Hospital": {
+      "rotulo": "Hospital",
+      "periodicidade": "a confirmar",
+      "fluxo": "parecer_trimestral",
+      "a_confirmar": "Lista de documentos a confirmar com a analista da carteira.",
+      "descricao": "Esqueleto. Enquanto a lista não for confirmada, o envio funciona como parecer/relatório (rascunho do Histórico) e o sistema não aponta falta.",
+      "documentos": []
+    }
+  }
+}

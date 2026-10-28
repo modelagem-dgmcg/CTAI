@@ -28,7 +28,7 @@ const OPERACIONAIS = [
   ['msg', 'Mensagens da equipe'], ['msg_anexos', 'Anexos das mensagens'], ['carteira', 'Carteiras (unidades por analista)'], ['importacoes', 'Importações em lote'],
   ['hist_indicadores', 'Histórico: indicadores'], ['hist_achados', 'Histórico: achados'], ['hist_recomendacoes', 'Histórico: recomendações'], ['hist_relatorios', 'Histórico: relatórios'],
   ['contrato_pontos', 'Contratos e TAs: pontos do quadro'], ['contrato_docs', 'Contratos e TAs: quadros lidos (rascunho e confirmado)'], ['contrato_pasta', 'Contratos e TAs: arquivos já vistos na pasta'], ['contrato_pasta_estado', 'Contratos e TAs: última consulta por unidade'], ['contratos_drive_cache', 'Contratos e TAs: cópia temporária da lista de arquivos'],
-  ['alimentar_fila', 'Fila do "Alimentar o Analista"'], ['alimentar_liberacao', 'Liberações do "Alimentar o Analista"'],
+  ['gaveta_numeros', 'Gaveta por mês: números lidos'], ['gaveta_documentos', 'Gaveta por mês: documentos (texto completo)'], ['alimentar_fila', 'Fila do "Alimentar o Analista"'], ['alimentar_liberacao', 'Liberações do "Alimentar o Analista"'],
   ['gaocg_cache', 'Cópia temporária de consultas ao GAOCG'], ['integracao_log', 'Registro das integrações'],
 ];
 const MANTIDOS = [

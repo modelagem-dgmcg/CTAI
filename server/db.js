@@ -254,6 +254,22 @@ CREATE TABLE IF NOT EXISTS alimentar_fila (
   contrato_id TEXT, trimestre TEXT, documento_tipo TEXT, texto TEXT, paginas INTEGER, mascarados TEXT, hist_id INTEGER, ia_ok INTEGER, criado_em TEXT NOT NULL, atualizado_em TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_alim_fila ON alimentar_fila (usuario_id, estado);
+-- Gaveta por mês: o TEXTO COMPLETO (já mascarado) de cada documento do catálogo, por unidade + mês + tipo de documento. O trimestre não é arquivo:
+-- é uma visão calculada juntando os 3 meses. O arquivo original nunca é guardado. Reenviar o mesmo documento (conteúdo diferente) substitui o anterior.
+CREATE TABLE IF NOT EXISTS gaveta_documentos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, mes TEXT NOT NULL, codigo TEXT NOT NULL, parte TEXT NOT NULL DEFAULT '', nome_arquivo TEXT, hash TEXT NOT NULL,
+  paginas INTEGER, paginas_imagem TEXT, caracteres INTEGER, texto TEXT, mascarados TEXT, versao INTEGER NOT NULL DEFAULT 1, criado_por TEXT NOT NULL, criado_em TEXT NOT NULL, atualizado_em TEXT,
+  UNIQUE (contrato_id, mes, codigo, parte)
+);
+CREATE INDEX IF NOT EXISTS ix_gaveta_doc ON gaveta_documentos (contrato_id, mes);
+CREATE INDEX IF NOT EXISTS ix_gaveta_hash ON gaveta_documentos (contrato_id, hash);
+-- Números lidos do texto (Anexo I e ofício/despacho de justificativa). A leitura só propõe; a analista confere e confirma. Cada número guarda o trecho de origem.
+CREATE TABLE IF NOT EXISTS gaveta_numeros (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, doc_id INTEGER NOT NULL, contrato_id TEXT NOT NULL, mes TEXT NOT NULL, fonte TEXT NOT NULL, chave TEXT NOT NULL, rotulo TEXT,
+  meta REAL, ofertado REAL, regulado REAL, realizado REAL, pct REAL, pct_ofertado REAL, trecho TEXT, estado TEXT NOT NULL DEFAULT 'proposto', confirmado_por TEXT, confirmado_em TEXT,
+  UNIQUE (doc_id, chave)
+);
+CREATE INDEX IF NOT EXISTS ix_gaveta_num ON gaveta_numeros (contrato_id, mes);
 CREATE TABLE IF NOT EXISTS alimentar_liberacao (usuario_id INTEGER PRIMARY KEY, liberado_em TEXT NOT NULL, por TEXT NOT NULL, motivo TEXT);
 -- Histórico dos relatórios e pareceres anteriores, por unidade e trimestre. Nasce como 'rascunho' e só vira 'confirmado' quando a pessoa da carteira confere.
 CREATE TABLE IF NOT EXISTS hist_relatorios (
@@ -324,6 +340,7 @@ const COLUNAS_NOVAS = {
   msg: ['grupo TEXT'],
   contratos: ['tipo TEXT', 'municipio TEXT', 'criado_por TEXT', 'criado_em TEXT'],
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
+  alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER'],
   achados: ['encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
 };
 function migrar(db) {
