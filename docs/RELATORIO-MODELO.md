@@ -19,3 +19,6 @@ O extrator sugere a origem de cada fonte citada: `unidade` (upload), `pedida_set
 
 ## SIMAS
 O consolidado do SIMAS (`simas_metas`, origem `gerado_simas`) é lido por `server/simas.js` e guardado em `imp_simas` (leitura) e `imp_simas_numeros` (fonte SIMAS, estado proposto/confirmado, trecho de origem, mês presumido ou confirmado dos indicadores). O Redator deve usar só números `confirmado`; o mês de indicadores com `mes_estado = 'presumido'` não pode ser afirmado.
+
+## Apuração do trimestre (Redator CTAI, 1ª entrega)
+`server/parecer-trimestre.js` monta, para a unidade e o trimestre, os quadros 01 (valorados) e 02 (não valorado), os apontamentos de descontos e os campos manuais (seções 7, 8 e "impossibilitado de análise"), com os números **confirmados** da gaveta (RM e planilha de monitoramento) e os digitados pela analista com motivo. Guarda o que a analista digitou em `par_apuracao`. As seções do modelo anterior (`textosDoModelo`) vêm com os trechos que costumam mudar (períodos, anos, valores, percentuais, números de documento) destacados. API: `GET/PUT /api/importar/unidade/:contrato/:trimestre/parecer`, `POST .../parecer/pronto`, `GET .../parecer/pdf`. Pendente: texto corrido das seções 1 a 4, 9 e 10 a partir do modelo.

@@ -5,6 +5,7 @@
 const U = require('../core/util');
 const C = require('./catalogo');
 const E = require('./extrator-rm');
+const P = require('./extrator-planilha');
 const trilha = require('./trilha');
 const CART = require('./carteira');
 const { erro } = require('./auth');
@@ -23,7 +24,12 @@ const catalogoDe = (c) => C.catalogoDoTipo(C.tipoDaUnidade(c));
 const usaGaveta = (c) => { const cat = catalogoDe(c); return !!cat && cat.fluxo === 'gaveta'; };
 
 // ---------- gravar ----------
-function lerNumeros(codigo, texto) {
+function lerNumeros(codigo, texto, mes) {
+  if (codigo === 'anexo_II') {
+    const r = P.extrairPlanilha(texto);
+    const dif = r.periodo && mes && r.periodo !== mes ? '[confira: a planilha diz ' + r.periodo + ' mas foi guardada em ' + mes + '] ' : '';
+    return r.numeros.map((n) => Object.assign(n, { trecho: dif + n.trecho }));
+  }
   if (codigo === 'anexo_I') return E.extrairProducaoRM(texto);
   if (codigo === 'oficio_justificativa' || codigo === 'despacho') return E.extrairOficio(texto);
   return [];
@@ -54,7 +60,7 @@ function gravar(db, usuario, d) {
         c.contrato_id, d.mes, codigo, parte, nomeArq, hash, d.paginas || null, pgImg, texto.length, texto, JSON.stringify(d.mascarados || {}), 1, usuario.login, agora(), agora()).lastInsertRowid);
     }
     if (defDoc && defDoc.extrator) {
-      for (const n of lerNumeros(codigo, texto)) {
+      for (const n of lerNumeros(codigo, texto, d.mes)) {
         db.run('INSERT OR IGNORE INTO gaveta_numeros (doc_id, contrato_id, mes, fonte, chave, rotulo, meta, ofertado, regulado, realizado, pct, pct_ofertado, trecho, estado) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
           id2, c.contrato_id, d.mes, codigo, n.chave, n.rotulo, n.meta, n.ofertado, n.regulado, n.realizado, n.pct, n.pct_ofertado, n.trecho || null, 'proposto');
         propostos++;

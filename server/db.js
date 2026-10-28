@@ -277,6 +277,11 @@ CREATE TABLE IF NOT EXISTS imp_modelos (
   estrutura TEXT, ia INTEGER NOT NULL DEFAULT 0, ativo INTEGER NOT NULL DEFAULT 1, criado_por TEXT NOT NULL, criado_em TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_imp_modelos ON imp_modelos (contrato_id, ativo);
+-- Apuração do trimestre para o Parecer CTAI (Redator CTAI): o que a analista digitou (repasse, % de desconto, campos manuais, ajustes com motivo) e o "pronto para conferência" com o hash dos números.
+CREATE TABLE IF NOT EXISTS par_apuracao (
+  contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, dados TEXT NOT NULL DEFAULT '{}', atualizado_por TEXT, atualizado_em TEXT, pronto_hash TEXT, pronto_por TEXT, pronto_em TEXT,
+  PRIMARY KEY (contrato_id, trimestre)
+);
 CREATE TABLE IF NOT EXISTS imp_listas (
   id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, versao INTEGER NOT NULL, estado TEXT NOT NULL, origem TEXT NOT NULL, modelo_id INTEGER, nota TEXT,
   criada_por TEXT NOT NULL, criada_em TEXT NOT NULL, atualizada_em TEXT, confirmada_por TEXT, confirmada_em TEXT

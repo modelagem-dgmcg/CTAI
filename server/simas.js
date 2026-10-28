@@ -290,18 +290,24 @@ function conferir(db, c, tri, numeros) {
     const sp = ls.reduce((s, x) => s + (x.previsto || 0), 0), sr = ls.reduce((s, x) => s + (x.realizado || 0), 0);
     if (sp !== t.previsto || sr !== t.realizado) div({ tipo: 'total_grupo', indicador: g + ' (total do grupo)', trecho_origem: origem(t), periodo: tri, a: { fonte: 'SIMAS · total', valor: t.realizado, previsto: t.previsto }, b: { fonte: 'SIMAS · soma das linhas', valor: sr, previsto: sp }, detalhe: 'O total do grupo (previsto ' + fmt(t.previsto) + ', realizado ' + fmt(t.realizado) + ') não é a soma das linhas (previsto ' + fmt(sp) + ', realizado ' + fmt(sr) + '). Linhas sem meta ficam com previsto 0.' });
   }
-  // 4) ostomizados e TEA: planilha de monitoramento (Anexo II). Ainda não há leitor dos números da planilha: só aponta o que conferir.
-  const plan = db.all("SELECT mes, chave, realizado, meta FROM gaveta_numeros WHERE contrato_id = ? AND fonte = 'anexo_II'", c.contrato_id);
-  for (const chave of ['ostomizados', 'consultas_medicas_tea']) {
+  // 4) ostomizados e TEA: planilha de monitoramento (Anexo II). Só entram números que a planilha traz com o mesmo significado.
+  //    ostomizados = PACIENTES (linha "Pessoas com estomia"); em meses anteriores ao 10º termo aditivo a planilha traz atendimentos (sessões): não é comparável.
+  const plan = db.all("SELECT mes, chave, realizado, meta, estado, trecho FROM gaveta_numeros WHERE contrato_id = ? AND fonte = 'anexo_II' AND mes IN (" + meses.map(() => '?').join(',') + ')', c.contrato_id, ...meses);
+  const DEF = [['ostomizados', 'ostomizados_pessoas', 'pacientes com estomia'], ['consultas_medicas_tea', 'neuropediatra', 'neuropediatra (PE Acessível)']];
+  for (const [chave, chavePlan, quem] of DEF) {
     const s = numeros.find((n) => n.chave === chave && n.tipo === 'producao');
     if (!s) continue;
-    const p = plan.filter((x) => x.chave === chave);
-    if (p.length) {
-      const sp = p.reduce((a, x) => a + (x.realizado || 0), 0);
-      if (sp !== s.realizado) div({ tipo: 'planilha', indicador: s.descricao, chave, trecho_origem: origem(s), periodo: tri, a: { fonte: 'SIMAS', valor: s.realizado, previsto: s.previsto }, b: { fonte: 'Planilha de monitoramento (Anexo II)', valor: sp }, detalhe: 'SIMAS realizado ' + fmt(s.realizado) + ' (previsto ' + fmt(s.previsto) + ') x planilha ' + fmt(sp) + '.' });
-    } else {
-      div({ tipo: 'planilha_pendente', indicador: s.descricao, chave, trecho_origem: origem(s), periodo: tri, a: { fonte: 'SIMAS', valor: s.realizado, previsto: s.previsto }, b: { fonte: 'Planilha de monitoramento (Anexo II)', valor: null }, detalhe: 'SIMAS: realizado ' + fmt(s.realizado) + ' de ' + fmt(s.previsto) + '. Ainda não há números lidos da planilha de monitoramento: confira à mão (pacientes atendidos na planilha).' });
+    const p = plan.filter((x) => x.chave === chavePlan);
+    const mesesLidos = p.map((x) => x.mes);
+    const faltam = meses.filter((m) => !mesesLidos.includes(m));
+    const outras = chave === 'ostomizados' ? plan.filter((x) => x.chave === 'ostomizados_atendimentos').map((x) => C.rotuloMes(x.mes) + ' ' + fmt(x.realizado)) : [];
+    const obs = (faltam.length ? 'Planilha sem ' + quem + ' lido em: ' + faltam.map(C.rotuloMes).join(', ') + '. ' : '') + (outras.length ? 'Nesses meses a planilha traz ATENDIMENTOS (' + outras.join('; ') + '), não pacientes: não comparável. ' : '');
+    if (!p.length || faltam.length) {
+      div({ tipo: 'planilha_pendente', indicador: s.descricao, chave, trecho_origem: origem(s), periodo: tri, a: { fonte: 'SIMAS', valor: s.realizado, previsto: s.previsto }, b: { fonte: 'Planilha de monitoramento (Anexo II)', valor: null }, detalhe: 'SIMAS: realizado ' + fmt(s.realizado) + ' de ' + fmt(s.previsto) + '. ' + (obs || 'Ainda não há números lidos da planilha.') + 'Confira à mão.' + (p.length ? ' Lidos: ' + p.map((x) => C.rotuloMes(x.mes) + ' ' + fmt(x.realizado) + ' (' + x.estado + ')').join('; ') + '.' : '') });
+      continue;
     }
+    const sp = p.reduce((a2, x) => a2 + (x.realizado || 0), 0);
+    if (sp !== s.realizado) div({ tipo: 'planilha', indicador: s.descricao, chave, trecho_origem: origem(s), periodo: tri, a: { fonte: 'SIMAS', valor: s.realizado, previsto: s.previsto }, b: { fonte: 'Planilha de monitoramento (Anexo II)', valor: sp }, detalhe: 'SIMAS realizado ' + fmt(s.realizado) + ' (previsto ' + fmt(s.previsto) + ') x planilha somada ' + fmt(sp) + ' (' + p.map((x) => C.rotuloMes(x.mes) + ' ' + fmt(x.realizado)).join('; ') + ').' });
   }
   // 5) indicadores: valor 0 em todos os meses com meta "maior ou igual" (provável dado não importado)
   const porInd = new Map();

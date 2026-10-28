@@ -165,7 +165,8 @@
       },
     ];
     const parecerEtapa4 = conteudos[3];
-    conteudos[3] = () => parecerEtapa4().concat([
+    const slotApuracao = h('div', { id: 'un-apuracao' });
+    conteudos[3] = () => [slotApuracao].concat(parecerEtapa4()).concat([
       h('div', { class: 'etapa-docs' }, h('h3', null, 'Ofício, despacho e outros'),
         h('div', { class: 'linha' }, [['oficio', 'Novo ofício'], ['despacho', 'Novo despacho'], ['branco', 'Documento em branco']].map(([t, r]) => h('button', { type: 'button', class: 'sec', onclick: () => janelaNova('/d/novo/' + encodeURIComponent(id) + '/' + T + '/' + t) }, r)), h('a', { class: 'btn sec', href: '#/documentos/modelos', target: '_blank', rel: 'noopener' }, 'Meus modelos')),
         docs.length ? tabela([{ t: 'Documento' }, { t: 'Tipo' }, { t: 'Situação' }, { t: '' }], docs.map((d) => [d.titulo, d.tipoNome, selo(d.status, d.status === 'finalizado' || d.status === 'conferido' ? 'ok' : (d.status === 'com reparos' ? 'atencao' : '')), h('button', { type: 'button', class: 'sec', onclick: () => janelaNova('/d/' + d.doc_id) }, 'Abrir')])) : h('p', { class: 'mudo peq' }, 'Nenhum ofício ou despacho desta unidade neste trimestre.'))]);
@@ -198,6 +199,7 @@
       });
       barra.querySelectorAll('.etapa-chip').forEach((b, i) => { b.className = 'etapa-chip ' + txtEstado(i); b.querySelector('.chip-n').textContent = feitas[i] ? '✔' : String(i + 1); });
     };
+    if (window.CTAI_PARECER_TRI) window.CTAI_PARECER_TRI.preencher(slotApuracao, { contratoId: id, tri: T }).catch(() => {});
     if (window.CTAI_IMPORTAR) window.CTAI_IMPORTAR.preencher(slotImportar, { contratoId: id, tri: T, estado: imp,
       aoMudar: (novo, recarga) => { if (recarga) { recarregar(); return; } imp = novo; calcular(); repintar(); } }).catch((e) => { slotImportar.replaceChildren(aviso('erro', e.message)); });
     const slotContrato = h('div', { id: 'un-contrato' });

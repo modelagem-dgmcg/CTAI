@@ -406,3 +406,14 @@ dialog:has(.imp-ed) .corpo,dialog:has(.imp-est) .corpo{max-height:72vh;overflow:
 .imp-simas-grupo{margin:6px 0}
 .imp-simas-ordem{margin:8px 0;padding:8px 10px;border-left:4px solid var(--ambar,#b7791f);background:rgba(183,121,31,.08);border-radius:6px}
 .imp-simas-dica{margin-top:4px}
+/* Apuração do trimestre (Parecer CTAI) */
+.pt-tab{width:100%;border-collapse:collapse;font-size:.9em;margin:6px 0 12px}
+.pt-tab th,.pt-tab td{padding:4px 6px;border-bottom:1px solid var(--borda);text-align:left;vertical-align:top}
+.pt-pend{background:rgba(217,119,6,.18);color:var(--ambar-esc);font-weight:600;outline:1px dashed var(--ambar)}
+.pt-bloq{margin:10px 0;padding:8px 12px;border-left:4px solid var(--erro);background:rgba(201,42,42,.07);border-radius:6px}
+.pt-campo{display:inline-flex;flex-direction:column;gap:2px;margin:4px 10px 4px 0}
+.pt-desc{margin:8px 0;padding:6px 10px;border-left:4px solid var(--ambar);background:rgba(217,119,6,.07);border-radius:6px}
+.pt-imp input{min-width:220px}
+.pt-pre{white-space:pre-wrap;font:inherit;font-size:.9em;margin:6px 0}
+.pt-modelo mark{background:rgba(217,119,6,.3)}
+#pt-raiz textarea{width:100%}
