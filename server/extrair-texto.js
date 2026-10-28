@@ -3,14 +3,16 @@
 // O texto devolvido já vem MASCARADO (server/mascara.js), então nada pessoal é guardado nem enviado à IA.
 const JSZip = require('jszip');
 const { erro } = require('./auth');
-const { mascarar } = require('./mascara');
+const { mascarar, somar } = require('./mascara');
+const crypto = require('crypto');
+const T = require('../public/js/texto-comum');
 
 // Limite por arquivo: 60 MB (cabe no Render Starter, 512 MB, porque o sistema lê um arquivo por vez e solta o original logo depois).
 const MAX_ARQUIVO = 60 * 1024 * 1024;
 const MAX_TEXTO = 3000000; // texto completo, caractere por caractere (um anexo grande tem algumas centenas de milhares)
 const TIPOS = ['pdf', 'docx', 'xlsx', 'csv', 'txt', 'html', 'htm'];
 // Página de PDF com menos que isto de texto parece ser só imagem (foto, planilha colada como figura): avisa a analista.
-const MIN_CHARS_PAGINA = 40;
+const MIN_CHARS_PAGINA = T.MIN_CHARS_PAGINA;
 const MB = (n) => (n / 1048576).toFixed(n >= 10485760 ? 0 : 1).replace('.', ',');
 const ent = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n))).replace(/&amp;/g, '&');
 
@@ -27,25 +29,8 @@ async function pdf(buf) {
     return { texto: paginas.join('\n'), paginas: r.totalPages, paginasImagem };
   } finally { try { await doc.destroy(); } catch (_) { /* já liberado */ } }
 }
-// HTML do SEI (ofícios, despachos): tira marcação, mantém o texto e as quebras de linha. A codificação vem do próprio arquivo (normalmente iso-8859-1).
-const NOMEADAS = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ', ordm: 'º', ordf: 'ª', deg: '°', ndash: '–', mdash: '—', hellip: '…', laquo: '«', raquo: '»', ldquo: '“', rdquo: '”', lsquo: '‘', rsquo: '’', bull: '•', sect: '§', middot: '·', times: '×', iexcl: '¡', iquest: '¿', copy: '©', ccedil: 'ç', Ccedil: 'Ç', ntilde: 'ñ', Ntilde: 'Ñ' };
-const ACENTOS = { acute: '́', grave: '̀', circ: '̂', tilde: '̃', uml: '̈' };
-function entidade(nome) {
-  if (NOMEADAS[nome] !== undefined) return NOMEADAS[nome];
-  const m = /^([aeiouAEIOU])(acute|grave|circ|tilde|uml)$/.exec(nome);
-  return m ? (m[1] + ACENTOS[m[2]]).normalize('NFC') : null;
-}
-function html(buf) {
-  const cab = buf.subarray(0, 4000).toString('latin1');
-  const cs = (/charset\s*=\s*["']?([\w-]+)/i.exec(cab) || [])[1] || 'utf-8';
-  let bruto;
-  try { bruto = new TextDecoder(cs).decode(buf); } catch (_) { bruto = buf.toString('utf8'); }
-  const t = bruto.replace(/<(script|style|head)[\s\S]*?<\/\1>/gi, ' ').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|tr|h\d|li|table|ul|ol)>/gi, '\n').replace(/<\/t[dh]>/gi, ' ').replace(/<[^>]+>/g, ' ')
-    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16))).replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
-    .replace(/&([A-Za-z]+);/g, (a, n) => { const e = entidade(n); return e === null ? a : e; });
-  const texto = t.replace(/\r/g, '').replace(/[ \t\u00a0]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{2,}/g, '\n').trim();
-  return { texto, paginas: null };
-}
+// HTML do SEI (ofícios, despachos): a mesma leitura roda no navegador (public/js/texto-comum.js).
+function html(buf) { return { texto: T.htmlDeBytes(buf), paginas: null }; }
 async function docx(buf) {
   const z = await JSZip.loadAsync(buf);
   const f = z.file('word/document.xml');
@@ -93,4 +78,35 @@ async function extrair(nome, buf) {
   return { texto: m.texto, paginas: r.paginas || null, tipo: ext, mascarados: m.mascarados, paginasImagem: r.paginasImagem || [], cortado: completo.length > MAX_TEXTO };
 }
 
-module.exports = { extrair, html, MAX_ARQUIVO, MAX_TEXTO, MIN_CHARS_PAGINA, TIPOS, MB };
+// Texto que o NAVEGADOR já leu (PDF ou HTML) e mascarou antes de enviar. O servidor não confia: confere tipo, tamanho e integridade (hash),
+// refaz a conta das páginas sem texto e MASCARA DE NOVO. O contador de dados protegidos soma o que cada lado mascarou.
+const TIPOS_NAVEGADOR = ['pdf', 'html', 'htm'];
+const MAX_CORPO_TEXTO = 8 * 1024 * 1024; // corpo JSON do envio de texto
+const TIPOS_MASCARA = new Set(require('../public/js/mascara-comum').TIPOS);
+function deTexto(nome, d) {
+  const ext = (String(nome).split('.').pop() || '').toLowerCase();
+  if (!TIPOS_NAVEGADOR.includes(ext)) throw erro(400, 'Só PDF e HTML podem ser enviados já como texto.');
+  if (!d || typeof d.texto !== 'string' || !d.texto.length) throw erro(400, 'Texto vazio.');
+  if (typeof d.hash === 'string' && d.hash) {
+    if (!/^[0-9a-f]{64}$/.test(d.hash) || crypto.createHash('sha256').update(d.texto, 'utf8').digest('hex') !== d.hash) throw erro(400, 'O texto chegou alterado. Envie de novo.');
+  }
+  const completo = d.texto.replace(/\u0000/g, '');
+  const texto = completo.slice(0, MAX_TEXTO);
+  if (texto.replace(/\s+/g, '').length < T.MIN_CHARS_ARQUIVO) throw erro(422, 'O arquivo não tem texto legível. Se for PDF escaneado, o sistema não faz OCR: use o arquivo original (Word/Excel/PDF com texto).');
+  let paginas = null; let paginasImagem = [];
+  if (ext === 'pdf') {
+    const pg = T.paginasDoTexto(texto);
+    const dec = Math.floor(Number(d.paginas));
+    paginas = Math.min(5000, Math.max(pg.total, Number.isFinite(dec) && dec > 0 ? dec : 0)) || null;
+    const extra = (Array.isArray(d.paginasSemTexto) ? d.paginasSemTexto : []).map(Number).filter((n) => Number.isInteger(n) && n >= 1 && n <= (paginas || 0));
+    paginasImagem = Array.from(new Set(pg.imagem.concat(extra))).sort((a, b) => a - b);
+  }
+  const cliente = {};
+  for (const [k, v] of Object.entries((d.mascarados && typeof d.mascarados === 'object') ? d.mascarados : {})) {
+    const n = Math.floor(Number(v)); if (TIPOS_MASCARA.has(k) && Number.isFinite(n) && n > 0) cliente[k] = Math.min(n, 1000000);
+  }
+  const m = mascarar(texto); // segunda máscara, no servidor
+  return { texto: m.texto, paginas, tipo: ext, mascarados: somar(cliente, m.mascarados), paginasImagem, cortado: completo.length > MAX_TEXTO || d.cortado === true };
+}
+
+module.exports = { extrair, deTexto, MAX_CORPO_TEXTO, TIPOS_NAVEGADOR, html, MAX_ARQUIVO, MAX_TEXTO, MIN_CHARS_PAGINA, TIPOS, MB };

@@ -340,7 +340,7 @@ const COLUNAS_NOVAS = {
   msg: ['grupo TEXT'],
   contratos: ['tipo TEXT', 'municipio TEXT', 'criado_por TEXT', 'criado_em TEXT'],
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
-  alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER'],
+  alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER', 'origem TEXT'],
   achados: ['encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
 };
 function migrar(db) {

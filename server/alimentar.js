@@ -4,6 +4,7 @@
 // e monta rascunhos do Histórico (a IA só propõe). Um arquivo por vez, em segundo plano. Só o confirmado entra nos cruzamentos.
 // O arquivo original NUNCA é guardado: fica só na memória do servidor até ser lido.
 const JSZip = require('jszip');
+const crypto = require('crypto');
 const A = require('./auth');
 const CART = require('./carteira');
 const H = require('./historico');
@@ -154,13 +155,40 @@ function registrarLote(db, usuario, corpo) {
 
 // Recebe os bytes de um arquivo já registrado e só responde depois de lê-lo: o navegador manda o próximo em seguida, então a memória do
 // servidor nunca guarda mais de um arquivo grande. Reenviar o que já foi recebido (rede que caiu na volta) é inofensivo.
-async function receberDoLote(db, usuario, filaId, buf) {
+// Origem do que chegou: 'navegador' = o navegador leu o arquivo na máquina da analista e mandou só o texto (já mascarado);
+// 'fallback-*' = o arquivo inteiro veio porque o navegador não conseguiu o texto; sem origem = arquivo enviado direto (Word, Excel, TXT, ZIP pequeno).
+const ORIGENS = ['fallback-sem-texto', 'fallback-erro', 'fallback-tempo'];
+const AVISO_ORIGEM = {
+  'fallback-sem-texto': 'O navegador não achou texto neste PDF (parece só imagem); o arquivo inteiro foi enviado para o sistema tentar ler.',
+  'fallback-erro': 'O navegador não conseguiu ler este PDF; o arquivo inteiro foi enviado para o sistema tentar ler.',
+  'fallback-tempo': 'A leitura deste PDF no navegador demorou demais; o arquivo inteiro foi enviado para o sistema ler.',
+};
+const avisoOrigem = (o) => AVISO_ORIGEM[o] || null;
+const juntar = (...partes) => partes.filter(Boolean).join(' ') || null;
+
+async function receberDoLote(db, usuario, filaId, buf, origem) {
   const i = doItem(db, usuario, filaId);
   if (i.estado !== 'espera') return { id: i.id, estado: i.estado, repetido: true };
   if (!buf || !buf.length) throw erro(400, 'Arquivo vazio.');
   if (buf.length > X.MAX_ARQUIVO) { set(db, i.id, { estado: 'problema', motivo: 'Arquivo grande demais (' + X.MB(buf.length) + ' MB; o limite é ' + X.MB(X.MAX_ARQUIVO) + ' MB).' }); return { id: i.id, estado: 'problema' }; }
   memoria.set(i.id, buf);
-  set(db, i.id, { estado: 'fila', tamanho: buf.length });
+  set(db, i.id, { estado: 'fila', tamanho: buf.length, origem: ORIGENS.includes(origem) ? origem : null });
+  await agendar(db);
+  return { id: i.id, estado: db.get('SELECT estado FROM alimentar_fila WHERE id = ?', i.id).estado };
+}
+
+// Texto que o navegador leu e mascarou na máquina da analista (PDF página a página, ou HTML do SEI). Corpo JSON pequeno (até 8 MB):
+// { texto, hash (sha-256 do texto), paginas, paginasSemTexto, mascarados }. O servidor valida tudo e mascara de novo (ver X.deTexto).
+async function receberTexto(db, usuario, filaId, corpo) {
+  const i = doItem(db, usuario, filaId);
+  if (i.estado !== 'espera') return { id: i.id, estado: i.estado, repetido: true };
+  if (!corpo || typeof corpo !== 'object') throw erro(400, 'Texto inválido.');
+  const ext = (i.nome.split('.').pop() || '').toLowerCase();
+  if (!X.TIPOS_NAVEGADOR.includes(ext)) throw erro(400, 'Só PDF e HTML podem ser enviados já como texto.');
+  if (typeof corpo.texto !== 'string' || !corpo.texto.length) throw erro(400, 'Texto vazio.');
+  if (typeof corpo.hash === 'string' && corpo.hash && crypto.createHash('sha256').update(corpo.texto, 'utf8').digest('hex') !== corpo.hash) throw erro(400, 'O texto chegou alterado. Envie de novo.');
+  memoria.set(i.id, { texto: corpo.texto, hash: corpo.hash, paginas: corpo.paginas, paginasSemTexto: corpo.paginasSemTexto, mascarados: corpo.mascarados, cortado: corpo.cortado === true });
+  set(db, i.id, { estado: 'fila', tamanho: Math.max(i.tamanho || 0, Buffer.byteLength(corpo.texto)), origem: 'navegador' });
   await agendar(db);
   return { id: i.id, estado: db.get('SELECT estado FROM alimentar_fila WHERE id = ?', i.id).estado };
 }
@@ -186,7 +214,7 @@ async function umArquivo(db, item) {
   if (!buf) { set(db, item.id, { estado: 'problema', motivo: 'O servidor foi reiniciado antes de ler este arquivo. Envie de novo.' }); return; }
   set(db, item.id, { estado: 'lendo' });
   let ex;
-  try { ex = await X.extrair(item.nome, buf); } catch (e) { set(db, item.id, { estado: 'problema', motivo: String(e.message || e).slice(0, 220) }); memoria.delete(item.id); return; }
+  try { ex = Buffer.isBuffer(buf) ? await X.extrair(item.nome, buf) : X.deTexto(item.nome, buf); } catch (e) { set(db, item.id, { estado: 'problema', motivo: String(e.message || e).slice(0, 220) }); memoria.delete(item.id); return; }
   memoria.delete(item.id); // o original some da memória assim que é lido
   let texto = ex.texto; let mascarados = ex.mascarados || {};
   // Reforço opcional: segunda passada pela IA para nomes de pacientes que escaparam das regras fixas.
@@ -208,7 +236,7 @@ async function umArquivo(db, item) {
       motivo: !un && !tri ? 'Não identifiquei a unidade nem o trimestre.' : !un ? 'Não identifiquei a unidade.' : 'Não identifiquei o trimestre.' });
     return;
   }
-  await montar(db, item.id, u, { contrato_id: un.contrato_id, trimestre: tri, documento_tipo: tipo, texto, paginas: ex.paginas || null, mascarados, nome: item.nome, aviso: un.assumida ? 'Unidade assumida (única da sua carteira). Confira.' : null });
+  await montar(db, item.id, u, { contrato_id: un.contrato_id, trimestre: tri, documento_tipo: tipo, texto, paginas: ex.paginas || null, mascarados, nome: item.nome, aviso: juntar(un.assumida ? 'Unidade assumida (única da sua carteira). Confira.' : null, avisoOrigem(item.origem)) });
 }
 
 const avisoImagens = (pg, total) => (pg && pg.length ? pg.length + ' página(s) parecem só imagem (pouco texto) e podem ter ficado de fora' + (total ? ' (de ' + total + ')' : '') + ': ' + pg.slice(0, 12).join(', ') + (pg.length > 12 ? '...' : '') + '.' : null);
@@ -228,7 +256,7 @@ async function viaGaveta(db, u, item, ex, texto, mascarados, c, lote, un) {
     set(db, item.id, Object.assign(comum, { estado: 'precisa_dados', texto, motivo: 'Não identifiquei o mês.' }));
     return true;
   }
-  await gravarNaGaveta(db, u, item.id, c, { mes, codigo, parte, nome: item.nome, texto, paginas: ex.paginas, paginasImagem: imagens, mascarados, ident, un, cortado: ex.cortado }, comum);
+  await gravarNaGaveta(db, u, item.id, c, { mes, codigo, parte, nome: item.nome, texto, paginas: ex.paginas, paginasImagem: imagens, mascarados, ident, un, cortado: ex.cortado, origem: item.origem }, comum);
   return true;
 }
 
@@ -241,6 +269,7 @@ async function gravarNaGaveta(db, u, filaId, c, d, comum) {
     if (r.substituiu) avisos.push('Substituiu a versão anterior (agora versão ' + r.versao + ').');
     const im = avisoImagens(d.paginasImagem, d.paginas); if (im) avisos.push(im);
     if (d.cortado) avisos.push('Texto cortado no limite do sistema.');
+    const ao = avisoOrigem(d.origem); if (ao) avisos.push(ao);
     set(db, filaId, Object.assign({}, comum, { estado: 'lido', texto: null, gaveta_id: r.id, motivo: avisos.join(' ') || null }));
   } catch (e) {
     if (e.status === 409) set(db, filaId, Object.assign({}, comum, { estado: 'duplicado', texto: null, gaveta_id: e.gaveta_id || null, motivo: e.message }));
@@ -327,6 +356,7 @@ function painel(db, u, linhas) {
   const p = {
     lote: alvo.lote, zip: alvo.zip_nome || null, ativo: pend.length > 0, concluido: pend.length === 0,
     contrato_id: contratoId, unidade: c ? c.unidade : null, tipo: c ? C.tipoDaUnidade(c) : null, mes, mesRotulo: mes ? C.rotuloMes(mes) : null, mesNome: mes ? C.nomeMes(mes) : null, trimestre: mes ? C.trimestreDoMes(mes) : null,
+    fallback: doLote.filter((i) => ORIGENS.includes(i.origem)).map((i) => ({ id: i.id, arquivo: i.nome, motivo: avisoOrigem(i.origem) })),
     catalogo: !!cat, arquivos: { total: doLote.length, feitos, lidos: doLote.filter((i) => ['lido', 'pronto', 'aprovado'].includes(i.estado)).length, duplicados: doLote.filter((i) => i.estado === 'duplicado').length, problemas: doLote.filter((i) => i.estado === 'problema').length, atencao: doLote.filter((i) => i.estado === 'precisa_dados').length },
     paginas: soma((i) => i.paginas), caracteres: soma((i) => i.caracteres), protegidos: mascarados, paginasImagem: imagens, itens: [], extras: [], faltam: [], resumo: null, avisoTrimestre: null,
   };
@@ -366,7 +396,7 @@ function estado(db, u) {
     let masc = {}; try { masc = JSON.parse(i.mascarados || '{}'); } catch (_) { /* vazio */ }
     return { id: i.id, nome: i.nome, estado: i.estado, motivo: i.motivo, contrato_id: i.contrato_id, unidade: c ? c.unidade : null, trimestre: i.trimestre, documento_tipo: i.documento_tipo, hist_id: i.hist_id, ia_ok: !!i.ia_ok, mascarados: masc, divergencias: divergencias(db, i),
       lote: i.lote, zip_nome: i.zip_nome, codigo: i.codigo, parte: i.parte, mes: i.mes, mesRotulo: i.mes ? C.rotuloMes(i.mes) : null, paginas: i.paginas, caracteres: i.caracteres, gaveta_id: i.gaveta_id,
-      paginasImagem: i.paginas_imagem ? String(i.paginas_imagem).split(',').map(Number) : [] };
+      paginasImagem: i.paginas_imagem ? String(i.paginas_imagem).split(',').map(Number) : [], origem: i.origem || null };
   });
   const n = (...es) => itens.filter((i) => es.includes(i.estado)).length;
   const meus = CART.doUsuario(db, u.usuario_id).map((id) => db.get('SELECT contrato_id, unidade, tipo FROM contratos WHERE contrato_id = ?', id)).filter(Boolean)
@@ -395,12 +425,12 @@ async function identificar(db, u, id, d) {
     const parte = ident ? ident.parte : baseNome(i.nome);
     const imagens = i.paginas_imagem ? String(i.paginas_imagem).split(',').map(Number) : [];
     set(db, i.id, { estado: 'montando', contrato_id: c.contrato_id, mes: d.mes, trimestre: C.trimestreDoMes(d.mes), codigo, parte });
-    await gravarNaGaveta(db, u, i.id, c, { mes: d.mes, codigo, parte, nome: i.nome, texto: i.texto || '', paginas: i.paginas, paginasImagem: imagens, mascarados: masc, un: null },
+    await gravarNaGaveta(db, u, i.id, c, { mes: d.mes, codigo, parte, nome: i.nome, texto: i.texto || '', paginas: i.paginas, paginasImagem: imagens, mascarados: masc, un: null, origem: i.origem },
       { contrato_id: c.contrato_id, codigo, parte, mes: d.mes, trimestre: C.trimestreDoMes(d.mes), documento_tipo: 'gaveta', paginas: i.paginas, caracteres: (i.texto || '').length, paginas_imagem: i.paginas_imagem, mascarados: i.mascarados });
     return { ok: true };
   }
   if (!/^\d{4}-T[1-4]$/.test(String(d.trimestre || ''))) throw erro(400, 'Informe o trimestre no formato 2026-T2.');
-  await montar(db, i.id, u, { contrato_id: d.contrato_id, trimestre: d.trimestre, documento_tipo: ['parecer', 'relatório da OSS', 'outro'].includes(d.documento_tipo) ? d.documento_tipo : (i.documento_tipo === 'gaveta' ? 'parecer' : i.documento_tipo || 'parecer'), texto: i.texto || '', paginas: i.paginas, mascarados: masc, nome: i.nome });
+  await montar(db, i.id, u, { contrato_id: d.contrato_id, trimestre: d.trimestre, documento_tipo: ['parecer', 'relatório da OSS', 'outro'].includes(d.documento_tipo) ? d.documento_tipo : (i.documento_tipo === 'gaveta' ? 'parecer' : i.documento_tipo || 'parecer'), texto: i.texto || '', paginas: i.paginas, mascarados: masc, nome: i.nome, aviso: avisoOrigem(i.origem) });
   return { ok: true };
 }
 
@@ -446,4 +476,4 @@ function liberarProprio(db, u) {
   return liberar(db, u, u.login, 'Concluiu o primeiro envio (' + e.resumo.lidos + ' lidos, ' + e.resumo.problemas + ' com problema)');
 }
 
-module.exports = { trava, estado, receber, registrarLote, receberDoLote, agendar, IGNORAR, MAX_LOTE, ESPERA_MAX_MIN, loteDe, mesDoDocumento, identificar, descartar, aprovar, pularProblemas, liberar, liberarProprio, recuperar, processar, trimestreDe, unidadeDe, ELEGIVEIS };
+module.exports = { trava, estado, receber, registrarLote, receberDoLote, receberTexto, avisoOrigem, agendar, IGNORAR, MAX_LOTE, ESPERA_MAX_MIN, loteDe, mesDoDocumento, identificar, descartar, aprovar, pularProblemas, liberar, liberarProprio, recuperar, processar, trimestreDe, unidadeDe, ELEGIVEIS };

@@ -2,6 +2,8 @@
   'use strict';
   // "Alimentar o Analista": soltar vários arquivos (ou o ZIP do SEI de uma unidade), acompanhar a leitura, conferir e liberar o menu completo.
   // O ZIP é aberto AQUI, no navegador: cada arquivo útil segue separadamente, um por vez, em segundo plano, com nova tentativa se a rede cair.
+  // PDF e HTML do SEI também são lidos AQUI: o navegador tira o texto, mascara os dados pessoais e envia SÓ O TEXTO. O PDF inteiro só vai
+  // ao servidor como último recurso (PDF só imagem, ou o navegador não conseguiu ler).
   const { h, api, toast, confirmar, aviso, montar } = window.CTAI;
   const ANO = new Date().getFullYear();
   const TRIS = []; for (let a = ANO; a >= ANO - 4; a--) for (let t = 4; t >= 1; t--) TRIS.push(a + '-T' + t);
@@ -18,6 +20,7 @@
   const ACEITOS = /\.(pdf|docx|xlsx|csv|txt|html?)$/i;
   const IGNORADOS = /\.(png|jpe?g|gif|bmp|tiff?|webp|svg|ico|db|ini|lnk|tmp|bak)$|(^|\/)(thumbs\.db|desktop\.ini|\.ds_store)$/i;
   const LIMITE_MB = 60;
+  const TEXTO_MAX = 3000000; // mesmo limite de texto do servidor
   // replaceChildren escreve "null" na tela se receber null: este ajudante descarta o que for vazio.
   const trocarFilhos = (el, ...cs) => el.replaceChildren(...cs.flat().filter((c) => c !== null && c !== undefined && c !== false));
   const bonito = (n) => String(n || '').replace(/^\s*\[\d+\]-\d+_/, '').replace(/\.[A-Za-z0-9]{2,5}$/, '').replace(/_+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -35,12 +38,21 @@
   }
 
   // Envia um arquivo cru. Tenta de novo (1s, 2s, 4s... até 30s) se a rede cair ou o servidor responder erro; erro "de verdade" (4xx) não se repete.
-  async function enviarArquivo(id, nome, corpo, aoTentar) {
+  async function enviarArquivo(id, nome, corpo, aoTentar, origem) {
+    const cab = { 'content-type': 'application/octet-stream', 'x-ctai': '1', 'x-nome-arquivo': encodeURIComponent(nome), 'x-fila-id': String(id) };
+    if (origem) cab['x-origem'] = origem;
+    return postarComNovaTentativa('/api/alimentar/arquivo', cab, corpo, nome, aoTentar);
+  }
+  // Só o texto (JSON pequeno, enviado como text/plain para passar direto pelo leitor de até 8 MB do servidor): o PDF não sai da máquina.
+  async function enviarTexto(id, nome, carga, aoTentar) {
+    return postarComNovaTentativa('/api/alimentar/texto', { 'content-type': 'text/plain; charset=utf-8', 'x-ctai': '1', 'x-fila-id': String(id) }, JSON.stringify(carga), nome, aoTentar);
+  }
+  async function postarComNovaTentativa(url, cab, corpo, nome, aoTentar) {
     let ultimo = null;
     for (let t = 0; t < 9; t++) {
       try {
         if (navigator.onLine === false) { aoTentar && aoTentar('Sem internet. Esperando a conexão voltar...'); await new Promise((ok) => { const f = () => { window.removeEventListener('online', f); ok(); }; window.addEventListener('online', f); setTimeout(f, 20000); }); }
-        const r = await fetch('/api/alimentar/arquivo', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/octet-stream', 'x-ctai': '1', 'x-nome-arquivo': encodeURIComponent(nome), 'x-fila-id': String(id) }, body: corpo });
+        const r = await fetch(url, { method: 'POST', credentials: 'same-origin', headers: cab, body: corpo });
         let j = null; try { j = await r.json(); } catch (_) { /* sem corpo */ }
         if (r.status === 401) { const e = new Error('Sua sessão terminou. Entre de novo e solte o ZIP outra vez.'); e.fatal = true; throw e; }
         if (r.ok) return j;
@@ -56,6 +68,7 @@
   async function tela() {
     let est = null, assinaturaBase = '', assinaturaTopo = '', timer = null;
     let enviandoId = null, mensagemEnvio = '', trabalhando = false, parar = false, aguardando = [];
+    let fase = ''; // o que está acontecendo com o arquivo da vez: lendo na máquina, enviando texto...
     const marcados = new Set(); const escolhas = new Map();
     const status = h('p', { class: 'al-status', id: 'al-andamento', role: 'status', 'aria-live': 'polite', hidden: true });
     const raiz = h('div', { id: 'al-raiz' });
@@ -120,6 +133,32 @@
       if (!r.ok) throw new Error((j && j.erro) || 'Não consegui enviar ' + arq.name + ' (' + r.status + ').');
     }
 
+    // Lê o PDF (ou o HTML do SEI) na máquina, mascara aqui mesmo e envia só o texto. Devolve { enviado } ou { enviado: false, fallback }.
+    async function lerNoNavegador(id, nome, ext, blob, rotulo) {
+      let texto, paginas = null, semTexto = [];
+      fase = 'Lendo na sua máquina'; dizer('Lendo ' + rotulo + ' na sua máquina...'); desenharPainel();
+      try {
+        if (ext === 'pdf') {
+          let ult = 0;
+          const r = await window.CTAI_LEITOR_PDF.lerPdf(blob, { aoPagina: (n, t) => { const agora = Date.now(); if (agora - ult < 250 && n < t) return; ult = agora; fase = 'Lendo na sua máquina (página ' + n + ' de ' + t + ')'; desenharPainel(); } });
+          if (!r.suficiente) return { enviado: false, fallback: 'fallback-sem-texto' };
+          texto = r.texto; paginas = r.paginas; semTexto = r.paginasSemTexto;
+        } else {
+          texto = window.CTAI_TEXTO.htmlDeBytes(new Uint8Array(await blob.arrayBuffer()));
+        }
+      } catch (e) { try { console.warn('Leitura no navegador falhou:', nome, e && e.message); } catch (_) { /* sem console */ } return { enviado: false, fallback: e && e.codigo === 'tempo' ? 'fallback-tempo' : 'fallback-erro' }; }
+      let cortado = false;
+      if (texto.length > TEXTO_MAX) { texto = texto.slice(0, TEXTO_MAX); cortado = true; }
+      const m = window.CTAI_MASCARA.mascarar(texto); // mascara ANTES de sair da máquina
+      fase = 'Enviando texto'; dizer('Enviando o texto de ' + rotulo + '...'); desenharPainel();
+      const carga = { texto: m.texto, hash: await sha256Hex(m.texto), paginas, paginasSemTexto: semTexto, mascarados: m.mascarados, cortado };
+      try { await enviarTexto(id, nome, carga, dizer); return { enviado: true }; }
+      catch (e) { if (e.fatal && !/sessão/.test(e.message)) return { enviado: false, fallback: 'fallback-erro' }; throw e; } // o servidor recusou o texto: tenta o arquivo inteiro
+    }
+    async function sha256Hex(txt) {
+      try { if (!window.crypto || !window.crypto.subtle) return null; const b = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt)); return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, '0')).join(''); } catch (_) { return null; }
+    }
+
     async function registrarEEnviar(zip, itens) {
       dizer('Preparando a leitura...');
       let reg;
@@ -132,20 +171,32 @@
         const reg1 = reg.itens[k];
         if (reg1.estado !== 'espera') continue;
         if (parar) break;
-        enviandoId = reg1.id; dizer('Enviando ' + bonito(itens[k].nome) + ' (' + (k + 1) + ' de ' + itens.length + ')...');
+        enviandoId = reg1.id; fase = ''; const nomeBonito = bonito(itens[k].nome); const posicao = ' (' + (k + 1) + ' de ' + itens.length + ')';
+        dizer('Abrindo ' + nomeBonito + posicao + '...');
         let corpo;
         try { corpo = await itens[k].pegar(); } catch (e) { corpo = null; }
         try {
           if (!corpo) { await api('DELETE', '/api/alimentar/' + reg1.id).catch(() => {}); toast('Não consegui abrir ' + itens[k].nome + ' dentro do ZIP.', true); }
-          else if (corpo.size > LIMITE_MB * 1024 * 1024) { await api('DELETE', '/api/alimentar/' + reg1.id).catch(() => {}); toast(itens[k].nome + ' é grande demais (' + Math.round(corpo.size / 1048576) + ' MB; o limite é ' + LIMITE_MB + ' MB).', true); }
-          else await enviarArquivo(reg1.id, itens[k].nome, corpo, dizer);
+          else {
+            // PDF e HTML: lê na máquina e manda só o texto. Se não der, cai para o arquivo inteiro (origem diz por quê).
+            const ext = (itens[k].nome.split('.').pop() || '').toLowerCase();
+            let origem = null, enviado = false;
+            if (['pdf', 'html', 'htm'].includes(ext)) {
+              const r = await lerNoNavegador(reg1.id, itens[k].nome, ext, corpo, nomeBonito + posicao);
+              enviado = r.enviado; origem = r.fallback || null;
+            }
+            if (!enviado) {
+              if (corpo.size > LIMITE_MB * 1024 * 1024) { await api('DELETE', '/api/alimentar/' + reg1.id).catch(() => {}); toast(itens[k].nome + ' é grande demais (' + Math.round(corpo.size / 1048576) + ' MB; o limite é ' + LIMITE_MB + ' MB).', true); }
+              else { fase = origem ? 'Enviando o arquivo inteiro' : 'Enviando'; dizer((origem ? 'Enviando o arquivo inteiro de ' : 'Enviando ') + nomeBonito + posicao + '...'); await enviarArquivo(reg1.id, itens[k].nome, corpo, dizer, origem); }
+            }
+          }
         } catch (e) {
           toast(e.message, true);
           if (e.fatal && /sessão/.test(e.message)) { parar = true; break; }
           if (!e.fatal) { parar = true; dizer('A conexão não voltou. O que já foi lido está guardado. Solte o ZIP de novo para continuar.'); }
         }
         corpo = null; // libera o arquivo da memória do navegador antes do próximo
-        enviandoId = null; aguardando = aguardando.filter((x) => x !== reg1.id);
+        enviandoId = null; fase = ''; aguardando = aguardando.filter((x) => x !== reg1.id);
         await atualizar(); desenharBase(false); desenharPainel();
       }
       if (parar) {
@@ -161,7 +212,7 @@
       ondrop: (ev) => { ev.preventDefault(); zona.classList.remove('sobre'); receber(ev.dataTransfer.files); },
       onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); entrada.click(); } } },
       h('h3', null, 'Solte aqui o ZIP do SEI ou os arquivos da unidade'),
-      h('p', { class: 'al-dica' }, 'Pode soltar o ZIP inteiro (mesmo com mais de 100 MB) ou vários arquivos de uma vez: PDF, Word, Excel, CSV, TXT ou HTML, até ' + LIMITE_MB + ' MB cada. PDF escaneado, só imagem, não é lido.'),
+      h('p', { class: 'al-dica' }, 'Pode soltar o ZIP inteiro (mesmo com mais de 100 MB) ou vários arquivos de uma vez: PDF, Word, Excel, CSV, TXT ou HTML, até ' + LIMITE_MB + ' MB cada. O PDF é lido na sua máquina: só o texto, já sem dados pessoais, vai para o sistema. PDF escaneado, só imagem, não é lido.'),
       h('button', { class: 'sec', onclick: () => entrada.click() }, 'Escolher arquivos no computador'));
     entrada.addEventListener('change', () => receber(entrada.files));
 
@@ -243,7 +294,7 @@
         const r = P.itens.get((it.codigo || it.nome) + '|' + (it.ids || []).join(',')); if (!r) continue;
         const e = estadoItem(it);
         if (r.li.getAttribute('data-estado') !== e) { r.li.setAttribute('data-estado', e); r.ic.innerHTML = e === 'lido' ? ICONE_OK : (e === 'falta' || e === 'problema' || e === 'atencao') ? ICONE_X : ''; }
-        const ro = ROTULO_ITEM[e] || e;
+        const ro = (e === 'lendo' && fase && it.ids && it.ids.includes(enviandoId)) ? fase : (ROTULO_ITEM[e] || e);
         if (r.est1.textContent !== ro) r.est1.textContent = ro;
         const mt = (e === 'problema' || e === 'atencao' || e === 'falta') ? (it.motivo || (e === 'falta' && !it.obrigatorio ? 'Opcional' : (e === 'falta' ? 'Não veio neste envio' : ''))) : '';
         if (r.mot.textContent !== mt) r.mot.textContent = mt;
@@ -251,13 +302,14 @@
       // fecho: resumo
       P.fim.hidden = !(p.concluido && !trabalhando);
       if (!P.fim.hidden) {
-        const sig = JSON.stringify([p.resumo, p.avisoTrimestre, p.faltam, p.paginasImagem, a]);
+        const sig = JSON.stringify([p.resumo, p.avisoTrimestre, p.faltam, p.paginasImagem, p.fallback, a]);
         if (P.fim.getAttribute('data-sig') !== sig) {
           P.fim.setAttribute('data-sig', sig);
           const pgImg = (p.paginasImagem || []);
           trocarFilhos(P.fim, 
             h('p', { class: 'al-resumo', id: 'al-resumo-mes' }, p.resumo || ''),
             p.avisoTrimestre ? h('p', { class: 'al-trim', id: 'al-aviso-tri' }, 'Trimestre: ' + p.avisoTrimestre) : null,
+            (p.fallback || []).length ? aviso('atencao', h('strong', null, 'PDF enviado inteiro: '), p.fallback.map((x) => bonito(x.arquivo)).join('; ') + '. O navegador não conseguiu tirar o texto na sua máquina (PDF só imagem, com senha ou com erro), então o arquivo foi enviado para o sistema tentar ler. Ele não é guardado.') : null,
             pgImg.length ? aviso('atencao', h('strong', null, 'Páginas que parecem só imagem: '), pgImg.map((x) => x.arquivo + ' (pág. ' + x.paginas.slice(0, 8).join(', ') + (x.paginas.length > 8 ? '...' : '') + ')').join('; ') + '. O texto dessas páginas pode não ter sido lido.') : null,
             p.catalogo && p.contrato_id && p.mes ? h('div', { class: 'linha' }, h('button', { id: 'al-abrir-conf', onclick: () => abrirConferencia(p.contrato_id, p.mes) }, 'Conferir os números de ' + (p.mesNome || 'o mês')), h('span', { class: 'peq mudo' }, 'A leitura só propõe os números. Você confere e confirma.')) : null);
         }

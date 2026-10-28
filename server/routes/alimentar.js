@@ -3,6 +3,7 @@
 const express = require('express');
 const A = require('../auth');
 const AL = require('../alimentar');
+const X = require('../extrair-texto');
 const { erro } = A;
 
 module.exports = (db) => {
@@ -19,9 +20,17 @@ module.exports = (db) => {
   r.post('/arquivo', express.raw({ type: () => true, limit: '60mb' }), async (req, res) => {
     const corpo = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
     const filaId = Number(req.get('x-fila-id'));
-    if (filaId) return res.json(await AL.receberDoLote(db, req.usuario, filaId, corpo));
+    if (filaId) return res.json(await AL.receberDoLote(db, req.usuario, filaId, corpo, String(req.get('x-origem') || '')));
     const nome = decodeURIComponent(String(req.get('x-nome-arquivo') || 'arquivo'));
     res.json(await AL.receber(db, req.usuario, nome, corpo));
+  });
+  // Caminho principal para PDF e HTML: o navegador leu o arquivo na máquina da analista, mascarou e manda SÓ O TEXTO (JSON de até 8 MB).
+  // O servidor valida tipo, tamanho e hash, e mascara de novo. O PDF só vem pelo caminho acima quando o navegador não conseguiu o texto.
+  r.post('/texto', express.raw({ type: () => true, limit: X.MAX_CORPO_TEXTO }), async (req, res) => {
+    let corpo = null;
+    if (req.body && !Buffer.isBuffer(req.body) && typeof req.body === 'object' && req.body.texto !== undefined) corpo = req.body; // (já lido como JSON pelo leitor geral, até 6 MB)
+    else try { corpo = JSON.parse(Buffer.isBuffer(req.body) ? req.body.toString('utf8') : ''); } catch (_) { throw erro(400, 'O texto enviado não está no formato esperado.'); }
+    res.json(await AL.receberTexto(db, req.usuario, Number(req.get('x-fila-id')), corpo));
   });
   r.post('/:id/identificar', async (req, res) => res.json(await AL.identificar(db, req.usuario, req.params.id, req.body || {})));
   r.delete('/:id', (req, res) => { AL.descartar(db, req.usuario, req.params.id); res.json({ ok: true }); });
