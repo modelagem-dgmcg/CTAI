@@ -23,6 +23,9 @@ const ITENS = [
   { id: 'achados', titulo: 'Achados do Analista fixados', ajuda: 'Pontos que a equipe fixou a partir da leitura do Analista.' },
 ];
 
+// Unidades UPAE (fluxo da gaveta) levam a apuração do trimestre como item próprio de conferência.
+const ITEM_APURACAO = { id: 'apuracao', titulo: 'Apuração do trimestre (quadros, descontos e textos)', ajuda: 'Números de cada quadro com a origem (SIMAS, RM, planilha), percentuais, descontos recalculados, campos manuais e textos trocados em relação ao modelo.' };
+const itensDe = (conteudo) => (conteudo && conteudo.apuracao ? ITENS.concat([ITEM_APURACAO]) : ITENS);
 const agora = () => new Date().toISOString();
 // O analista (criador) também confere os pareceres dos colegas; nunca o próprio.
 const ehMesa = (u) => u && ['colega', 'criador', 'superintendente'].includes(u.perfil);
@@ -222,6 +225,7 @@ function conteudoAtual(db, parecerId) {
     texto: Object.assign({ abertura: '', analise: '', conclusao: '' }, p.blocos.texto || {}),
     achados: pinned,
     modelo: p.blocos.modelo || null,
+    apuracao: (() => { try { return require('./gaveta').usaGaveta(contrato) ? require('./parecer-trimestre').paraMinuta(db, contrato, p.trimestre) : null; } catch (_) { return null; } })(),
   };
 }
 
@@ -257,6 +261,7 @@ function congelar(db, parecerId, usuario, dados) {
   const ult = ultimaVersao(db, p.parecer_id);
   if (ult && !String(dados.motivo || '').trim()) throw erro(400, 'Informe o motivo da nova versão (o que mudou).');
   const conteudo = conteudoAtual(db, p.parecer_id);
+  if (conteudo.apuracao && !conteudo.apuracao.pronto) throw erro(409, 'A apuração do trimestre não está pronta para conferência (' + conteudo.apuracao.pendencias + ' pendência(s) ou números/textos alterados depois do "pronto"). Resolva e marque pronto na etapa Produzir antes de congelar.');
   const hash = hashDe(conteudo);
   if (ult && ult.hash === hash) throw erro(409, 'Nada mudou desde a versão ' + ult.numero + '. Não há o que congelar.');
   const numero = ult ? ult.numero + 1 : 1;
@@ -280,7 +285,7 @@ function estadoDaVersao(db, versaoId) {
   // Vale o último registro de cada pessoa em cada item.
   const ultimo = {};
   for (const r of regs) ultimo[r.usuario_id + '|' + r.item_id] = r;
-  const itens = ITENS.map((it) => {
+  const itens = itensDe(D.json(v.conteudo, {})).map((it) => {
     const porPessoa = Object.values(ultimo).filter((r) => r.item_id === it.id).map((r) => ({ usuario_id: r.usuario_id, nome: nomes[r.usuario_id] ? nomes[r.usuario_id].nome : '?', papel: r.papel, status: r.status, comentario: r.comentario, data_hora: r.data_hora }));
     const colegasOk = convocados.filter((uid) => porPessoa.some((x) => x.usuario_id === uid && x.status === 'ok'));
     const reparo = porPessoa.some((x) => x.status === 'reparo');
@@ -306,7 +311,7 @@ function conferir(db, versaoId, usuario, itemId, status, comentario) {
   if (v.status === 'autorizada') throw erro(409, 'Esta versão já foi autorizada.');
   const convocados = D.json(v.convocados, []);
   if (usuario.perfil !== 'superintendente' && !convocados.includes(usuario.usuario_id)) throw erro(403, 'Você não foi convocado para conferir esta versão.');
-  if (!ITENS.some((i) => i.id === itemId)) throw erro(400, 'Item desconhecido.');
+  if (!itensDe(D.json(v.conteudo, {})).some((i) => i.id === itemId)) throw erro(400, 'Item desconhecido.');
   if (!['ok', 'reparo'].includes(status)) throw erro(400, 'Marque "ok" ou "reparo".');
   if (status === 'reparo' && !String(comentario || '').trim()) throw erro(400, 'Explique o reparo para quem criou o parecer.');
   db.run('INSERT INTO conferencias (versao_id, usuario_id, papel, item_id, status, comentario, data_hora) VALUES (?,?,?,?,?,?,?)', v.versao_id, usuario.usuario_id, usuario.perfil, itemId, status, comentario || null, agora());
@@ -361,4 +366,4 @@ function detalhe(db, parecerId, usuario) {
     voce: { eCriador: usuario.usuario_id === p.criador_id, perfil: usuario.perfil } };
 }
 
-module.exports = { exigirCriador, ITENS, obter, listar, criar, salvarTexto, adotar, conteudoAtual, hashDe, rascunhoDeTexto, ultimaVersao, congelar, estadoDaVersao, conferir, autorizar, registrarSEI, detalhe };
+module.exports = { exigirCriador, ITENS, ITEM_APURACAO, itensDe, obter, listar, criar, salvarTexto, adotar, conteudoAtual, hashDe, rascunhoDeTexto, ultimaVersao, congelar, estadoDaVersao, conferir, autorizar, registrarSEI, detalhe };

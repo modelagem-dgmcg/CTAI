@@ -417,3 +417,14 @@ dialog:has(.imp-ed) .corpo,dialog:has(.imp-est) .corpo{max-height:72vh;overflow:
 .pt-pre{white-space:pre-wrap;font:inherit;font-size:.9em;margin:6px 0}
 .pt-modelo mark{background:rgba(217,119,6,.3)}
 #pt-raiz textarea{width:100%}
+
+.pt-tri td{font-weight:600;background:rgba(92,99,106,.08)}
+.pt-par{margin:.4em 0;line-height:1.5}
+.pt-novo{background:rgba(25,135,84,.18);color:inherit;text-decoration:none;padding:0 2px;border-radius:3px}
+.pt-velho{color:var(--cinza);font-size:.85em}
+.pt-rev{background:rgba(217,119,6,.3);padding:0 2px;border-radius:3px}
+.pt-fixo{color:var(--cinza)}
+.pt-sec{margin:6px 0;border:1px solid var(--borda);border-radius:8px;padding:6px 10px}
+.pt-div td{background:rgba(217,119,6,.12)}
+.pt-largo{display:flex;width:100%}
+.pt-largo textarea{width:100%}

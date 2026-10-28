@@ -214,7 +214,18 @@ Ao receber o Anexo II de um mês, o sistema lê os números sem IA (`server/extr
 - O conferidor SIMAS × RM × planilha passou a usar esses números: compara pacientes de ostomizados e neuropediatria (TEA) **somados no trimestre**; mês sem número lido, ou mês com só atendimentos, vira "planilha pendente" explicando o que falta. Continua só sinalizando, sem dizer quem está certo.
 
 ## Etapa 4 da unidade: Apuração do trimestre (Parecer CTAI)
-Na etapa **Produzir** aparece a **Apuração do trimestre**, primeira entrega do Redator CTAI: quadros 01 e 02, apontamentos de descontos, campos manuais, considerações finais sugeridas e a conferência número a número. Os textos corridos das seções 1 a 4, 9 e 10 ainda são redigidos pela analista a partir do parecer do trimestre anterior (o texto dele aparece abaixo, com valores, datas e períodos em destaque para revisar).
+Na etapa **Produzir** aparece a **Apuração do trimestre**, primeira entrega do Redator CTAI: quadros 01 e 02, apontamentos de descontos, campos manuais, considerações finais sugeridas e a conferência número a número. Os textos corridos da abertura e das seções 1 a 4, 9 e 10 são gerados a partir do parecer do trimestre anterior (relatório-modelo) e dos dados confirmados, sem IA e sem adivinhar (ver abaixo).
+**Textos a partir do modelo (2ª rodada)**
+- O sistema troca período, ordinal do trimestre, repasse (número e por extenso) e numeração do parecer. Verde com o texto antigo riscado = trocado pelo sistema; amarelo = a analista revisa (datas, R$, %, números de processo, nomes de mês que sobraram); cinza = texto jurídico mantido (seção 2 e trechos entre aspas). Tudo o que é citado do trimestre anterior fica como estava.
+- Cada seção com troca ou revisão precisa de "Li e revisei esta seção" (ou ser editada à mão) antes do "pronto". Mudar o modelo ou os números depois invalida a revisão.
+- Informe o número do parecer e, quando a meta mudou no trimestre, os termos aditivos (seção 3).
+**Fonte dos números**
+- O SIMAS confirmado é a fonte principal dos quadros 01 e 02 ("Fonte: SIMAS"); RM e planilha conferem. Se divergirem, o sistema mostra os dois lados e **não decide**: a analista escolhe a fonte. Há uma tabela "Lado a lado" (SIMAS, RM/planilha, valor usado) e a conferência número a número.
+- O Quadro 03 (qualidade) vem do SIMAS confirmado; o "atingido" é recalculado pela regra do indicador e divergência é bloqueio. "Impossibilitado de análise" é manual, com motivo.
+- Decisões que ficam com a analista: percentual de desconto por indicador, critério de arredondamento, faixa entre 85% e 100% e a fonte quando há divergência.
+**Fluxo da minuta**
+- Para UPAE com a Gaveta, a apuração é um item da minuta. A versão **só congela com a apuração pronta**; mudar qualquer número ou texto depois derruba o "pronto" e exige nova versão. O PDF do parecer sai da versão congelada, com as seções 1 a 10, e segue para conferir, autorizar e registrar no SEI como as demais.
+
 **Regras de segurança dos números**
 1. **Só entra número confirmado** (RM, planilha, ajuste digitado com motivo). Número só lido (proposto), ausente ou divergente aparece em destaque como PENDENTE, nunca como valor, e impede o "pronto para conferência".
 2. **Todo cálculo é refeito por um segundo caminho** (inteiros, sem ponto flutuante) e **lendo de volta o que está escrito** nos quadros, tabelas e considerações finais. Percentual do trimestre = soma dos 3 meses ÷ soma das metas dos 3 meses (com meta constante, ÷ (meta mensal × 3)). Desconto = percentual × repasse total do trimestre. Qualquer diferença bloqueia o "pronto para conferência" com a mensagem do ponto exato.

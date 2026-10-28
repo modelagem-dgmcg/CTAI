@@ -5,6 +5,8 @@ const H = require('../helpers');
 const assert = require('node:assert/strict');
 const CART = require('../../server/carteira');
 const C = require('../../server/catalogo');
+const F = require('../fixtures-planilha');
+const EST = require('../../server/importar-estrutura');
 const { chromium } = require('playwright');
 
 (async () => {
@@ -31,6 +33,10 @@ const { chromium } = require('playwright');
     const num = (m, f, chave, meta, real, estado) => S.db.run("INSERT INTO gaveta_numeros (doc_id, contrato_id, mes, fonte, chave, rotulo, meta, realizado, trecho, estado, confirmado_por) VALUES (?,'UPAE-APU',?,?,?,?,?,?,?,?,?)", doc[m + f], m, f, chave, chave, meta, real, 'trecho sintético ' + chave, estado, estado === 'confirmado' ? 'cleuton' : null);
     for (const [chave, [meta, reais]] of Object.entries(dados)) meses.forEach((m, k) => num(m, 'anexo_I', chave, meta, reais[k], chave === 'consultas_medicas' ? 'proposto' : 'confirmado'));
     meses.forEach((m) => num(m, 'anexo_II', 'ostomizados_pessoas', 70, 80, 'confirmado'));
+    // relatório-modelo (parecer do trimestre anterior, sintético) e SIMAS de qualidade confirmado
+    const texto = F.modeloTexto(); const est = EST.extrairEstrutura(texto, { periodicidadePadrao: 'mensal', tipo: 'UPAE' });
+    S.db.run("INSERT INTO imp_modelos (contrato_id, trimestre, nome_arquivo, hash, texto, estrutura, ativo, criado_por, criado_em) VALUES ('UPAE-APU',?,'modelo.txt','hm',?,?,1,'t','2026-10-01')", est.trimestre, texto, JSON.stringify(est));
+    meses.forEach((m, k) => { for (const [ch, nm, rg, vl] of [['qualidade_do_preenchimento_de_prontuarios', 'Qualidade do Preenchimento de Prontuários', 'Maior ou igual a 85', 90], ['indice_de_satisfacao_do_usuario', 'Índice de Satisfação do Usuário', 'Maior ou igual a 90', 95]]) S.db.run("INSERT INTO imp_simas_numeros (contrato_id, trimestre, tipo, descricao, chave, realizado, regra, atingido, ocorrencia, mes, mes_estado, estado, confirmado_por, trecho) VALUES ('UPAE-APU',?,'indicador',?,?,?,?,'Sim',?,?,'confirmado','confirmado','cleuton',?)", T, nm, ch, vl, rg, k + 1, m, nm + ' | ' + rg); });
     // abre a etapa Produzir
     await p.evaluate(() => { location.hash = '#/u/UPAE-APU'; location.reload(); });
     await p.waitForSelector('#pt-raiz', { state: 'attached', timeout: 15000 });
@@ -50,7 +56,14 @@ const { chromium } = require('playwright');
     await p.fill('#pt-fonte', 'Contrato de Gestão, cláusula teste');
     await p.fill('#pct-consultas_medicas', '3'); await p.fill('#pct-mamografia', '4'); await p.fill('#pt-qual', '0,00');
     await p.fill('#pt-s7', 'Informações financeiras: texto da analista.'); await p.fill('#pt-s8', 'Parecer da CMA: texto da analista.');
+    await p.fill('#pt-numero', '202/2026'); await p.fill('#pt-tas', 'Termo aditivo sintético do trimestre.');
     await p.click('#pt-salvar'); await p.waitForFunction(() => /R\$ 21\.000,02/.test(document.querySelector('#pt-total').textContent), null, { timeout: 8000 });
+    // textos com destaque: trocas e revisões bloqueiam até a analista marcar cada seção como revisada
+    assert.ok(await p.locator('#pt-raiz ins.pt-novo').count() >= 1, 'trocas destacadas'); assert.ok(await p.locator('#pt-raiz del.pt-velho').count() >= 1, 'texto antigo riscado');
+    assert.match(await p.innerText('#pt-bloq'), /trecho\(s\) trocado\(s\)/);
+    for (let i = 0; i < 10 && await p.locator('[id^=pt-rev-]:not([disabled])').count(); i++) { await p.evaluate(() => { document.querySelectorAll('details.pt-sec').forEach((d) => { d.open = true; }); }); await p.locator('[id^=pt-rev-]:not([disabled])').first().click(); await p.waitForTimeout(600); }
+    await p.waitForFunction(() => !document.querySelector('#pt-bloq'), null, { timeout: 8000 });
+    assert.ok(await p.locator('#pt-lado').count() >= 1, 'lado a lado'); assert.match(await p.innerText('#pt-raiz'), /Quadro 03/);
     assert.equal((await p.locator('#pt-bloq').count()), 0, 'sem pendências');
     assert.match(await p.innerText('#pt-conf'), /anexo_I-.*\.pdf/);
     await p.click('#pt-pronto'); await p.waitForSelector('#pt-pdf', { timeout: 8000 });

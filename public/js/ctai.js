@@ -415,6 +415,7 @@
       d.adotado && d.adotado.total !== undefined ? h('p', null, h('strong', null, 'Desconto adotado: ' + fmt.moeda(d.adotado.total))) : aviso('atencao', 'O valor do desconto depende de decisões em aberto: ' + (d.decisoesAbertas.join(', ') || '—') + '.')); }
     if (id === 'alertas') { const a = c.alertas.recalculo.concat(c.alertas.integridade.map((e) => ({ competencia: e.competencia, gravidade: e.gravidade, mensagem: e.mensagem }))); return a.length ? h('ul', { class: 'peq' }, a.map((x) => h('li', null, seloGrav(x.gravidade), ' ', x.competencia + (x.indicador_id ? ' · item ' + x.indicador_id : '') + ': ' + x.mensagem))) : h('p', { class: 'mudo' }, 'Sem alertas.'); }
     if (id === 'texto') return ['abertura', 'analise', 'conclusao'].map((k) => h('div', null, h('h3', null, { abertura: 'Abertura', analise: 'Análise', conclusao: 'Conclusão' }[k]), h('p', { style: 'white-space:pre-wrap' }, c.texto[k] || '(sem texto)')));
+    if (id === 'apuracao' && c.apuracao) return window.CTAI_PARECER_TRI ? window.CTAI_PARECER_TRI.resumo(c.apuracao) : null;
     if (id === 'achados') return c.achados.length ? c.achados.map((a) => achadoCard(a)) : h('p', { class: 'mudo' }, 'Nenhum achado fixado.');
     return null;
   }
@@ -566,6 +567,7 @@
         c.indicadores.competencias.some((k) => !k.envio) ? h('p', { class: 'mudo peq' }, 'Meses sem envio pelo portal usam os totais da carga (somente leitura).') : null),
       h('div', { class: 'cartao' }, h('h2', null, '2. Divergências, desconto e alertas'), h('p', { class: 'peq' }, c.divergencias.length + ' divergência(s) (' + c.divergencias.filter((x) => x.status === 'aberta').length + ' abertas) · ' + c.alertas.recalculo.length + ' alerta(s) do recálculo'), renderSecao('desconto', c),
         c.desconto.decisoesAbertas.length ? h('p', { class: 'peq' }, h('a', { href: '#/regras/' + P.contrato_id }, 'Decidir as dúvidas de regra')) : null),
+      c.apuracao && window.CTAI_PARECER_TRI ? h('div', { class: 'cartao', id: 'cartao-apuracao' }, h('h2', null, 'Apuração do trimestre'), h('p', { class: 'peq mudo' }, 'Quadros, descontos e textos desta unidade UPAE são montados na página da unidade (etapa Produzir). Só congela com a apuração pronta. ', h('a', { href: '#/u/' + P.contrato_id }, 'Abrir a página da unidade')), window.CTAI_PARECER_TRI.resumo(c.apuracao)) : null,
       cartaoModelo(P, c, eCriador && !travado, () => parecer(p), d.modeloDef),
       c.modelo ? null : h('div', { class: 'cartao' }, h('h2', null, '3b. Texto livre (formato antigo)'),
         area('abertura', 'Abertura'), area('analise', 'Análise'), area('conclusao', 'Conclusão'),

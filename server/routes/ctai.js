@@ -199,7 +199,8 @@ module.exports = (db) => {
   r.get('/versoes/:id', (req, res) => {
     const est = M.estadoDaVersao(db, req.params.id);
     const v = db.get('SELECT conteudo FROM versoes_minuta WHERE versao_id = ?', Number(req.params.id));
-    res.json(Object.assign(est, { conteudo: JSON.parse(v.conteudo), itensDef: M.ITENS }));
+    const cont = JSON.parse(v.conteudo);
+    res.json(Object.assign(est, { conteudo: cont, itensDef: M.itensDe(cont) }));
   });
   r.post('/versoes/:id/conferir', (req, res) => res.json(M.conferir(db, req.params.id, req.usuario, req.body && req.body.item, req.body && req.body.status, req.body && req.body.comentario)));
   r.post('/versoes/:id/autorizar', (req, res) => res.json(M.autorizar(db, req.params.id, req.usuario)));

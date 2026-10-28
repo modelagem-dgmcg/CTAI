@@ -11,6 +11,7 @@ function construirMinuta(conteudo, versao, estado) {
   const blocos = [];
   const autorizada = estado === 'autorizada';
   const rascunho = versao && versao.numero === 'rascunho';
+  if (conteudo.apuracao) return construirParecerUpae(conteudo, versao, estado, rascunho);
   if (id.demo) blocos.push({ tipo: 'aviso', nivel: 'atencao', texto: 'DEMONSTRAÇÃO – dados fictícios. Esta minuta não vale como parecer.' });
   blocos.push({ tipo: 'aviso', nivel: autorizada ? 'info' : 'atencao', texto: rascunho ? 'Rascunho para leitura e impressão (ainda não foi congelado nem conferido). Não é o parecer assinado.' : autorizada
     ? 'Versão ' + versao.numero + ' autorizada internamente. O parecer só vale depois de assinado no SEI pelas pessoas responsáveis. O "OK" do sistema é controle interno e não substitui a assinatura.'
@@ -104,6 +105,25 @@ function construirMinuta(conteudo, versao, estado) {
     cabecalhoCurto: (rascunho ? 'Rascunho · ' : 'Minuta · ') + id.unidade + ' · ' + id.trimestre,
     demo: !!id.demo,
     rodape: rascunho ? 'Rascunho do parecer · gerado para leitura e impressão' : 'Minuta v' + versao.numero + ' · código de integridade ' + versao.hash.slice(0, 16) + ' · situação: ' + estado,
+    blocos,
+  };
+}
+
+// UPAE: o PDF é o parecer completo (seções 1 a 10), montado só com o que foi apurado e congelado.
+function construirParecerUpae(conteudo, versao, estado, rascunho) {
+  const id = conteudo.identificacao; const ap = conteudo.apuracao;
+  const autorizada = estado === 'autorizada';
+  const blocos = [];
+  if (id.demo) blocos.push({ tipo: 'aviso', nivel: 'atencao', texto: 'DEMONSTRAÇÃO – dados fictícios. Esta minuta não vale como parecer.' });
+  if (rascunho && !ap.pronto) blocos.push({ tipo: 'aviso', nivel: 'atencao', texto: 'Rascunho: a apuração do trimestre ainda NÃO está pronta para conferência (' + ap.pendencias + ' pendência(s)). Há números e textos que não valem.' });
+  blocos.push({ tipo: 'aviso', nivel: autorizada ? 'info' : 'atencao', texto: rascunho ? 'Rascunho para leitura e impressão (ainda não foi congelado nem conferido). Não é o parecer assinado.' : (autorizada ? 'Versão ' + versao.numero + ' autorizada internamente. O parecer só vale depois de assinado no SEI. O "OK" do sistema é controle interno e não substitui a assinatura no SEI.' : 'Minuta para conferência (versão ' + versao.numero + ', situação: ' + estado + '). Não é o parecer assinado.') });
+  blocos.push(...require('../parecer-trimestre').blocosDoParecer(ap.documento));
+  return {
+    titulo: 'Parecer Técnico CTAI N.º ' + (ap.documento.numero_parecer || 'a definir'),
+    subtitulo: id.unidade + ' · ' + id.trimestre + (rascunho ? ' · rascunho' : ' · versão ' + versao.numero),
+    cabecalhoCurto: (rascunho ? 'Rascunho · ' : 'Minuta · ') + id.unidade + ' · ' + id.trimestre,
+    demo: !!id.demo,
+    rodape: rascunho ? 'Rascunho do parecer · gerado para leitura e impressão' : 'Minuta v' + versao.numero + ' · código de integridade ' + String(versao.hash).slice(0, 12),
     blocos,
   };
 }
