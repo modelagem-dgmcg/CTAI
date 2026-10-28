@@ -19,9 +19,10 @@ test.before(async () => {
   await cle.entrar('cleuton'); await adm.entrar('admin'); await sup.entrar('nathalia'); await c2.entrar('colega2');
   S.db.run("INSERT INTO contratos (contrato_id, unidade, oss, tipo, demo) VALUES ('UPAE-T','UPAE Teste','OSS Teste','UPAE',0)");
   S.db.run("INSERT INTO contratos (contrato_id, unidade, oss, tipo, demo) VALUES ('UPAE-NOVA','UPAE Nova','OSS Teste','UPAE',0)");
+  S.db.run("INSERT INTO contratos (contrato_id, unidade, oss, tipo, demo) VALUES ('UPAE-ORIG','UPAE Origens','OSS Teste','UPAE',0)");
   S.db.run("INSERT INTO contratos (contrato_id, unidade, oss, tipo, demo) VALUES ('HOSP-T','Hospital Teste','OSS Teste','Hospital',0)");
   const u = S.db.get("SELECT usuario_id FROM usuarios WHERE login = 'cleuton'");
-  CART.definir(S.db, 'admin', u.usuario_id, ['UPAE-T', 'UPAE-NOVA', 'HOSP-T', 'UPA-OLINDA'], 'teste');
+  CART.definir(S.db, 'admin', u.usuario_id, ['UPAE-T', 'UPAE-NOVA', 'UPAE-ORIG', 'HOSP-T', 'UPA-OLINDA'], 'teste');
   const u2 = S.db.get("SELECT usuario_id FROM usuarios WHERE login = 'colega2'");
   CART.definir(S.db, 'admin', u2.usuario_id, ['UPA-OLINDA'], 'teste');
 });
@@ -69,7 +70,7 @@ test('proposta de lista: nome, padrões, obrigatório, periodicidade, origem e t
   assert.equal(bid.obrigatorio, 1); assert.equal(bid.periodicidade, 'mensal'); assert.equal(bid.origem, 'unidade');
   assert.deepEqual(bid.padroes, ['\\banexo iv\\b']); assert.match(bid.trecho, /BID/);
   const fin = p.itens.find((i) => i.codigo === 'financeiro');
-  assert.equal(fin.origem, 'fonte_externa'); assert.equal(fin.periodicidade, 'trimestral');
+  assert.equal(fin.origem, 'pedida_setor'); assert.equal(fin.periodicidade, 'trimestral');
   const cit = p.itens.find((i) => /^planilha_/.test(i.codigo));
   assert.equal(cit.obrigatorio, 0, 'citação solta fica opcional'); assert.equal(cit.confianca, 'baixa');
   // sem nenhuma fonte: parte da lista padrão e avisa
@@ -220,12 +221,12 @@ test('fonte externa: check manual com observação, por mês; não vem por uploa
   e = await est(cle, 'UPAE-T');
   assert.equal(item(e, 'simas').recebidos, 2); assert.equal(item(e, 'simas').estado, 'parcial');
   assert.equal(item(e, 'simas').slots[0].observacao, 'Conferido no SIMAS em 2026-10'); assert.equal(item(e, 'simas').slots[0].check, 'manual');
-  // um arquivo com nome de despacho NÃO é casado com item de fonte externa (vira avulso)
+  // item de fonte externa (SIMAS) nunca é casado por upload: o arquivo vira avulso
   const antes = e.avulsos.length;
-  await subir(cle, 'UPAE-T', TRI, [{ nome: '[9]-90_GOVPE___Despacho_681.txt', buf: F.corpo('Despacho da Gerência de Prestação de Contas', '10') }]);
+  await subir(cle, 'UPAE-T', TRI, [{ nome: '[9]-90_GOVPE___SIMAS_681.txt', buf: F.corpo('Consulta SIMAS', '10') }]);
   e = await est(cle, 'UPAE-T');
   assert.equal(e.avulsos.length, antes + 1);
-  assert.equal(item(e, 'despacho_financeiro').recebidos, 0);
+  assert.equal(item(e, 'simas').slots.filter((x) => x.arquivos.length).length, 0);
   // desmarcar
   await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/check', { item: 'simas', mes: '2026-11', marcado: false });
   assert.equal(item(await est(cle, 'UPAE-T'), 'simas').recebidos, 1);
@@ -254,7 +255,7 @@ test('conclusão da etapa: automática com todos os obrigatórios; manual com co
   const falta = e.resumo.faltam;
   for (const f of falta) {
     const it = item(e, f.codigo);
-    assert.equal(it.origem, 'fonte_externa', 'o que sobrou é fonte externa: ' + f.codigo);
+    assert.notEqual(it.origem, 'unidade', 'o que sobrou é fonte externa: ' + f.codigo);
     for (const s of it.slots) if (!s.check) await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/check', { item: it.codigo, mes: s.mes, marcado: true });
   }
   e = await est(cle, 'UPAE-T');
@@ -355,8 +356,101 @@ test('respeita a carteira: colega de outra carteira não vê nem mexe; superinte
 
 test('zerar apaga as tabelas novas e o original nunca fica no banco', () => {
   const fonte = require('fs').readFileSync(require('path').join(__dirname, '..', 'server', 'zerar.js'), 'utf8');
-  for (const t of ['imp_modelos', 'imp_listas', 'imp_itens', 'imp_arquivos', 'imp_checks', 'imp_conclusoes']) assert.ok(fonte.includes("['" + t + "'"), t);
+  for (const t of ['imp_modelos', 'imp_listas', 'imp_itens', 'imp_arquivos', 'imp_checks', 'imp_conclusoes', 'imp_ausencias']) assert.ok(fonte.includes("['" + t + "'"), t);
   const apagar = require('../server/zerar').contar(S.db, null).apagar.map((x) => x.tabela);
   for (const t of ['imp_modelos', 'imp_listas', 'imp_itens', 'imp_arquivos', 'imp_checks']) assert.ok(apagar.includes(t), t);
   assert.equal(S.db.get('SELECT COUNT(*) AS n FROM alimentar_fila WHERE texto IS NOT NULL').n, 0);
+});
+
+// ---------- três origens e a regra da planilha de monitoramento ----------
+const TEXTO_ORIGENS = F.textoParecer() + `
+Os dados de ostomizados e de TEA foram extraídos da planilha de monitoramento enviada pela Unidade (Anexo II), às vezes chamada de planilha consolidada.
+Foi anexado o Despacho da Gerência de Prestação de Contas com o relatório de prestação de contas do trimestre.
+As Informações Financeiras referentes ao trimestre anterior constam da INFORMAÇÃO N.º 48/2026/SES - GGCCG.
+Consideramos o Parecer Conclusivo da CMA do trimestre anterior, que consta do processo do parecer.
+`;
+
+test('o extrator sugere as três origens e a planilha de monitoramento como item obrigatório e mensal da unidade', () => {
+  const e = E.extrairEstrutura(TEXTO_ORIGENS, { periodicidadePadrao: 'mensal', tipo: 'UPAE' });
+  const lista = E.propostaLista(e, 'UPAE').itens;
+  const por = (c) => lista.find((i) => i.codigo === c);
+  assert.equal(por('despacho_financeiro').origem, 'pedida_setor');
+  assert.equal(por('financeiro').origem, 'pedida_setor');
+  assert.equal(por('parecer_cma').origem, 'processo_parecer');
+  assert.equal(por('simas').origem, 'fonte_externa');
+  const plan = por('anexo_II');
+  assert.equal(plan.origem, 'unidade'); assert.equal(plan.obrigatorio, 1); assert.equal(plan.periodicidade, 'mensal');
+  assert.ok(!lista.some((i) => /^planilha_.*monitoramento/.test(i.codigo)), 'sem item duplicado para a mesma planilha');
+  // casa pelo nome do arquivo: "monitoramento" e "consolidad"
+  const itens = [plan];
+  assert.equal(E.casar(itens, 'Planilha_de_Monitoramento_UPAE_102026.pdf', '').codigo, 'anexo_II');
+  assert.equal(E.casar(itens, 'planilha consolidada outubro.pdf', '').codigo, 'anexo_II');
+  assert.equal(E.casar(itens, 'Anexo_II_UPAE.pdf', '').codigo, 'anexo_II');
+  assert.equal(E.casar(itens, 'Relatorio_RM_102026.pdf', ''), null);
+});
+
+test('origens na prática: pedida (não pedido, pedido com processo, recebido), consultada no processo, resumo e conclusão', async () => {
+  const lista = E.propostaLista(E.extrairEstrutura(TEXTO_ORIGENS, { periodicidadePadrao: 'mensal', tipo: 'UPAE' }), 'UPAE').itens
+    .filter((i) => ['anexo_I', 'anexo_II', 'despacho_financeiro', 'financeiro', 'parecer_cma'].includes(i.codigo)).map((i) => ({ ...i, obrigatorio: true }));
+  assert.equal(lista.length, 5);
+  assert.equal((await cle.put('/api/importar/unidade/UPAE-ORIG/lista', { itens: lista })).status, 200);
+  assert.equal((await cle.post('/api/importar/unidade/UPAE-ORIG/lista/confirmar')).status, 200);
+  const url = '/api/importar/unidade/UPAE-ORIG/' + TRI + '/check';
+  let e = await est(cle, 'UPAE-ORIG');
+  const fin = item(e, 'financeiro'); const cma = item(e, 'parecer_cma');
+  assert.equal(fin.origem, 'pedida_setor'); assert.equal(fin.estado, 'falta');
+  assert.match(e.resumo.texto, /falta .*Informação financeira.*\(ainda não pedido\)/);
+  const mesFin = fin.periodicidade === 'mensal' ? '2026-10' : '';
+  // pedido: data e nº do processo SEI, campo livre; ainda não conta como recebido
+  assert.equal((await cle.post(url, { item: 'financeiro', mes: mesFin, situacao: 'pedido', data_pedido: '2026-10-20', processo_sei: '00000.0000001/2026-11', observacao: 'Pedido à GGCCG' })).status, 200);
+  e = await est(cle, 'UPAE-ORIG');
+  assert.equal(item(e, 'financeiro').estado, 'pedido'); assert.equal(item(e, 'financeiro').slots[0].processo_sei, '00000.0000001/2026-11'); assert.equal(item(e, 'financeiro').slots[0].data_pedido, '2026-10-20');
+  assert.match(e.resumo.texto, /pedido, aguardando resposta/);
+  assert.equal((await cle.post(url, { item: 'financeiro', mes: mesFin, situacao: 'pedido', data_pedido: '20/10/2026' })).status, 400, 'data inválida');
+  assert.equal((await cle.post(url, { item: 'financeiro', mes: mesFin, situacao: 'consultado' })).status, 400, 'situação de outra origem');
+  // recebido (sem arquivo: não é obrigatório subir)
+  assert.equal((await cle.post(url, { item: 'financeiro', mes: mesFin, situacao: 'recebido', data_pedido: '2026-10-20', processo_sei: '00000.0000001/2026-11', observacao: 'Gasto com pessoal 61%' })).status, 200);
+  e = await est(cle, 'UPAE-ORIG');
+  assert.equal(item(e, 'financeiro').estado, 'completo'); assert.equal(item(e, 'financeiro').slots[0].check, 'manual'); assert.equal(item(e, 'financeiro').slots[0].observacao, 'Gasto com pessoal 61%');
+  // dentro do processo do parecer: consultado + informação anotada
+  assert.equal(cma.origem, 'processo_parecer');
+  assert.equal((await cle.post(url, { item: 'parecer_cma', mes: cma.periodicidade === 'mensal' ? '2026-10' : '', situacao: 'consultado', observacao: 'CMA: metas parcialmente cumpridas' })).status, 200);
+  e = await est(cle, 'UPAE-ORIG');
+  assert.equal(item(e, 'parecer_cma').slots[0].check, 'consultado'); assert.equal(item(e, 'parecer_cma').slots[0].observacao, 'CMA: metas parcialmente cumpridas');
+  // desmarcar volta a "não pedido"
+  assert.equal((await cle.post(url, { item: 'parecer_cma', mes: cma.periodicidade === 'mensal' ? '2026-10' : '', marcado: false })).status, 200);
+  assert.equal(item(await est(cle, 'UPAE-ORIG'), 'parecer_cma').estado, 'falta');
+  assert.ok(S.db.get("SELECT 1 AS x FROM trilha_auditoria WHERE tabela = 'imp_checks' AND valor_novo LIKE '%00000.0000001/2026-11%'"));
+});
+
+test('arquivo de item pedido a outro setor pode ser enviado, mas não é obrigatório', async () => {
+  const r = await subir(cle, 'UPAE-ORIG', TRI, [{ nome: 'Despacho_Gerencia_Prestacao_de_Contas_102026.txt', buf: F.corpo('Despacho da Gerência de Prestação de Contas', '10') }]);
+  assert.equal(r[0].estado, 'lido', JSON.stringify(r[0]));
+  const e = await est(cle, 'UPAE-ORIG');
+  assert.ok(item(e, 'despacho_financeiro').slots.some((s) => s.arquivos.length), 'casou pelo nome');
+});
+
+test('planilha de monitoramento ausente: aviso, regra da CTAI registrada ao concluir, sem valor inventado; reabrir limpa', async () => {
+  let e = await est(cle, 'UPAE-ORIG');
+  assert.equal(item(e, 'anexo_II').estado, 'falta');
+  const aus = e.ausencias.find((a) => a.item === 'anexo_II');
+  assert.ok(aus); assert.equal(aus.estado, 'sem_planilha_meta_nao_cumprida');
+  assert.match(aus.texto, /contam como meta não cumprida/); assert.deepEqual(aus.indicadores, ['Ostomizados', 'TEA / neuropediatria']);
+  assert.equal(aus.meses_sem.length, 3);
+  // ainda não registrado: só aparece como aviso até concluir
+  assert.equal(S.db.get('SELECT COUNT(*) AS n FROM imp_ausencias').n, 0);
+  assert.equal((await cle.post('/api/importar/unidade/UPAE-ORIG/' + TRI + '/concluir', {})).status, 409);
+  assert.equal((await cle.post('/api/importar/unidade/UPAE-ORIG/' + TRI + '/concluir', { confirmar_faltantes: true })).status, 200);
+  const reg = (await cle.get('/api/importar/unidade/UPAE-ORIG/' + TRI + '/ausencias')).json.ausencias;
+  assert.equal(reg.length, 6, '3 meses x 2 indicadores');
+  assert.ok(reg.every((x) => x.estado === 'sem_planilha_meta_nao_cumprida' && /regra da CTAI/.test(x.regra)));
+  assert.equal(S.db.get("SELECT COUNT(*) AS n FROM gaveta_numeros WHERE contrato_id = 'UPAE-ORIG'").n, 0, 'nenhum número inventado');
+  assert.ok(S.db.get("SELECT 1 AS x FROM trilha_auditoria WHERE campo = 'regra_ausencia_aplicada'"));
+  assert.equal((await c2.get('/api/importar/unidade/UPAE-ORIG/' + TRI + '/ausencias')).status, 403);
+  // a planilha chega nos três meses: o aviso some
+  await cle.post('/api/importar/unidade/UPAE-ORIG/' + TRI + '/reabrir', {});
+  assert.equal(S.db.get('SELECT COUNT(*) AS n FROM imp_ausencias').n, 0);
+  for (const mm of ['10', '11', '12']) await subir(cle, 'UPAE-ORIG', TRI, [{ nome: 'Planilha_Consolidada_UPAE_Origens_' + mm + '2026.txt', buf: F.corpo('Planilha de monitoramento', mm) }]);
+  e = await est(cle, 'UPAE-ORIG');
+  assert.equal(item(e, 'anexo_II').estado, 'completo'); assert.equal(e.ausencias.length, 0);
 });

@@ -13,3 +13,6 @@ Nota de projeto. O parecer automático (Redator CTAI) **não** foi construído; 
 2. Usar `estrutura.secoes` como esqueleto do novo parecer e `estrutura.tabelas` / `indicadores` para saber quais quadros preencher com os números do trimestre novo (gaveta e conferência de números).
 3. Trocar os dados do trimestre anterior pelos do atual; trechos que citam fonte externa (seção 7 financeira, seção 8 parecer da CMA) só entram se o item correspondente da lista de conferência estiver com check.
 4. Mandar à IA em nuvem apenas texto já mascarado, como no resto do sistema; a analista revisa tudo antes de assinar.
+
+## Origens dos itens
+O extrator sugere a origem de cada fonte citada: `unidade` (upload), `pedida_setor` (despacho da Gerência de Prestação de Contas, informação financeira da GGCCG, relatório de prestação de contas), `processo_parecer` (Parecer Conclusivo da CMA) e `fonte_externa` (SIMAS). Quando o Redator montar as seções 7 e 8, deve ler a observação lançada nesses itens (`imp_checks.observacao`) e o estado "sem planilha → meta não cumprida" em `imp_ausencias`.

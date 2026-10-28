@@ -396,3 +396,6 @@ input.al-num{width:96px;text-align:right;padding:6px 8px}
 @media(prefers-reduced-motion:reduce){.imp-ic{transition:none}.imp-item[data-estado=completo] .al-tick{animation:none}}
 dialog:has(.imp-ed),dialog:has(.imp-est){max-width:880px}
 dialog:has(.imp-ed) .corpo,dialog:has(.imp-est) .corpo{max-height:72vh;overflow:auto}
+.imp-regra{margin-top:6px;padding:8px 10px;border-left:4px solid var(--verm,#b3261e);background:rgba(179,38,30,.08);border-radius:6px;font-size:.92em}
+.imp-slot .linha{align-items:center;flex-wrap:wrap;gap:8px}
+.imp-sit,.imp-data,.imp-proc{min-width:130px}

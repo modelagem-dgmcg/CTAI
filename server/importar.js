@@ -221,7 +221,7 @@ function textoDoArquivo(db, r) {
 // Decide item e mês de um arquivo. Devolve { item, por, mes, aviso }.
 function decidir(efetivos, tri, nome, texto) {
   const meses = mesesDe(tri);
-  const m = EST.casar(efetivos.filter((i) => i.origem === 'unidade'), nome, texto);
+  const m = EST.casar(efetivos.filter((i) => i.origem === 'unidade' || i.origem === 'pedida_setor'), nome, texto);
   const item = m ? efetivos.find((i) => i.codigo === m.codigo) : null;
   const mesBruto = mesDe(nome, texto);
   const avisos = [];
@@ -344,22 +344,57 @@ function tirarArquivo(db, usuario, id) {
   return { ok: true };
 }
 
-// Check manual (fonte externa: GAOCG, despacho financeiro, SIMAS...), com observação.
+// Check manual. Três origens não vêm por upload da unidade:
+//  - pedida_setor: a CTAI pede a outro setor. situacao nao_pedido | pedido (data e nº do processo SEI) | recebido (o arquivo é opcional);
+//  - processo_parecer: fica no processo do parecer. situacao consultado, com a informação anotada;
+//  - fonte_externa: consulta da analista (SIMAS). Check simples com observação.
+const SITUACOES = { pedida_setor: ['nao_pedido', 'pedido', 'recebido'], processo_parecer: ['consultado'], fonte_externa: ['recebido'] };
 function marcarCheck(db, usuario, contratoId, tri, d) {
   const c = unidade(db, usuario, contratoId); exigirTri(tri);
   const item = listaEfetiva(db, c).itens.find((i) => i.codigo === d.item);
   if (!item) throw erro(400, 'Item fora da lista.');
-  if (item.origem !== 'fonte_externa') throw erro(400, 'Este item vem por arquivo, não por check manual.');
+  if (!SITUACOES[item.origem]) throw erro(400, 'Este item vem por arquivo da unidade, não por check manual.');
   let mes = '';
   if (item.periodicidade === 'mensal') { mes = String(d.mes || ''); if (!mesesDe(tri).includes(mes)) throw erro(400, 'Escolha o mês.'); }
   const obs = String(d.observacao || '').trim().slice(0, 500);
+  let situacao = d.situacao ? String(d.situacao) : (d.marcado === false ? 'nao_pedido' : SITUACOES[item.origem].slice(-1)[0]);
+  if (d.marcado === false) situacao = 'nao_pedido';
+  if (situacao !== 'nao_pedido' && !SITUACOES[item.origem].includes(situacao)) throw erro(400, 'Situação inválida para este item.');
+  const dataPedido = String(d.data_pedido || '').trim().slice(0, 10);
+  if (dataPedido && !/^\d{4}-\d{2}-\d{2}$/.test(dataPedido)) throw erro(400, 'Data do pedido inválida.');
+  const proc = String(d.processo_sei || '').trim().slice(0, 40);
+  if (situacao === 'pedido' && item.origem === 'pedida_setor' && !dataPedido && !proc) { /* campos livres: pode registrar o pedido sem dados */ }
   db.tx(() => {
-    if (d.marcado === false) db.run('DELETE FROM imp_checks WHERE contrato_id = ? AND trimestre = ? AND item_codigo = ? AND mes = ?', c.contrato_id, tri, item.codigo, mes);
-    else db.run('INSERT INTO imp_checks (contrato_id, trimestre, item_codigo, mes, observacao, marcado_por, marcado_em) VALUES (?,?,?,?,?,?,?) ON CONFLICT(contrato_id, trimestre, item_codigo, mes) DO UPDATE SET observacao = excluded.observacao, marcado_por = excluded.marcado_por, marcado_em = excluded.marcado_em',
-      c.contrato_id, tri, item.codigo, mes, obs || null, usuario.login, agora());
-    trilha.registrar(db, { usuario: usuario.login, tabela: 'imp_checks', registro: c.contrato_id + '/' + tri + '/' + item.codigo + (mes ? '/' + mes : ''), campo: d.marcado === false ? 'check_desmarcado' : 'check_manual', valor_novo: { observacao: obs || null } });
+    if (situacao === 'nao_pedido') db.run('DELETE FROM imp_checks WHERE contrato_id = ? AND trimestre = ? AND item_codigo = ? AND mes = ?', c.contrato_id, tri, item.codigo, mes);
+    else db.run('INSERT INTO imp_checks (contrato_id, trimestre, item_codigo, mes, observacao, marcado_por, marcado_em, situacao, data_pedido, processo_sei) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(contrato_id, trimestre, item_codigo, mes) DO UPDATE SET observacao = excluded.observacao, marcado_por = excluded.marcado_por, marcado_em = excluded.marcado_em, situacao = excluded.situacao, data_pedido = excluded.data_pedido, processo_sei = excluded.processo_sei',
+      c.contrato_id, tri, item.codigo, mes, obs || null, usuario.login, agora(), situacao, dataPedido || null, proc || null);
+    trilha.registrar(db, { usuario: usuario.login, tabela: 'imp_checks', registro: c.contrato_id + '/' + tri + '/' + item.codigo + (mes ? '/' + mes : ''), campo: situacao === 'nao_pedido' ? 'check_desmarcado' : 'check_manual', valor_novo: { situacao, observacao: obs || null, data_pedido: dataPedido || null, processo_sei: proc || null } });
   });
   return { ok: true };
+}
+
+// Regra da CTAI: sem a planilha de monitoramento (Anexo II), os indicadores que dependem dela contam como meta NÃO cumprida.
+// Só vale para o tipo de unidade que usa essa planilha; nenhum valor é inventado.
+const REGRAS_AUSENCIA = {
+  anexo_II: { tipos: ['UPAE'], estado: 'sem_planilha_meta_nao_cumprida', indicadores: ['Ostomizados', 'TEA / neuropediatria'],
+    texto: 'Sem a planilha de monitoramento, estes indicadores contam como meta não cumprida (regra da CTAI): Ostomizados e TEA / neuropediatria.' },
+};
+function ausenciasDe(itens, tipo) {
+  const out = [];
+  for (const it of itens) {
+    const r = REGRAS_AUSENCIA[it.codigo];
+    if (!r || !r.tipos.includes(tipo) || !it.obrigatorio) continue;
+    const meses = it.slots.filter((s) => !s.check).map((s) => s.mes).filter(Boolean);
+    if (meses.length) out.push({ item: it.codigo, nome: it.nome, estado: r.estado, indicadores: r.indicadores, texto: r.texto, meses_sem: meses });
+  }
+  return out;
+}
+// Grava a regra aplicada (ao concluir); apaga o que deixou de valer.
+function registrarAusencias(db, usuario, c, tri, aus) {
+  db.run('DELETE FROM imp_ausencias WHERE contrato_id = ? AND trimestre = ?', c.contrato_id, tri);
+  for (const a of aus) for (const m of a.meses_sem) for (const ind of a.indicadores)
+    db.run('INSERT INTO imp_ausencias (contrato_id, trimestre, mes, item_codigo, indicador, estado, regra, registrado_por, registrado_em) VALUES (?,?,?,?,?,?,?,?,?)', c.contrato_id, tri, m, a.item, ind, a.estado, 'sem planilha → meta não cumprida (regra da CTAI)', usuario.login, agora());
+  if (aus.length) trilha.registrar(db, { usuario: usuario.login, tabela: 'imp_ausencias', registro: c.contrato_id + '/' + tri, campo: 'regra_ausencia_aplicada', valor_novo: aus.map((a) => ({ item: a.item, meses: a.meses_sem, estado: a.estado })) });
 }
 
 // ---------- o que a tela mostra ----------
@@ -374,11 +409,13 @@ function estado(db, usuario, contratoId, tri) {
     const slots = slotsMes.map((m) => {
       const a = arqs.filter((x) => x.item_codigo === it.codigo && (it.periodicidade === 'mensal' ? x.mes === m : true));
       const ch = checks.find((x) => x.item_codigo === it.codigo && x.mes === m);
-      return { mes: m, rotulo: m ? C.nomeMes(m) : 'Trimestre', check: a.length ? 'arquivo' : (ch ? 'manual' : null), arquivos: a.map((x) => ({ id: x.id, nome: x.nome_arquivo })), observacao: ch ? ch.observacao : null, por: ch ? ch.marcado_por : null };
+      const sit = ch ? (ch.situacao || 'recebido') : null; // checks antigos (sem situação) valem como recebido
+      const check = a.length ? 'arquivo' : (ch ? (sit === 'pedido' ? 'pedido' : (sit === 'consultado' ? 'consultado' : 'manual')) : null);
+      return { mes: m, rotulo: m ? C.nomeMes(m) : 'Trimestre', check, situacao: a.length ? 'recebido' : (sit || 'nao_pedido'), data_pedido: ch ? ch.data_pedido : null, processo_sei: ch ? ch.processo_sei : null, arquivos: a.map((x) => ({ id: x.id, nome: x.nome_arquivo })), observacao: ch ? ch.observacao : null, por: ch ? ch.marcado_por : null };
     });
-    const recebidos = slots.filter((s) => s.check).length, esperados = slots.length;
-    const estadoItem = !esperados ? 'nao_exigido' : (recebidos === esperados ? 'completo' : (recebidos ? 'parcial' : (it.obrigatorio ? 'falta' : 'opcional')));
-    return { codigo: it.codigo, nome: it.nome, obrigatorio: it.obrigatorio, periodicidade: it.periodicidade, origem: it.origem, trecho: it.trecho, confianca: it.confianca, a_partir_de: it.a_partir_de, slots, recebidos, esperados, estado: estadoItem };
+    const recebidos = slots.filter((s) => s.check && s.check !== 'pedido').length, esperados = slots.length, pedidos = slots.filter((s) => s.check === 'pedido').length;
+    const estadoItem = !esperados ? 'nao_exigido' : (recebidos === esperados ? 'completo' : (recebidos ? 'parcial' : (pedidos ? 'pedido' : (it.obrigatorio ? 'falta' : 'opcional'))));
+    return { codigo: it.codigo, nome: it.nome, obrigatorio: it.obrigatorio, periodicidade: it.periodicidade, origem: it.origem, trecho: it.trecho, confianca: it.confianca, a_partir_de: it.a_partir_de, slots, recebidos, esperados, pedidos, estado: estadoItem };
   });
   const avulsos = arqs.filter((x) => {
     const it = ef.itens.find((i) => i.codigo === x.item_codigo);
@@ -386,7 +423,7 @@ function estado(db, usuario, contratoId, tri) {
   }).map((x) => { const it = ef.itens.find((i) => i.codigo === x.item_codigo); return { id: x.id, nome: x.nome_arquivo, mes: x.mes, paginas: x.paginas, aviso: x.aviso, sugestao: it ? { codigo: it.codigo, nome: it.nome, periodicidade: it.periodicidade } : null }; });
   const contados = itens.filter((i) => i.estado !== 'nao_exigido' && (i.obrigatorio || i.recebidos > 0));
   const obrig = itens.filter((i) => i.obrigatorio && i.estado !== 'nao_exigido');
-  const faltam = obrig.filter((i) => i.estado !== 'completo').map((i) => ({ codigo: i.codigo, nome: i.nome, detalhe: i.estado === 'parcial' ? i.recebidos + ' de ' + i.esperados + (i.periodicidade === 'mensal' ? ' meses' : '') : null }));
+  const faltam = obrig.filter((i) => i.estado !== 'completo').map((i) => ({ codigo: i.codigo, nome: i.nome, detalhe: i.estado === 'parcial' ? i.recebidos + ' de ' + i.esperados + (i.periodicidade === 'mensal' ? ' meses' : '') + (i.pedidos ? ', ' + i.pedidos + ' pedido(s)' : '') : (i.estado === 'pedido' ? 'pedido, aguardando resposta' : (i.estado === 'falta' && i.origem === 'pedida_setor' ? 'ainda não pedido' : (i.estado === 'falta' && i.origem === 'processo_parecer' ? 'ainda não consultado' : null))) }));
   const completos = contados.filter((i) => i.estado === 'completo').length;
   const curto = (nome) => String(nome).split(' - ')[0];
   const listaFaltas = faltam.map((f) => curto(f.nome) + (f.detalhe ? ' (' + f.detalhe + ')' : ''));
@@ -404,6 +441,7 @@ function estado(db, usuario, contratoId, tri) {
     proposta: prop ? { id: prop.id, versao: prop.versao, origem: prop.origem, nota: prop.nota, itens: db.get('SELECT COUNT(*) AS n FROM imp_itens WHERE lista_id = ?', prop.id).n, criada_em: prop.criada_em } : null,
     modelo: mod ? { id: mod.id, trimestre: mod.trimestre, nome_arquivo: mod.nome_arquivo, criado_em: mod.criado_em, criado_por: mod.criado_por, ia: !!mod.ia } : null,
     itens, avulsos, arquivos: arqs.length,
+    ausencias: ausenciasDe(itens, tipoDe(c)),
     resumo: { recebidos: completos, total: contados.length, faltam, texto },
     feitaPorChecks, concluida: con ? { em: con.concluida_em, por: con.por, faltantes: ler(con.faltantes, []), observacao: con.observacao } : null,
     feita: !!con || feitaPorChecks,
@@ -424,6 +462,7 @@ function concluir(db, usuario, contratoId, tri, d) {
     db.run('INSERT INTO imp_conclusoes (contrato_id, trimestre, concluida_em, por, faltantes, observacao) VALUES (?,?,?,?,?,?) ON CONFLICT(contrato_id, trimestre) DO UPDATE SET concluida_em = excluded.concluida_em, por = excluded.por, faltantes = excluded.faltantes, observacao = excluded.observacao',
       contratoId, tri, agora(), usuario.login, json(faltam), obs || null);
     trilha.registrar(db, { usuario: usuario.login, tabela: 'imp_conclusoes', registro: contratoId + '/' + tri, campo: 'importacao_concluida', valor_novo: { faltantes: faltam, recebidos: st.resumo.recebidos, total: st.resumo.total, sem_arquivos: semNada } , motivo: obs || null });
+    registrarAusencias(db, usuario, st.contrato, tri, st.ausencias);
   });
   return { ok: true, faltantes: faltam };
 }
@@ -434,6 +473,7 @@ function reabrir(db, usuario, contratoId, tri) {
   if (!con) return { ok: true };
   db.tx(() => {
     db.run('DELETE FROM imp_conclusoes WHERE contrato_id = ? AND trimestre = ?', c.contrato_id, tri);
+    db.run('DELETE FROM imp_ausencias WHERE contrato_id = ? AND trimestre = ?', c.contrato_id, tri);
     trilha.registrar(db, { usuario: usuario.login, tabela: 'imp_conclusoes', registro: c.contrato_id + '/' + tri, campo: 'importacao_reaberta', valor_anterior: { em: con.concluida_em, por: con.por, faltantes: ler(con.faltantes, []) } });
   });
   return { ok: true };
@@ -462,4 +502,5 @@ function fila(db, usuario, ids) {
   return linhas.map((r) => ({ id: r.id, nome: r.nome, estado: r.estado, motivo: r.motivo, paginas: r.paginas || 0, protegidos: Object.values(ler(r.mascarados, {})).reduce((t, v) => t + Number(v || 0), 0) }));
 }
 
-module.exports = { estado, visaoLista, listaEfetiva, salvarRascunho, completarComPadrao, descartarRascunho, confirmarLista, guardarModelo, textoDoModelo, guardarArquivo, daFila, recasar, apontar, tirarArquivo, marcarCheck, concluir, reabrir, fila, decidir, mesDe, ia, modeloAtivo, textoDoArquivo };
+function ausenciasRegistradas(db, usuario, contratoId, tri) { const c = unidade(db, usuario, contratoId); return db.all('SELECT mes, item_codigo, indicador, estado, regra, registrado_por, registrado_em FROM imp_ausencias WHERE contrato_id = ? AND trimestre = ? ORDER BY mes, indicador', c.contrato_id, tri); }
+module.exports = { ausenciasRegistradas, ausenciasDe, estado, visaoLista, listaEfetiva, salvarRascunho, completarComPadrao, descartarRascunho, confirmarLista, guardarModelo, textoDoModelo, guardarArquivo, daFila, recasar, apontar, tirarArquivo, marcarCheck, concluir, reabrir, fila, decidir, mesDe, ia, modeloAtivo, textoDoArquivo };

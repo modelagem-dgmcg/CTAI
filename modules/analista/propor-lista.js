@@ -9,8 +9,8 @@ const LIMITE = 60000;
 const SISTEMA = 'Você lê relatórios e pareceres de acompanhamento de contratos de gestão de unidades de saúde. Seu trabalho é listar os DOCUMENTOS e FONTES DE DADOS que o relatório usa ou cita (anexos, planilhas, relatórios, sistemas, despachos), para virar uma lista de conferência do trimestre seguinte. Responda SOMENTE com JSON. Nunca invente: cada item precisa de "trecho" copiado exatamente do texto.';
 const PEDIDO = (texto, existentes) => `Itens que já encontrei (não repita): ${existentes.map((i) => i.nome).join('; ') || 'nenhum'}.
 Liste só o que FALTOU: documentos ou fontes citados no texto que a unidade ou outro órgão precisa fornecer a cada mês ou trimestre.
-Para cada um: {"nome":"nome curto","obrigatorio":true|false,"periodicidade":"mensal"|"trimestral","origem":"unidade"|"fonte_externa","trecho":"frase copiada do texto"}.
-"unidade" = enviado pela unidade/OSS pelo SEI; "fonte_externa" = vem de outro órgão ou sistema (GAOCG, despacho financeiro, SIMAS, prestação de contas).
+Para cada um: {"nome":"nome curto","obrigatorio":true|false,"periodicidade":"mensal"|"trimestral","origem":"unidade"|"pedida_setor"|"processo_parecer"|"fonte_externa","trecho":"frase copiada do texto"}.
+"unidade" = enviado pela unidade/OSS pelo SEI; "pedida_setor" = a CTAI pede a outro setor (despacho da Gerência de Prestação de Contas, informação financeira da GGCCG); "processo_parecer" = fica no próprio processo do parecer (parecer conclusivo da CMA); "fonte_externa" = consulta da analista (SIMAS).
 Responda: {"itens":[...]}
 
 TEXTO:
@@ -32,7 +32,7 @@ function interpretar(bruto, texto, existentes) {
     if (nome.length < 3 || jaTem.has(norm(nome))) continue;
     if (trecho.length < 8 || !base.includes(norm(trecho))) continue; // sem trecho conferido, não entra
     jaTem.add(norm(nome));
-    out.push({ nome, obrigatorio: x.obrigatorio === true, periodicidade: x.periodicidade === 'trimestral' ? 'trimestral' : 'mensal', origem: x.origem === 'fonte_externa' ? 'fonte_externa' : 'unidade', trecho: trecho.slice(0, 280) });
+    out.push({ nome, obrigatorio: x.obrigatorio === true, periodicidade: x.periodicidade === 'trimestral' ? 'trimestral' : 'mensal', origem: ['fonte_externa', 'pedida_setor', 'processo_parecer'].includes(x.origem) ? x.origem : 'unidade', trecho: trecho.slice(0, 280) });
     if (out.length >= 30) break;
   }
   return out;

@@ -6,7 +6,9 @@
   const anterior = (t) => { const m = /^(\d{4})-T([1-4])$/.exec(t || ''); if (!m) return ''; return Number(m[2]) === 1 ? (Number(m[1]) - 1) + '-T4' : m[1] + '-T' + (Number(m[2]) - 1); };
   const { h, api, toast, janela, confirmar, aviso, selo } = window.CTAI;
   const AL = () => window.CTAI_ALIMENTAR.base;
-  const NOMES_FONTE = { unidade: 'Unidade (pelo SEI)', fonte_externa: 'Fonte externa' };
+  const NOMES_FONTE = { unidade: 'Da unidade, pelo SEI', pedida_setor: 'Pedida pela CTAI a outro setor', processo_parecer: 'Dentro do processo do parecer', fonte_externa: 'Fonte externa (consulta da analista)' };
+  const TAG_FONTE = { pedida_setor: 'pedida a outro setor', processo_parecer: 'no processo do parecer', fonte_externa: 'fonte externa' };
+  const SITUACAO = { nao_pedido: 'Não pedido', pedido: 'Pedido', recebido: 'Recebido' };
   const SOLTOS = /\.(zip|pdf|docx)$/i;      // o que a analista solta
   const DENTRO_DO_ZIP = /\.(pdf|docx|html?)$/i; // o que o ZIP do SEI traz e é lido
   const fmtData = (iso) => { try { return new Date(iso).toLocaleDateString('pt-BR') + ' ' + new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); } catch (_) { return ''; } };
@@ -297,18 +299,38 @@
       if (!est) return;
       const r = est.resumo;
       const linhaItem = (it) => {
-        const icone = it.estado === 'completo' ? ICONE_OK : (it.estado === 'parcial' ? ICONE_MEIO : (it.estado === 'falta' ? ICONE_X : ''));
+        const icone = it.estado === 'completo' ? ICONE_OK : (it.estado === 'parcial' ? ICONE_MEIO : ((it.estado === 'falta' || it.estado === 'pedido') ? ICONE_X : ''));
         const cont = it.periodicidade === 'mensal' && it.esperados ? it.recebidos + '/' + it.esperados : (it.recebidos ? '✔' : '');
-        const extra = it.origem === 'fonte_externa' ? h('div', { class: 'imp-ext' }, it.slots.map((s) => {
+        const salvar = async (s, campos) => { try { await api('POST', u + '/' + tri + '/check', Object.assign({ item: it.codigo, mes: s.mes }, campos)); await atualizar(); } catch (e) { toast(e.message, true); } };
+        const rot = (s) => s.mes ? s.rotulo : '';
+        const manual = (s) => {
+          const por = s.check === 'arquivo';
+          if (it.origem === 'pedida_setor') {
+            const sel = h('select', { class: 'imp-sit', 'aria-label': 'Situação de ' + it.nome + (rot(s) ? ' ' + rot(s) : ''), disabled: por, onchange: () => salvar(s, { situacao: sel.value, data_pedido: dt.value, processo_sei: pr.value, observacao: obs.value }) },
+              Object.entries(SITUACAO).map(([v, r]) => h('option', Object.assign({ value: v }, (s.situacao || 'nao_pedido') === v ? { selected: true } : {}), r)));
+            const dt = h('input', { type: 'date', class: 'imp-data', value: s.data_pedido || '', 'aria-label': 'Data do pedido', disabled: por, onchange: () => { if (sel.value !== 'nao_pedido') salvar(s, { situacao: sel.value, data_pedido: dt.value, processo_sei: pr.value, observacao: obs.value }); } });
+            const pr = h('input', { type: 'text', class: 'imp-proc', placeholder: 'Nº do processo SEI do pedido', value: s.processo_sei || '', 'aria-label': 'Processo SEI do pedido', disabled: por, onchange: () => { if (sel.value !== 'nao_pedido') salvar(s, { situacao: sel.value, data_pedido: dt.value, processo_sei: pr.value, observacao: obs.value }); } });
+            const obs = h('input', { type: 'text', class: 'imp-obs', placeholder: 'Valores lançados / observação', value: s.observacao || '', 'aria-label': 'Observação de ' + it.nome, disabled: por, onchange: () => { if (sel.value !== 'nao_pedido') salvar(s, { situacao: sel.value, data_pedido: dt.value, processo_sei: pr.value, observacao: obs.value }); } });
+            return h('div', { class: 'imp-slot', 'data-mes': s.mes, 'data-situacao': s.situacao }, h('div', { class: 'linha' }, rot(s) ? h('strong', null, rot(s)) : null, sel, dt, pr), obs, por ? h('div', { class: 'peq mudo' }, 'Recebido pelo arquivo enviado.') : null);
+          }
+          if (it.origem === 'processo_parecer') {
+            const obs = h('input', { type: 'text', class: 'imp-obs', placeholder: 'Informação anotada (ex.: o que a CMA concluiu)', value: s.observacao || '', 'aria-label': 'Informação de ' + it.nome, onchange: async () => { if (caixa.checked) await salvar(s, { situacao: 'consultado', observacao: obs.value }); } });
+            const caixa = h('input', Object.assign({ type: 'checkbox', 'aria-label': 'Consultado: ' + it.nome, onchange: async (ev) => { await salvar(s, ev.target.checked ? { situacao: 'consultado', observacao: obs.value } : { marcado: false }); } }, s.check === 'consultado' ? { checked: true } : {}));
+            return h('div', { class: 'imp-slot', 'data-mes': s.mes }, h('label', { class: 'imp-slot-chk' }, caixa, ' Consultado no processo do parecer' + (rot(s) ? ' (' + rot(s) + ')' : '')), obs);
+          }
           const caixa = h('input', Object.assign({ type: 'checkbox', 'aria-label': 'Marcar ' + it.nome + (s.mes ? ' ' + s.rotulo : ''), onchange: async (ev) => { await marcar(it, s, ev.target.checked, ev.target); } }, s.check === 'manual' ? { checked: true } : {}, s.check === 'arquivo' ? { checked: true, disabled: true } : {}));
           const obs = h('input', { type: 'text', class: 'imp-obs', placeholder: 'Observação (ex.: número do despacho)', value: s.observacao || '', 'aria-label': 'Observação de ' + it.nome + (s.mes ? ' ' + s.rotulo : ''), onchange: async () => { if (caixa.checked && s.check !== 'arquivo') await marcar(it, s, true, caixa, obs.value); } });
           return h('div', { class: 'imp-slot', 'data-mes': s.mes }, h('label', { class: 'imp-slot-chk' }, caixa, ' ' + (s.mes ? s.rotulo : 'Recebi')), obs);
-        })) : (it.periodicidade === 'mensal' ? h('div', { class: 'imp-meses' }, it.slots.map((s) => h('span', { class: 'imp-mes ' + (s.check ? 'ok' : 'vazio'), 'data-mes': s.mes, title: s.arquivos.map((a) => a.nome).join('; ') }, (s.check ? '✔ ' : '') + s.rotulo))) : null);
+        };
+        const extra = it.origem !== 'unidade' ? h('div', { class: 'imp-ext' }, it.slots.map(manual))
+          : (it.periodicidade === 'mensal' ? h('div', { class: 'imp-meses' }, it.slots.map((s) => h('span', { class: 'imp-mes ' + (s.check ? 'ok' : 'vazio'), 'data-mes': s.mes, title: s.arquivos.map((a) => a.nome).join('; ') }, (s.check ? '✔ ' : '') + s.rotulo))) : null);
+        const aviso1 = (est.ausencias || []).find((x) => x.item === it.codigo);
         const arqs = it.slots.flatMap((s) => s.arquivos.map((a) => a.nome));
         return h('li', { class: 'imp-item', 'data-codigo': it.codigo, 'data-estado': it.estado, id: 'imp-i-' + it.codigo },
           h('span', { class: 'imp-ic', 'aria-hidden': 'true', html: icone }),
           h('div', { class: 'imp-tx' },
-            h('div', { class: 'imp-nm' }, it.nome, ' ', h('span', { class: 'imp-tag' }, it.obrigatorio ? 'obrigatório' : 'opcional'), it.origem === 'fonte_externa' ? h('span', { class: 'imp-tag ext' }, 'fonte externa') : null, cont ? h('span', { class: 'imp-cont', title: 'Recebidos' }, cont) : null),
+            h('div', { class: 'imp-nm' }, it.nome, ' ', h('span', { class: 'imp-tag' }, it.obrigatorio ? 'obrigatório' : 'opcional'), TAG_FONTE[it.origem] ? h('span', { class: 'imp-tag ext' }, TAG_FONTE[it.origem]) : null, it.estado === 'pedido' ? h('span', { class: 'imp-tag ext' }, 'pedido, aguardando') : null, cont ? h('span', { class: 'imp-cont', title: 'Recebidos' }, cont) : null),
+            aviso1 ? h('div', { class: 'imp-regra', role: 'alert' }, h('strong', null, 'Atenção: '), aviso1.texto, ' Falta em: ' + aviso1.meses_sem.map((m) => (est.meses.find((x) => x.mes === m) || {}).rotulo || m).join(', ') + '. Estado: sem planilha → meta não cumprida (regra da CTAI).') : null,
             extra, arqs.length ? h('div', { class: 'peq mudo imp-arq' }, arqs.map((n) => AL().bonito(n)).join('; ')) : null));
       };
       const avulsos = est.avulsos.length ? h('div', { class: 'imp-avulsos', id: 'imp-avulsos' }, h('h3', null, 'Avulsos (' + est.avulsos.length + ')'), h('p', { class: 'peq mudo' }, 'O sistema não soube em qual item entram. Aponte o item de cada um.'),

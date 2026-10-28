@@ -299,6 +299,11 @@ CREATE TABLE IF NOT EXISTS imp_checks (
 CREATE TABLE IF NOT EXISTS imp_conclusoes (
   contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, concluida_em TEXT NOT NULL, por TEXT NOT NULL, faltantes TEXT, observacao TEXT, PRIMARY KEY (contrato_id, trimestre)
 );
+-- Regra da CTAI aplicada quando falta um documento (ex.: sem a planilha de monitoramento, ostomizados e TEA contam como meta não cumprida). Não guarda valor inventado.
+CREATE TABLE IF NOT EXISTS imp_ausencias (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, mes TEXT NOT NULL, item_codigo TEXT NOT NULL, indicador TEXT NOT NULL,
+  estado TEXT NOT NULL, regra TEXT NOT NULL, registrado_por TEXT NOT NULL, registrado_em TEXT NOT NULL, UNIQUE (contrato_id, trimestre, item_codigo, mes, indicador)
+);
 CREATE TABLE IF NOT EXISTS alimentar_liberacao (usuario_id INTEGER PRIMARY KEY, liberado_em TEXT NOT NULL, por TEXT NOT NULL, motivo TEXT);
 -- Histórico dos relatórios e pareceres anteriores, por unidade e trimestre. Nasce como 'rascunho' e só vira 'confirmado' quando a pessoa da carteira confere.
 CREATE TABLE IF NOT EXISTS hist_relatorios (
@@ -370,6 +375,7 @@ const COLUNAS_NOVAS = {
   contratos: ['tipo TEXT', 'municipio TEXT', 'criado_por TEXT', 'criado_em TEXT'],
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
   alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER', 'origem TEXT', 'imp_trimestre TEXT', 'imp_modelo INTEGER'],
+  imp_checks: ['situacao TEXT', 'data_pedido TEXT', 'processo_sei TEXT'],
   achados: ['encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
 };
 function migrar(db) {

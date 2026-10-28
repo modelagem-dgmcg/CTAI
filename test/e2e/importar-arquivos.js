@@ -12,7 +12,7 @@ const CART = require('../../server/carteira');
 const F = require('../fixtures-importar');
 const { chromium } = require('playwright');
 
-const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_1_1', 'anexo_5', 'simas', 'despacho_financeiro', 'prestacao_contas'];
+const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_1_1', 'anexo_5', 'anexo_II', 'simas', 'despacho_financeiro', 'financeiro', 'parecer_cma', 'prestacao_contas'];
 
 (async () => {
   const S = await H.iniciar(); const base = S.base;
@@ -48,7 +48,7 @@ const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_
     assert.ok(await p.isVisible('#imp-zona'));
 
     // ---------- 2) relatório-modelo em PDF: só o texto sobe ----------
-    const txt = F.textoParecer() + '\nPaciente: Maria da Silva Souza, CPF 123.456.789-09, telefone (81) 99876-5432.';
+    const txt = F.textoParecer() + '\nConsideramos o Parecer Conclusivo da CMA do trimestre anterior, que consta do processo do parecer.\nPaciente: Maria da Silva Souza, CPF 123.456.789-09, telefone (81) 99876-5432.';
     await p.setInputFiles('#imp-modelo-arquivo', { name: 'Parecer_Tecnico_999.pdf', mimeType: 'application/pdf', buffer: await F.pdfDe(txt) });
     await p.waitForSelector('#imp-proposta', { timeout: 30000 });
     assert.match(await p.innerText('#imp-proposta'), /lista proposta com \d+ itens/);
@@ -101,6 +101,28 @@ const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_
     await av.locator('button:has-text("Apontar")').click();
     await p.waitForFunction(() => !document.querySelector('.imp-avulso'), null, { timeout: 8000 });
 
+    // ---------- 5b) três origens + planilha de monitoramento ausente ----------
+    const tag = (c) => p.innerText('#imp-i-' + c + ' .imp-tag.ext');
+    assert.match(await tag('despacho_financeiro'), /pedida a outro setor/); assert.match(await tag('financeiro'), /pedida a outro setor/);
+    assert.match(await tag('parecer_cma'), /no processo do parecer/); assert.match(await tag('simas'), /fonte externa/);
+    const regra = p.locator('#imp-i-anexo_II .imp-regra');
+    assert.ok(await regra.isVisible(), 'aviso visível quando falta a planilha');
+    assert.match(await regra.innerText(), /sem a planilha de monitoramento, estes indicadores contam como meta não cumprida/i);
+    assert.match(await regra.innerText(), /Ostomizados/); assert.match(await regra.innerText(), /TEA/);
+    const fin = p.locator('#imp-i-financeiro .imp-slot').first();
+    await fin.locator('select').selectOption('pedido');
+    await p.waitForFunction(() => /pedido, aguardando/.test(document.querySelector('#imp-i-financeiro').innerText), null, { timeout: 8000 });
+    await p.locator('#imp-i-financeiro .imp-proc').first().fill('00000.0000001/2026-11');
+    await p.locator('#imp-i-financeiro .imp-data').first().fill(ano + '-' + MM[2] + '-15');
+    await p.waitForFunction(() => document.querySelector('#imp-i-financeiro .imp-proc').value === '00000.0000001/2026-11' && document.querySelector('#imp-i-financeiro .imp-data').value !== '', null, { timeout: 8000 });
+    assert.ok(S.db.get("SELECT 1 AS x FROM imp_checks WHERE item_codigo = 'financeiro' AND situacao = 'pedido' AND processo_sei = '00000.0000001/2026-11'"));
+    await p.locator('#imp-i-financeiro select').first().selectOption('recebido');
+    await p.waitForFunction(() => document.querySelector('#imp-i-financeiro').getAttribute('data-estado') !== 'pedido', null, { timeout: 8000 });
+    const cma = p.locator('#imp-i-parecer_cma .imp-slot').first();
+    await cma.locator('input[type=text]').fill('CMA: metas parcialmente cumpridas'); await cma.locator('input[type=checkbox]').check();
+    await p.waitForFunction(() => /CMA: metas/.test(document.querySelector('#imp-i-parecer_cma .imp-obs').value), null, { timeout: 8000 });
+    assert.ok(S.db.get("SELECT 1 AS x FROM imp_checks WHERE item_codigo = 'parecer_cma' AND situacao = 'consultado'"));
+
     // ---------- 6) fonte externa: check manual com observação ----------
     const slot = p.locator('#imp-i-simas .imp-slot').first();
     await slot.locator('input[type=text]').fill('Despacho 123'); await slot.locator('input[type=checkbox]').check();
@@ -123,6 +145,7 @@ const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_
     if (await dlg.count()) await p.click('dialog button:has-text("Concluir mesmo assim")');
     await ver('#imp-reabrir');
 
+    assert.ok(S.db.get("SELECT 1 AS x FROM imp_ausencias WHERE estado = 'sem_planilha_meta_nao_cumprida'"));
     // ---------- 8) persiste ao recarregar; sem erros ----------
     await p.reload(); await ver('#imp-resumo');
     assert.ok(await p.isVisible('#imp-reabrir'));

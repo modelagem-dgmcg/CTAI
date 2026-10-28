@@ -5,7 +5,8 @@
 const C = require('./catalogo');
 
 const sem = C.sem;
-const ORIGENS = ['unidade', 'fonte_externa'];
+// unidade = chega pelo SEI (upload); pedida_setor = a CTAI pede a outro setor (despacho, informação financeira); processo_parecer = fica no próprio processo do parecer (parecer da CMA); fonte_externa = consulta da analista (SIMAS)
+const ORIGENS = ['unidade', 'pedida_setor', 'processo_parecer', 'fonte_externa'];
 const PERIODOS = ['mensal', 'trimestral'];
 
 // ---------- utilidades ----------
@@ -133,15 +134,19 @@ const FONTES = [
   { codigo: 'cnes', nome: 'CNES (cadastro de profissionais)', re: /\bCNES\b/, origem: 'unidade', periodicidade: 'mensal', obrigatorio: true, padroes: ['\\bcnes\\b'], equivale: ['anexo_VI', 'anexo_VII'] },
   { codigo: 'ouvidoria', nome: 'Ouvidoria e satisfação do usuário', re: /ouvidoria|\bNPS\b|\bCSAT\b|queixas? recebidas|satisfa[cç][aã]o do usu[aá]rio/i, origem: 'unidade', periodicidade: 'mensal', obrigatorio: true, padroes: ['ouvidoria', '\\bnps\\b', '\\bcsat\\b', 'satisfacao'], equivale: ['anexo_1', 'anexo_1_1'] },
   { codigo: 'simas', nome: 'SIMAS (consulta da analista)', re: /\bSIMAS\b/, origem: 'fonte_externa', periodicidade: 'mensal', obrigatorio: true, padroes: ['\\bsimas\\b'] },
-  { codigo: 'despacho_financeiro', nome: 'Despacho financeiro / prestação de contas', re: /despachos?\b[^\n]{0,160}(?:ger[eê]ncia|presta[cç][aã]o de contas|financeir|GAFCG|GGCCG|GAOCG)|(?:ger[eê]ncia de presta[cç][aã]o de contas|prestac[aã]o de contas)[^\n]{0,80}despacho/i, origem: 'fonte_externa', periodicidade: 'mensal', obrigatorio: true, padroes: ['despacho'] },
-  { codigo: 'financeiro', nome: 'Informação financeira (GGCCG), trimestre anterior', re: /informa[cç][oõ]es financeiras|INFORMA[CÇ][AÃ]O N[.º°o]*\s*\d+[^\n]{0,40}GG|gasto com pessoal|\bGAOCG\b/, origem: 'fonte_externa', periodicidade: 'trimestral', obrigatorio: true, padroes: ['informacao', 'financeir', 'gaocg'] },
-  { codigo: 'parecer_cma', nome: 'Parecer conclusivo da CMA', re: /parecer conclusivo da (?:CMA|Comiss[aã]o Mista)/i, origem: 'fonte_externa', periodicidade: 'trimestral', obrigatorio: false, padroes: ['\\bcma\\b', 'comissao mista'] },
-  { codigo: 'prestacao_contas', nome: 'Relatório de prestação de contas', re: /relat[oó]rio de presta[cç][aã]o de contas|presta[cç][oõ]es de contas/i, origem: 'fonte_externa', periodicidade: 'mensal', obrigatorio: false, padroes: ['prestacao de contas'] },
+  { codigo: 'despacho_financeiro', nome: 'Despacho financeiro / prestação de contas', re: /despachos?\b[^\n]{0,160}(?:ger[eê]ncia|presta[cç][aã]o de contas|financeir|GAFCG|GGCCG|GAOCG)|(?:ger[eê]ncia de presta[cç][aã]o de contas|prestac[aã]o de contas)[^\n]{0,80}despacho/i, origem: 'pedida_setor', periodicidade: 'mensal', obrigatorio: true, padroes: ['despacho'] },
+  { codigo: 'financeiro', nome: 'Informação financeira (GGCCG), trimestre anterior', re: /informa[cç][oõ]es financeiras|INFORMA[CÇ][AÃ]O N[.º°o]*\s*\d+[^\n]{0,40}GG|gasto com pessoal|\bGAOCG\b/, origem: 'pedida_setor', periodicidade: 'trimestral', obrigatorio: true, padroes: ['informacao', 'financeir', 'gaocg'] },
+  { codigo: 'parecer_cma', nome: 'Parecer conclusivo da CMA', re: /parecer conclusivo da (?:CMA|Comiss[aã]o Mista)/i, origem: 'processo_parecer', periodicidade: 'trimestral', obrigatorio: false, padroes: ['\\bcma\\b', 'comissao mista'] },
+  { codigo: 'prestacao_contas', nome: 'Relatório de prestação de contas', re: /relat[oó]rio de presta[cç][aã]o de contas|presta[cç][oõ]es de contas/i, origem: 'pedida_setor', periodicidade: 'mensal', obrigatorio: false, padroes: ['prestacao de contas'] },
 ];
 // "conforme/de acordo com o relatório X": o que vem depois do tipo de documento vira um item de confiança baixa
 const REF = /(?:conforme|de acordo com|segundo|constante d[oa]s?|apresentad[oa]s? (?:no|na|pelo|pela))\s+(?:o |a |os |as )?((?:relat[oó]rio|of[ií]cio|ata|laudo|boletim)s?\s+(?:de |da |do |dos |das )?[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ /-]{2,50})/gi;
 const PLAN = /\b(planilhas?\s+(?:de |da |do |dos |das )[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ /-]{3,40})/gi;
 
+// Planilha de monitoramento (Anexo II; às vezes chega como "planilha consolidada"): obrigatória e mensal.
+// Regra da CTAI: sem ela, os indicadores que dependem dela contam como meta não cumprida (ver importar.js, REGRAS_AUSENCIA).
+const PADROES_PLANILHA_MON = ['\\banexo ii\\b', 'planilha de monitoramento', 'monitoramento', 'consolidad'];
+const PLANILHA_MON = () => ({ codigo: 'anexo_II', nome: 'Anexo II - Planilha de Monitoramento', origem: 'unidade', periodicidade: 'mensal', obrigatorio: true, padroes: PADROES_PLANILHA_MON.slice(), palavras: [], tipo: 'anexo', ordem: ordemAnexo('II') });
 const nomeCitado = (n) => corta(String(n).split(/\s+(?:constante|apresentad|enviad|elaborad|encaminhad|realizad|pela|pelo|que|para|foi|conforme|e\s)/i)[0].replace(/[\s–-]+$/, ''), 70);
 const slug = (s) => sem(s).replace(/\s+/g, '_').slice(0, 40);
 const contextoPeriodo = (linha) => { const s = sem(linha); return /\bmensa(l|is)\b/.test(s) ? 'mensal' : (/\b(trimestra(l|is)|semestral|anual)\b/.test(s) ? 'trimestral' : null); };
@@ -196,10 +201,12 @@ function fontesDe(linhas, ctx) {
     PLAN.lastIndex = 0;
     while ((r = PLAN.exec(l))) {
       const nome = nomeCitado(r[1]);
+      if (/monitoramento|consolidad/i.test(nome)) { poe(PLANILHA_MON(), i, { confianca: 'alta' }); continue; }
       poe({ codigo: 'planilha_' + slug(nome.replace(/^planilhas?\s+(de |da |do |dos |das )/i, '')), nome: nome[0].toUpperCase() + nome.slice(1), origem: 'unidade', periodicidade: contextoPeriodo(l) || padrao, obrigatorio: false, padroes: [], palavras: [sem(nome)], tipo: 'citado', ordem: 850 }, i, { confianca: 'baixa' });
     }
   }
   const todos = [...porCodigo.values()];
+  for (const f of todos) if (f.codigo === 'anexo_II') { f.obrigatorio = true; f.periodicidade = 'mensal'; f.origem = 'unidade'; f.padroes = [...new Set((f.padroes || []).concat(PADROES_PLANILHA_MON))]; }
   // o que um anexo já cobre não vira item avulso (ex.: "BID" quando existe "Anexo IV - BID")
   const temAnexo = new Set(todos.filter((f) => f.tipo === 'anexo').map((f) => f.codigo));
   const lista = todos.filter((f) => !(f.equivale || []).some((c) => temAnexo.has(c)));
