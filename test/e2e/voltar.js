@@ -19,12 +19,12 @@ const { chromium } = require('playwright');
     const cid = demo.competencias[0].cid;
     const tem = async (hash) => { await p.evaluate((h) => { location.hash = h; }, hash); await p.waitForTimeout(700); return p.evaluate(() => !!document.querySelector('#conteudo .migalha, #conteudo .voltar') || Array.from(document.querySelectorAll('#conteudo a,#conteudo button')).some((x) => /^\s*(←\s*)?voltar/i.test(x.textContent))); };
     for (const h of ['#/c/' + cid, '#/c/' + cid + '/achados', '#/regras/DEMO-UPA', '#/historico/DEMO-UPA', '#/u/DEMO-UPA', '#/documentos/modelos', '#/rota-que-nao-existe']) assert.ok(await tem(h), 'sem voltar em ' + h);
-    for (const h of ['#/caixa', '#/mensageiro', '#/unidades', '#/gestao/usuarios']) { await p.evaluate((x) => { location.hash = x; }, h); await p.waitForTimeout(500); assert.equal(await p.locator('#conteudo .voltar').count(), 0, 'botão a mais em ' + h); }
+    for (const h of ['#/historico', '#/mensageiro', '#/unidades', '#/gestao/usuarios']) { await p.evaluate((x) => { location.hash = x; }, h); await p.waitForTimeout(500); assert.equal(await p.locator('#conteudo .voltar').count(), 0, 'botão a mais em ' + h); }
     // o botão volta de verdade
-    await p.evaluate(() => { location.hash = '#/caixa'; }); await p.waitForTimeout(400);
+    await p.evaluate(() => { location.hash = '#/unidades'; }); await p.waitForTimeout(400);
     await p.evaluate(() => { location.hash = '#/rota-que-nao-existe'; }); await p.waitForSelector('#conteudo .voltar');
     await p.click('#conteudo .voltar'); await p.waitForTimeout(500);
-    assert.equal(await p.evaluate(() => location.hash), '#/caixa');
+    assert.equal(await p.evaluate(() => location.hash), '#/unidades');
     assert.deepEqual(erros, []);
     console.log('VOLTAR OK');
   } finally { await browser.close(); await S.fechar(); }

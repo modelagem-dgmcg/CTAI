@@ -339,7 +339,7 @@ let base;
     for (const e of S.db.all('SELECT envio_id, cid, versao FROM envios WHERE recebido_em IS NOT NULL ORDER BY envio_id DESC LIMIT 2')) { S.db.run("DELETE FROM caixa_destinos WHERE item_id IN (SELECT item_id FROM caixa_itens WHERE chave = ?)", 'envio:' + e.envio_id); S.db.run('DELETE FROM caixa_itens WHERE chave = ?', 'envio:' + e.envio_id); CXs.eventoEnvio(S.db, e); }
     CXs.sincronizar(S.db, { forcar: true });
     await colegaCart.goto(colegaCart.url().split('#')[0] + '#/caixa'); await colegaCart.waitForSelector('#cx-lista .cx-item', { timeout: 8000 });
-    assert.ok(await colegaCart.locator('#caixa-contador').count() >= 1, 'contador de não lidos no menu');
+    assert.equal(await colegaCart.locator('.lateral a.nav[data-h="#/caixa"]').count(), 0, 'a Caixa de entrada não aparece no menu (a tela continua acessível pelo endereço)');
     await colegaCart.setViewportSize({ width: 1280, height: 1500 }); await limpa(colegaCart); await colegaCart.screenshot({ path: path.join(CAP, '27-caixa-entrada.png') });
     await colegaCart.locator('.cx-tratar').first().click(); await colegaCart.fill('#perg-campo', 'Conferido'); await colegaCart.click('dialog button:has-text("Confirmar")');
     await colegaCart.waitForFunction(() => document.querySelectorAll('.cx-item').length >= 0, null, { timeout: 5000 }); await colegaCart.waitForTimeout(500);
@@ -354,19 +354,19 @@ let base;
     // Tela inicial por perfil e configuração de volta (CTAI_PAINEL_ANALISTA)
     CFG.painelAnalista = false;
     const an = await entrar(browser, 'colega1', 1280, true); paginas.push(an);
-    await an.waitForSelector('#cx-resumo', { timeout: 8000 });
-    assert.match(an.url(), /#\/caixa$/, 'analista começa na Caixa de entrada');
-    assert.equal(await an.locator('a.nav:text-is("Unidades")').count(), 1, 'o analista sempre tem o item Unidades (o início dele é a Caixa)');
-    assert.ok(await an.isVisible('#cx-resumo'), 'quadro de resumo da caixa');
+    await an.waitForSelector('.lateral a.nav', { timeout: 8000 }); await an.waitForTimeout(600);
+    assert.doesNotMatch(an.url(), /#\/caixa$/, 'analista não começa mais na Caixa de entrada');
+    assert.equal(await an.locator('a.nav:text-is("Caixa de entrada")').count(), 0, 'sem item Caixa de entrada no menu');
+    assert.equal(await an.locator('a.nav:text-is("Unidades")').count(), 1, 'o analista sempre tem o item Unidades (o início dele é a tela de alimentar ou Unidades)');
     await an.setViewportSize({ width: 1280, height: 900 }); await limpa(an); await an.screenshot({ path: path.join(CAP, '30-inicio-analista-caixa.png') });
-    await an.goto(base + '/ctai#/'); await an.waitForSelector('#cx-resumo', { timeout: 8000 }); assert.match(an.url(), /#\/caixa$/, 'link antigo do Painel redireciona sem erro');
+    await an.goto(base + '/ctai#/'); await an.waitForSelector('.lateral a.nav', { timeout: 8000 }); await an.waitForTimeout(600); assert.doesNotMatch(an.url(), /#\/caixa$|nao encontrada/i, 'link antigo do Painel redireciona sem erro, sem cair na Caixa');
     const sup2 = await entrar(browser, 'nathalia', 1280, true); paginas.push(sup2);
     await sup2.waitForSelector('#conteudo h1', { timeout: 8000 }); assert.match(await sup2.textContent('#conteudo h1'), /Unidades/, 'inicio superintendente: ' + sup2.url()); assert.equal(await sup2.locator('a.nav:text-is("Unidades")').count(), 1, 'superintendente mantém o Painel');
     CFG.painelAnalista = true;
     await an.goto(base + '/ctai?v=2#/'); await an.waitForSelector('#conteudo h1', { timeout: 8000 }); assert.match(await an.textContent('#conteudo h1'), /Unidades/, 'painel de volta: ' + an.url());
     assert.equal(await an.locator('a.nav:text-is("Unidades")').count(), 1, 'com a configuração ligada, o analista começa em Unidades');
     CFG.painelAnalista = false;
-    log('tela inicial por perfil: analista na Caixa de entrada, superintendente no Painel, configuração de volta');
+    log('tela inicial por perfil: analista sem Caixa no menu, superintendente no Painel, configuração de volta');
     // Documentos: ensinar um modelo, montar um ofício, pedir conferência e gerar PDF
     await an.goto(base + '/ctai#/documentos/modelos'); await an.waitForSelector('.rec-cab:has-text("Ensinar um modelo novo")', { timeout: 8000 });
     await an.click('.rec-cab:has-text("Ensinar um modelo novo")');

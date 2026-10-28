@@ -4,7 +4,7 @@ Endereço: `/ctai`. Perfis: **criador** (monta o parecer), **colega** (confere),
 
 ## Tela inicial e Painel reduzido
 
-- **Criador e colega (analistas):** o menu **não tem o item Painel**; ao entrar, a tela inicial é a **Caixa de entrada**. No topo dela há uma **faixa de resumo** de uma linha, clicável: não lidos, prazos vencidos, prazos a vencer, achados com resposta e unidades sem gestor (só as da carteira da pessoa). Cada número abre a lista já filtrada. Links antigos para o Painel (`#/`) levam à Caixa de entrada, sem erro.
+- **Criador e colega (analistas):** o menu **não tem o item Painel**; ao entrar, a tela inicial é **Alimentar o Analista** (ou **Unidades**, se a pessoa ainda não tiver carteira). A **Caixa de entrada** deixou de aparecer no menu enquanto as unidades não enviam dados pela internet; a tela continua existindo pelo endereço `#/caixa`. No topo dela há uma **faixa de resumo** de uma linha, clicável: não lidos, prazos vencidos, prazos a vencer, achados com resposta e unidades sem gestor (só as da carteira da pessoa). Cada número abre a lista já filtrada. Links antigos para o Painel (`#/`) levam à Caixa de entrada, sem erro.
 - **Superintendente e administrador:** a tela inicial continua sendo o **Painel**, sem mudança. A visão completa por unidade, prazos e alertas fica no **Gestão CTAI**.
 - **Para voltar atrás:** coloque `CTAI_PAINEL_ANALISTA=sim` no `.env` (no Render, em Environment) e reinicie. O item Painel e a tela inicial antiga voltam para criadores e colegas. Padrão: `nao`.
 
