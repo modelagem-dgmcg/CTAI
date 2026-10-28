@@ -20,9 +20,10 @@ test.before(async () => {
   S.db.run("INSERT INTO contratos (contrato_id, unidade, oss, tipo, demo) VALUES ('UPAE-T','UPAE Teste','OSS Teste','UPAE',0)");
   S.db.run("INSERT INTO contratos (contrato_id, unidade, oss, tipo, demo) VALUES ('UPAE-NOVA','UPAE Nova','OSS Teste','UPAE',0)");
   S.db.run("INSERT INTO contratos (contrato_id, unidade, oss, tipo, demo) VALUES ('UPAE-ORIG','UPAE Origens','OSS Teste','UPAE',0)");
+  S.db.run("INSERT INTO contratos (contrato_id, unidade, oss, tipo, demo) VALUES ('UPAE-SIM','UPAE Simas','OSS Teste','UPAE',0)");
   S.db.run("INSERT INTO contratos (contrato_id, unidade, oss, tipo, demo) VALUES ('HOSP-T','Hospital Teste','OSS Teste','Hospital',0)");
   const u = S.db.get("SELECT usuario_id FROM usuarios WHERE login = 'cleuton'");
-  CART.definir(S.db, 'admin', u.usuario_id, ['UPAE-T', 'UPAE-NOVA', 'UPAE-ORIG', 'HOSP-T', 'UPA-OLINDA'], 'teste');
+  CART.definir(S.db, 'admin', u.usuario_id, ['UPAE-T', 'UPAE-NOVA', 'UPAE-ORIG', 'UPAE-SIM', 'HOSP-T', 'UPA-OLINDA'], 'teste');
   const u2 = S.db.get("SELECT usuario_id FROM usuarios WHERE login = 'colega2'");
   CART.definir(S.db, 'admin', u2.usuario_id, ['UPA-OLINDA'], 'teste');
 });
@@ -54,11 +55,11 @@ test('extrai seções, quadros, indicadores e fontes do parecer sintético; "Ane
   assert.deepEqual(e.tabelas[0].colunas, ['Nº', 'Indicador', 'Meta', 'Produção', 'Status']);
   assert.deepEqual(e.indicadores.map((i) => i.numero), ['1.1', '1.2', '1.3', '3.1']);
   const cods = e.fontes.map((f) => f.codigo);
-  for (const c of ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_1_1', 'anexo_5', 'simas', 'despacho_financeiro', 'financeiro']) assert.ok(cods.includes(c), 'falta ' + c + ' em ' + cods);
+  for (const c of ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_1_1', 'anexo_5', 'simas_metas', 'despacho_financeiro', 'financeiro']) assert.ok(cods.includes(c), 'falta ' + c + ' em ' + cods);
   assert.ok(!cods.includes('anexo_T'), 'Anexo Técnico não vira item');
   assert.ok(!cods.includes('bid') && !cods.includes('sia_sus') && !cods.includes('cnes'), 'BID/SIA/CNES já estão cobertos pelos anexos');
-  const simas = e.fontes.find((f) => f.codigo === 'simas');
-  assert.equal(simas.origem, 'fonte_externa'); assert.match(simas.trecho, /SIMAS/);
+  const simas = e.fontes.find((f) => f.codigo === 'simas_metas');
+  assert.equal(simas.origem, 'gerado_simas'); assert.match(simas.trecho, /SIMAS/);
   assert.equal(e.fontes.find((f) => f.codigo === 'anexo_5').nome, 'Anexo 5 - Comissão de Óbito');
 });
 
@@ -149,7 +150,7 @@ test('relatório-modelo em PDF gera lista proposta; ela só vale depois de confi
   assert.equal(c.status, 200, JSON.stringify(c.json)); assert.equal(c.json.versao, 1);
   e = await est(cle, 'UPAE-T');
   assert.equal(e.lista.origem, 'confirmada'); assert.equal(e.lista.versao, 1); assert.equal(e.proposta, null);
-  assert.ok(item(e, 'anexo_IV') && item(e, 'simas'));
+  assert.ok(item(e, 'anexo_IV') && item(e, 'simas_metas'));
   assert.ok(S.db.get("SELECT 1 AS x FROM trilha_auditoria WHERE tabela = 'imp_listas' AND campo = 'lista_confirmada'"));
   assert.ok(S.db.get("SELECT 1 AS x FROM trilha_auditoria WHERE tabela = 'imp_modelos' AND campo = 'modelo_guardado'"));
 });
@@ -157,9 +158,10 @@ test('relatório-modelo em PDF gera lista proposta; ela só vale depois de confi
 test('editar a lista: renomear, marcar opcional, tirar e acrescentar item; a nova versão só vale ao confirmar', async () => {
   const v = (await cle.get('/api/importar/unidade/UPAE-T/lista')).json;
   assert.equal(v.rascunho, null);
-  const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_1_1', 'simas', 'despacho_financeiro', 'financeiro', 'prestacao_contas'];
+  const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_1_1', 'simas_metas', 'despacho_financeiro', 'financeiro', 'prestacao_contas'];
   assert.ok(v.efetiva.itens.length > 25 && v.efetiva.itens.some((i) => i.codigo === 'anexo_5'), 'a UPAE traz também o que o parecer não cita');
   const itens = v.efetiva.itens.filter((i) => MANTER.includes(i.codigo)).map((i) => (i.codigo === 'anexo_VI' ? Object.assign({}, i, { nome: 'Anexo VI - Cadastro CNES (renomeado)', obrigatorio: false }) : i));
+  itens.push({ codigo: 'mapa_ses', nome: 'Mapa de leitos SES', obrigatorio: true, periodicidade: 'mensal', origem: 'fonte_externa' });
   itens.push({ nome: 'Planilha de leitos', obrigatorio: true, periodicidade: 'trimestral', origem: 'unidade', palavras: ['leitos'] });
   assert.equal((await cle.put('/api/importar/unidade/UPAE-T/lista', { itens })).status, 200);
   let e = await est(cle, 'UPAE-T');
@@ -213,29 +215,29 @@ test('casamento por nome e conteúdo; mensal 1/3, 2/3, 3/3; avulso para a analis
 
 test('fonte externa: check manual com observação, por mês; não vem por upload; opcional não bloqueia', async () => {
   let e = await est(cle, 'UPAE-T');
-  const simas = item(e, 'simas');
+  const simas = item(e, 'mapa_ses');
   assert.equal(simas.origem, 'fonte_externa'); assert.equal(simas.estado, 'falta');
   assert.equal((await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/check', { item: 'anexo_I', mes: '2026-10', marcado: true })).status, 400, 'item por arquivo não aceita check manual');
-  assert.equal((await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/check', { item: 'simas', mes: '2026-09', marcado: true })).status, 400, 'mês fora do trimestre');
-  for (const mes of ['2026-10', '2026-11']) assert.equal((await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/check', { item: 'simas', mes, marcado: true, observacao: 'Conferido no SIMAS em ' + mes })).status, 200);
+  assert.equal((await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/check', { item: 'mapa_ses', mes: '2026-09', marcado: true })).status, 400, 'mês fora do trimestre');
+  for (const mes of ['2026-10', '2026-11']) assert.equal((await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/check', { item: 'mapa_ses', mes, marcado: true, observacao: 'Conferido no mapa em ' + mes })).status, 200);
   e = await est(cle, 'UPAE-T');
-  assert.equal(item(e, 'simas').recebidos, 2); assert.equal(item(e, 'simas').estado, 'parcial');
-  assert.equal(item(e, 'simas').slots[0].observacao, 'Conferido no SIMAS em 2026-10'); assert.equal(item(e, 'simas').slots[0].check, 'manual');
+  assert.equal(item(e, 'mapa_ses').recebidos, 2); assert.equal(item(e, 'mapa_ses').estado, 'parcial');
+  assert.equal(item(e, 'mapa_ses').slots[0].observacao, 'Conferido no mapa em 2026-10'); assert.equal(item(e, 'mapa_ses').slots[0].check, 'manual');
   // item de fonte externa (SIMAS) nunca é casado por upload: o arquivo vira avulso
   const antes = e.avulsos.length;
-  await subir(cle, 'UPAE-T', TRI, [{ nome: '[9]-90_GOVPE___SIMAS_681.txt', buf: F.corpo('Consulta SIMAS', '10') }]);
+  await subir(cle, 'UPAE-T', TRI, [{ nome: '[9]-90_GOVPE___SES_681.txt', buf: F.corpo('Consulta SES', '10') }]);
   e = await est(cle, 'UPAE-T');
   assert.equal(e.avulsos.length, antes + 1);
-  assert.equal(item(e, 'simas').slots.filter((x) => x.arquivos.length).length, 0);
+  assert.equal(item(e, 'mapa_ses').slots.filter((x) => x.arquivos.length).length, 0);
   // desmarcar
-  await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/check', { item: 'simas', mes: '2026-11', marcado: false });
-  assert.equal(item(await est(cle, 'UPAE-T'), 'simas').recebidos, 1);
+  await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/check', { item: 'mapa_ses', mes: '2026-11', marcado: false });
+  assert.equal(item(await est(cle, 'UPAE-T'), 'mapa_ses').recebidos, 1);
 });
 
 test('conclusão da etapa: automática com todos os obrigatórios; manual com confirmação quando falta; fica na trilha; reabrir', async () => {
   let e = await est(cle, 'UPAE-T');
   assert.equal(e.feita, false);
-  assert.ok(e.resumo.faltam.some((f) => f.codigo === 'simas'));
+  assert.ok(e.resumo.faltam.some((f) => f.codigo === 'mapa_ses'));
   // concluir com faltantes exige confirmação
   const sem = await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/concluir', {});
   assert.equal(sem.status, 409); assert.match(sem.json.erro, /Faltam itens obrigatórios/);
@@ -245,7 +247,7 @@ test('conclusão da etapa: automática com todos os obrigatórios; manual com co
   assert.equal(e.feita, true); assert.equal(e.feitaPorChecks, false);
   assert.ok(e.concluida.faltantes.length >= 2); assert.equal(e.concluida.observacao, 'Despachos chegam na próxima semana'); assert.equal(e.concluida.por, 'cleuton');
   const tr = S.db.get("SELECT * FROM trilha_auditoria WHERE tabela = 'imp_conclusoes' AND campo = 'importacao_concluida'");
-  assert.ok(tr && /simas/i.test(tr.valor_novo) && tr.motivo === 'Despachos chegam na próxima semana');
+  assert.ok(tr && /mapa/i.test(tr.valor_novo) && tr.motivo === 'Despachos chegam na próxima semana');
   assert.equal((await cle.post('/api/importar/unidade/UPAE-T/' + TRI + '/reabrir')).status, 200);
   assert.equal((await est(cle, 'UPAE-T')).feita, false);
   assert.ok(S.db.get("SELECT 1 AS x FROM trilha_auditoria WHERE campo = 'importacao_reaberta'"));
@@ -356,7 +358,7 @@ test('respeita a carteira: colega de outra carteira não vê nem mexe; superinte
 
 test('zerar apaga as tabelas novas e o original nunca fica no banco', () => {
   const fonte = require('fs').readFileSync(require('path').join(__dirname, '..', 'server', 'zerar.js'), 'utf8');
-  for (const t of ['imp_modelos', 'imp_listas', 'imp_itens', 'imp_arquivos', 'imp_checks', 'imp_conclusoes', 'imp_ausencias']) assert.ok(fonte.includes("['" + t + "'"), t);
+  for (const t of ['imp_modelos', 'imp_listas', 'imp_itens', 'imp_arquivos', 'imp_checks', 'imp_conclusoes', 'imp_ausencias', 'imp_simas', 'imp_simas_numeros']) assert.ok(fonte.includes("['" + t + "'"), t);
   const apagar = require('../server/zerar').contar(S.db, null).apagar.map((x) => x.tabela);
   for (const t of ['imp_modelos', 'imp_listas', 'imp_itens', 'imp_arquivos', 'imp_checks']) assert.ok(apagar.includes(t), t);
   assert.equal(S.db.get('SELECT COUNT(*) AS n FROM alimentar_fila WHERE texto IS NOT NULL').n, 0);
@@ -377,7 +379,7 @@ test('o extrator sugere as três origens e a planilha de monitoramento como item
   assert.equal(por('despacho_financeiro').origem, 'pedida_setor');
   assert.equal(por('financeiro').origem, 'pedida_setor');
   assert.equal(por('parecer_cma').origem, 'processo_parecer');
-  assert.equal(por('simas').origem, 'fonte_externa');
+  assert.equal(por('simas_metas').origem, 'gerado_simas'); assert.equal(por('simas_metas').periodicidade, 'trimestral'); assert.equal(por('simas_metas').obrigatorio, 1);
   const plan = por('anexo_II');
   assert.equal(plan.origem, 'unidade'); assert.equal(plan.obrigatorio, 1); assert.equal(plan.periodicidade, 'mensal');
   assert.ok(!lista.some((i) => /^planilha_.*monitoramento/.test(i.codigo)), 'sem item duplicado para a mesma planilha');
@@ -453,4 +455,140 @@ test('planilha de monitoramento ausente: aviso, regra da CTAI registrada ao conc
   for (const mm of ['10', '11', '12']) await subir(cle, 'UPAE-ORIG', TRI, [{ nome: 'Planilha_Consolidada_UPAE_Origens_' + mm + '2026.txt', buf: F.corpo('Planilha de monitoramento', mm) }]);
   e = await est(cle, 'UPAE-ORIG');
   assert.equal(item(e, 'anexo_II').estado, 'completo'); assert.equal(e.ausencias.length, 0);
+});
+
+// ---------- consolidado do SIMAS ----------
+test('leitor do SIMAS: cabeçalho, grupos, linhas, totais, descrição quebrada, sem meta e indicadores com mês presumido', () => {
+  const r = require('../server/simas').lerSimas(F.simasTexto());
+  assert.deepEqual(r.cabecalho.periodos, ['2026-10', '2026-11', '2026-12']); assert.equal(r.cabecalho.trimestre, '2026-T4');
+  assert.equal(r.cabecalho.gerado_por, 'Analista de Teste'); assert.equal(r.cabecalho.cnpj, '00000000000191'); assert.match(r.cabecalho.gerado_em, /^2027-02-01T10:30/);
+  assert.deepEqual(r.grupos.map((g) => g.nome), ['TEA ATENDIMENTOS MEDICOS', 'Atendimento Ambulatorial Não Médico', 'Matriciamento e Supervisão', 'Programas Especiais', 'SADT UPAE', 'SADT Especial']);
+  assert.equal(r.grupos[0].secao, 'Ambulatorial'); assert.equal(r.grupos[4].secao, 'SADT');
+  const todas = r.grupos.flatMap((g) => g.linhas);
+  assert.equal(todas.length, 9); assert.deepEqual(r.resumo, { grupos: 6, linhas: 9, indicadores: 9 });
+  const nutri = todas.find((l) => l.descricao === 'Nutrição'); assert.equal(nutri.sem_meta, true); assert.equal(nutri.pct, 100);
+  assert.equal(todas.find((l) => l.descricao === 'Fisioterapia').realizado, 1243, '1.243 é milhar em pt-BR');
+  assert.equal(todas.find((l) => l.descricao === 'Neuropediatra').pct, 34.63);
+  assert.ok(todas.some((l) => l.descricao === 'Matriciamento das equipes de Saúde da Família dos Municípios da Área de Abrangência'), 'descrição quebrada em duas linhas');
+  assert.ok(todas.some((l) => l.descricao === 'Supervisão dos Cuidados Prestados nas Unidades Básicas de Saúde'));
+  assert.deepEqual(r.grupos[2].total, { previsto: 48, realizado: 96, pct: 200, trecho: r.grupos[2].total.trecho });
+  assert.equal(todas.filter((l) => l.descricao === 'Mamografia').length, 2);
+  // indicadores: ponto decimal, 3 blocos sem rótulo -> mês presumido pela ordem
+  const pront = r.indicadores.filter((i) => i.nome === 'Qualidade do Preenchimento de Prontuários');
+  assert.deepEqual(pront.map((i) => [i.ocorrencia, i.mes_presumido, i.realizado]), [[1, '2026-10', 100], [2, '2026-11', 97.5], [3, '2026-12', 94.12]]);
+  const sat = r.indicadores.find((i) => i.nome === 'Índice de Satisfação do Usuário (CTT Novo)');
+  assert.equal(sat.atingido, 'Não'); assert.equal(sat.regra, 'Maior ou igual a 90');
+  assert.equal(r.indicadores.find((i) => i.nome === 'Perda Primária PE').regra, 'N/A 0');
+  assert.deepEqual(r.avisos, []);
+  // texto de PDF lido no navegador: sem linhas em branco, com marcas de página -> mesmo resultado
+  const seco = F.simasTexto().split('\n').filter((l) => l.trim()).map((l, k) => (k % 17 === 0 ? '--- página ' + (k / 17 + 1) + ' ---\n' : '') + l.trimStart()).join('\n');
+  const r2 = require('../server/simas').lerSimas(seco);
+  assert.deepEqual(r2.resumo, r.resumo); assert.deepEqual(r2.indicadores.map((i) => [i.nome, i.ocorrencia, i.realizado]), r.indicadores.map((i) => [i.nome, i.ocorrencia, i.realizado]));
+  assert.deepEqual(r2.grupos.map((g) => [g.nome, g.linhas.length]), r.grupos.map((g) => [g.nome, g.linhas.length]));
+  // período que não fecha um trimestre
+  assert.match(require('../server/simas').lerSimas(F.simasTexto({ periodos: '12/2026, 01/2027' })).avisos.join(' '), /não fecham um único trimestre/);
+});
+
+test('SIMAS na lista: item obrigatório trimestral da UPAE, reconhecido por nome e por conteúdo; planilha consolidada continua sendo o Anexo II', () => {
+  const lista = E.listaDoCatalogo('UPAE').itens;
+  const sim = lista.find((i) => i.codigo === 'simas_metas');
+  assert.equal(sim.nome, 'SIMAS – Metas atingidas (consolidado do trimestre)'); assert.equal(sim.origem, 'gerado_simas'); assert.equal(sim.periodicidade, 'trimestral'); assert.equal(sim.obrigatorio, 1);
+  assert.equal(E.casar(lista, 'METAS_ATINGIDAS_UPAE_Teste.pdf', '').codigo, 'simas_metas');
+  assert.equal(E.casar(lista, 'relatorio_simas_2026T4.pdf', '').codigo, 'simas_metas');
+  assert.equal(E.casar(lista, 'qualquer.pdf', F.simasTexto()).codigo, 'simas_metas');
+  assert.equal(E.casar(lista, 'consolidado.pdf', F.simasTexto()).codigo, 'simas_metas', 'conteúdo vence o "consolidad" do Anexo II');
+  assert.equal(E.casar(lista, 'Planilha_consolidada_102026.pdf', 'Planilha de produção').codigo, 'anexo_II');
+  // o extrator sugere o item quando o parecer cita o SIMAS
+  const prop = E.propostaLista(E.extrairEstrutura(F.textoParecer(), { periodicidadePadrao: 'mensal', tipo: 'UPAE' }), 'UPAE').itens.find((i) => i.codigo === 'simas_metas');
+  assert.ok(prop && prop.origem === 'gerado_simas' && /SIMAS/.test(prop.trecho));
+});
+
+test('SIMAS na prática: lê ao receber, números ficam propostos; confirmar exige a ordem dos meses; alternativa "sem acesso agora"', async () => {
+  let e = await est(cle, 'UPAE-SIM');
+  assert.equal(item(e, 'simas_metas').estado, 'falta');
+  const r = await subir(cle, 'UPAE-SIM', TRI, [{ nome: 'Metas_atingidas_consolidado_UPAE_Simas.txt', buf: Buffer.from(F.simasTexto(), 'utf8') }]);
+  assert.equal(r[0].estado, 'lido', JSON.stringify(r[0])); assert.match(r[0].motivo, /Consolidado do SIMAS lido: 6 grupos, 9 linhas e 9 indicadores/);
+  e = await est(cle, 'UPAE-SIM');
+  assert.equal(item(e, 'simas_metas').estado, 'completo'); assert.equal(item(e, 'simas_metas').slots[0].check, 'arquivo');
+  let v = (await cle.get('/api/importar/unidade/UPAE-SIM/' + TRI + '/simas')).json;
+  assert.equal(v.lido, true); assert.equal(v.resumo.confirmados, 0); assert.ok(v.resumo.propostos >= 20);
+  assert.ok(v.numeros.every((n) => n.fonte === 'SIMAS' && n.estado === 'proposto' && n.trecho));
+  assert.ok(v.numeros.filter((n) => n.tipo === 'indicador').every((n) => n.mes_estado === 'presumido'));
+  assert.deepEqual(v.ordem_meses.map((o) => o.mes), ['2026-10', '2026-11', '2026-12']);
+  // nada vira definitivo sem confirmar a ordem dos meses
+  const url = '/api/importar/unidade/UPAE-SIM/' + TRI + '/simas/confirmar';
+  assert.equal((await cle.post(url, {})).status, 400);
+  assert.equal((await cle.post(url, { ordem_meses: { 1: '2026-10', 2: '2026-10', 3: '2026-12' } })).status, 400, 'mês repetido');
+  assert.equal((await c2.post(url, { ordem_meses: { 1: '2026-10', 2: '2026-11', 3: '2026-12' } })).status, 403);
+  const ok = await cle.post(url, { ordem_meses: { 1: '2026-10', 2: '2026-12', 3: '2026-11' } });
+  assert.equal(ok.status, 200); assert.ok(ok.json.confirmados >= 20);
+  v = (await cle.get('/api/importar/unidade/UPAE-SIM/' + TRI + '/simas')).json;
+  assert.equal(v.resumo.propostos, 0);
+  const pr = v.numeros.filter((n) => n.tipo === 'indicador' && n.descricao.startsWith('Qualidade'));
+  assert.deepEqual(pr.map((n) => [n.ocorrencia, n.mes, n.mes_estado, n.realizado]), [[1, '2026-10', 'confirmado', 100], [2, '2026-12', 'confirmado', 97.5], [3, '2026-11', 'confirmado', 94.12]]);
+  assert.ok(S.db.get("SELECT 1 AS x FROM trilha_auditoria WHERE campo = 'simas_confirmado'"));
+  // reenviar outro consolidado substitui a leitura (e volta a ser proposto)
+  assert.equal((await cle.del('/api/importar/arquivos/' + e.itens.find((i) => i.codigo === 'simas_metas').slots[0].arquivos[0].id)).status, 200);
+  assert.equal((await cle.get('/api/importar/unidade/UPAE-SIM/' + TRI + '/simas')).json.lido, false);
+  // alternativa: SIMAS sem acesso agora (check manual com observação) para não travar
+  assert.equal((await cle.post('/api/importar/unidade/UPAE-SIM/' + TRI + '/check', { item: 'simas_metas', situacao: 'recebido', observacao: 'SIMAS fora do ar hoje' })).status, 200);
+  e = await est(cle, 'UPAE-SIM');
+  assert.equal(item(e, 'simas_metas').estado, 'completo'); assert.equal(item(e, 'simas_metas').slots[0].alternativa_manual, true); assert.equal(item(e, 'simas_metas').slots[0].observacao, 'SIMAS fora do ar hoje');
+});
+
+test('conferidor SIMAS x RM x planilha: lista divergências por indicador e período, sem concluir quem está certo', async () => {
+  await subir(cle, 'UPAE-SIM', TRI, [{ nome: 'Metas_atingidas_consolidado_UPAE_Simas.txt', buf: Buffer.from(F.simasTexto(), 'utf8') }]);
+  // RM (Anexo I) sintético dos 3 meses, direto na gaveta
+  const docs = {};
+  for (const mes of ['2026-10', '2026-11', '2026-12']) docs[mes] = Number(S.db.run("INSERT INTO gaveta_documentos (contrato_id, mes, codigo, parte, nome_arquivo, hash, caracteres, texto, versao, criado_por, criado_em, atualizado_em) VALUES ('UPAE-SIM',?,'anexo_I','','rm.txt',?,1,'x',1,'t','2026-10-01','2026-10-01')", mes, 'h' + mes).lastInsertRowid);
+  const num = (mes, chave, meta, real) => S.db.run("INSERT INTO gaveta_numeros (doc_id, contrato_id, mes, fonte, chave, rotulo, meta, realizado, estado) VALUES (?,?,?,?,?,?,?,?, 'confirmado')", docs[mes], 'UPAE-SIM', mes, 'anexo_I', chave, chave, meta, real);
+  for (const [mes, real] of [['2026-10', 400], ['2026-11', 300], ['2026-12', 200]]) num(mes, 'mamografia', 500, real);
+  for (const [mes, meta] of [['2026-10', 20], ['2026-11', 20], ['2026-12', 10]]) num(mes, 'matriciamento', meta, 12);
+  const v = (await cle.get('/api/importar/unidade/UPAE-SIM/' + TRI + '/simas')).json;
+  const por = (t, ind) => v.divergencias.filter((d) => d.tipo === t && (!ind || new RegExp(ind, 'i').test(d.indicador)));
+  assert.ok(v.divergencias.length >= 6 && v.divergencias.every((d) => /Só sinaliza/.test(d.aviso)), 'todas só sinalizam');
+  assert.equal(por('duplicidade', 'Mamografia').length, 1, 'Mamografia em dois grupos do SIMAS');
+  assert.match(por('duplicidade')[0].detalhe, /SADT UPAE.*previsto 442.*SADT Especial.*1\.498/);
+  assert.ok(por('mamografia').length >= 1 && por('mamografia').every((d) => d.b.fonte === 'RM (Anexo I)'));
+  const mat = por('previsto', 'Matriciamento');
+  assert.equal(mat.length, 1); assert.equal(mat[0].a.valor, 24); assert.equal(mat[0].b.valor, 50); assert.match(mat[0].detalhe, /Outubro\/2026 20; Novembro\/2026 20; Dezembro\/2026 10/);
+  assert.equal(por('planilha_pendente', 'Ostomizados').length, 1, 'planilha ainda sem números lidos: só aponta o que conferir');
+  assert.equal(por('indicador_zero', 'Satisfação').length, 1); assert.match(por('indicador_zero')[0].detalhe, /dado não importado/);
+  assert.ok(por('total_grupo').length >= 1, 'total do grupo diferente da soma das linhas');
+  // sem RM de um mês: a nota diz que a soma está incompleta
+  S.db.run("DELETE FROM gaveta_numeros WHERE mes = '2026-12'");
+  const v2 = (await cle.get('/api/importar/unidade/UPAE-SIM/' + TRI + '/simas')).json;
+  assert.match(v2.divergencias.find((d) => d.tipo === 'previsto' && /Matriciamento/.test(d.indicador)).nota, /Dezembro\/2026 não lido/);
+});
+
+test('divergências do SIMAS viram achados da unidade: "A CONFERIR", com números e origem; fixar ou descartar com motivo; não voltam depois de decididas', async () => {
+  // o RM só chegou depois da leitura: atualizar os achados
+  S.db.run("DELETE FROM achados WHERE origem_tipo = 'simas'");
+  const at = await cle.post('/api/importar/unidade/UPAE-SIM/' + TRI + '/simas/achados');
+  assert.equal(at.status, 200, JSON.stringify(at.json)); assert.ok(at.json.novos >= 4);
+  assert.equal((await c2.post('/api/importar/unidade/UPAE-SIM/' + TRI + '/simas/achados')).status, 403);
+  let lista = (await cle.get('/api/analista/achados?contrato=UPAE-SIM&origem_tipo=simas')).json.achados;
+  assert.equal(lista.length, at.json.novos);
+  assert.ok(lista.every((a) => a.gravidade === 'A CONFERIR' && a.status === 'novo' && a.contrato_id === 'UPAE-SIM' && a.unidade === 'UPAE Simas' && a.trimestre === TRI && a.cid === null));
+  const mam = lista.find((a) => /Mamografia/.test(a.tipo) && /dois grupos/.test(a.trecho));
+  assert.ok(mam, 'achado da duplicidade de Mamografia');
+  assert.match(mam.trecho, /previsto 442, realizado 0/); assert.match(mam.trecho, /arquivo Metas_atingidas_consolidado_UPAE_Simas\.txt/); assert.match(mam.trecho, /trecho: "/);
+  assert.match(mam.risco, /não diz qual está certa/);
+  // aparece também na fila do painel do Analista
+  assert.ok((await cle.get('/api/analista/painel')).json.fila.some((a) => a.origem_tipo === 'simas' && a.unidade === 'UPAE Simas'));
+  // a unidade (portal) nunca vê
+  assert.equal((await cle.get('/api/analista/achados?contrato=UPAE-SIM&origem_tipo=simas')).json.achados.length, lista.length);
+  // não dá para encaminhar sem competência
+  assert.equal((await cle.post('/api/analista/achados/' + mam.achado_id + '/encaminhar', { mensagem: 'x' })).status, 400);
+  // descartar exige motivo; fixar aceita
+  assert.equal((await cle.patch('/api/analista/achados/' + mam.achado_id, { status: 'descartado' })).status, 400);
+  assert.equal((await cle.patch('/api/analista/achados/' + mam.achado_id, { status: 'descartado', motivo: 'Mamografia do SADT é outro exame' })).status, 200);
+  const outro = lista.find((a) => a.achado_id !== mam.achado_id);
+  assert.equal((await cle.patch('/api/analista/achados/' + outro.achado_id, { status: 'fixado' })).status, 200);
+  // ler de novo: os já decididos não voltam; os ainda novos são refeitos sem duplicar
+  const de = await cle.post('/api/importar/unidade/UPAE-SIM/' + TRI + '/simas/achados');
+  assert.equal(de.json.novos, at.json.novos - 2);
+  lista = (await cle.get('/api/analista/achados?contrato=UPAE-SIM&origem_tipo=simas')).json.achados;
+  assert.equal(lista.length, at.json.novos);
+  assert.equal(lista.filter((a) => a.status === 'descartado').length, 1); assert.equal(lista.filter((a) => a.status === 'fixado').length, 1);
 });

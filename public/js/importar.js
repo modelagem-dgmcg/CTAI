@@ -6,8 +6,8 @@
   const anterior = (t) => { const m = /^(\d{4})-T([1-4])$/.exec(t || ''); if (!m) return ''; return Number(m[2]) === 1 ? (Number(m[1]) - 1) + '-T4' : m[1] + '-T' + (Number(m[2]) - 1); };
   const { h, api, toast, janela, confirmar, aviso, selo } = window.CTAI;
   const AL = () => window.CTAI_ALIMENTAR.base;
-  const NOMES_FONTE = { unidade: 'Da unidade, pelo SEI', pedida_setor: 'Pedida pela CTAI a outro setor', processo_parecer: 'Dentro do processo do parecer', fonte_externa: 'Fonte externa (consulta da analista)' };
-  const TAG_FONTE = { pedida_setor: 'pedida a outro setor', processo_parecer: 'no processo do parecer', fonte_externa: 'fonte externa' };
+  const NOMES_FONTE = { unidade: 'Da unidade, pelo SEI', gerado_simas: 'Gerado no SIMAS pela analista', pedida_setor: 'Pedida pela CTAI a outro setor', processo_parecer: 'Dentro do processo do parecer', fonte_externa: 'Fonte externa (consulta da analista)' };
+  const TAG_FONTE = { gerado_simas: 'gerado no SIMAS', pedida_setor: 'pedida a outro setor', processo_parecer: 'no processo do parecer', fonte_externa: 'fonte externa' };
   const SITUACAO = { nao_pedido: 'Não pedido', pedido: 'Pedido', recebido: 'Recebido' };
   const SOLTOS = /\.(zip|pdf|docx)$/i;      // o que a analista solta
   const DENTRO_DO_ZIP = /\.(pdf|docx|html?)$/i; // o que o ZIP do SEI traz e é lido
@@ -70,6 +70,46 @@
   }
 
   // O que o sistema leu do relatório-modelo (seções, quadros, indicadores e fontes).
+  // Números do consolidado do SIMAS: a leitura só propõe; a analista confirma (e confirma o mês dos blocos de indicadores).
+  async function verSimas(contratoId, tri, depois) {
+    let v;
+    try { v = await api('GET', '/api/importar/unidade/' + encodeURIComponent(contratoId) + '/' + tri + '/simas'); } catch (e) { toast(e.message, true); return; }
+    if (!v.lido) { toast('O consolidado do SIMAS ainda não foi lido neste trimestre.', true); return; }
+    const fmtN = (x) => (x === null || x === undefined ? '—' : Number(x).toLocaleString('pt-BR', { maximumFractionDigits: 2 }));
+    const msg = h('p', { class: 'peq', id: 'imp-simas-msg', role: 'status' });
+    const cab = v.cabecalho || {};
+    const selMes = {}; // ocorrência -> select
+    const fechar = () => { const d = document.querySelector('dialog .imp-simas'); const dlg = d && d.closest('dialog'); if (dlg) dlg.close(); };
+    const rotMes = (m) => { const [a, mm] = String(m).split('-'); return ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'][Number(mm) - 1] + '/' + a; };
+    const ordem = h('div', { class: 'imp-simas-ordem' }, h('p', { class: 'peq' }, h('strong', null, 'Mês de cada bloco de indicadores. '), 'O PDF repete os indicadores ' + v.ordem_meses.length + ' vezes sem dizer o mês. Presumi pela ordem em que aparecem; ', h('strong', null, 'confira e ajuste'), ' antes de confirmar.'),
+      v.ordem_meses.map((o) => { const sel = h('select', { 'aria-label': 'Mês do bloco ' + o.ocorrencia }, v.ordem_meses.map((o2) => h('option', Object.assign({ value: o2.mes }, o2.mes === o.mes ? { selected: true } : {}), rotMes(o2.mes)))); selMes[o.ocorrencia] = sel;
+        return h('label', { class: 'linha' }, 'Bloco ' + o.ocorrencia + ': ', sel, o.estado === 'confirmado' ? selo('confirmado', 'ok') : selo('presumido pela ordem, conferir', 'atencao')); }));
+    const prod = v.numeros.filter((n) => n.tipo !== 'indicador');
+    const grupos = [...new Set(prod.map((n) => n.secao + '|' + n.grupo))];
+    const tabelaProd = grupos.map((g) => { const linhas = prod.filter((n) => n.secao + '|' + n.grupo === g);
+      return h('details', { class: 'imp-simas-grupo' }, h('summary', null, g.replace('|', ' · ') + ' (' + linhas.filter((n) => n.tipo === 'producao').length + ' linhas)'),
+        h('table', { class: 'tabela' }, h('thead', null, h('tr', null, ['Descrição', 'Previsto', 'Realizado', 'Atingido %', ''].map((t) => h('th', null, t)))),
+          h('tbody', null, linhas.map((n) => h('tr', { class: n.tipo === 'total_grupo' ? 'imp-total' : '' }, h('td', null, n.descricao), h('td', { class: 'num' }, fmtN(n.previsto)), h('td', { class: 'num' }, fmtN(n.realizado)), h('td', { class: 'num' }, n.pct === null ? '—' : fmtN(n.pct) + '%'), h('td', null, n.sem_meta ? 'sem meta' : '')))))); });
+    const ind = v.numeros.filter((n) => n.tipo === 'indicador');
+    const tabelaInd = ind.length ? h('details', { class: 'imp-simas-grupo' }, h('summary', null, 'Indicadores (' + ind.length + ')'),
+      h('table', { class: 'tabela' }, h('thead', null, h('tr', null, ['Indicador', 'Bloco', 'Meta', 'Realizado', 'Atingido'].map((t) => h('th', null, t)))),
+        h('tbody', null, ind.map((n) => h('tr', null, h('td', null, n.descricao), h('td', null, 'bloco ' + n.ocorrencia + ' · ' + rotMes(n.mes) + (n.mes_estado === 'confirmado' ? '' : ' (presumido)')), h('td', null, n.regra), h('td', { class: 'num' }, fmtN(n.realizado)), h('td', null, n.atingido)))))) : null;
+    const divs = v.divergencias.length ? h('div', { class: 'imp-simas-divs', id: 'imp-simas-divs' }, h('h3', null, 'Para conferir (' + v.divergencias.length + ')'), h('p', { class: 'peq mudo' }, 'O sistema só sinaliza as diferenças entre o SIMAS, o RM (Anexo I) e a planilha de monitoramento. Não diz qual está certo. Cada uma virou um achado "A CONFERIR" desta unidade, na ', h('a', { href: '#/analista' }, 'Fila de achados'), ', onde você fixa ou descarta com motivo.'),
+      h('ul', null, v.divergencias.map((d) => h('li', null, h('strong', null, d.indicador), ' · ', d.detalhe, d.nota ? h('div', { class: 'peq mudo' }, d.nota) : null)))) : h('p', { class: 'peq mudo' }, 'Nenhuma diferença para sinalizar com os números lidos até agora.');
+    const fim = h('div', { class: 'linha' },
+      h('button', { type: 'button', id: 'imp-simas-confirmar', disabled: !v.resumo.propostos, onclick: async () => {
+        const om = {}; for (const [k, sel] of Object.entries(selMes)) om[k] = sel.value;
+        try { const r = await api('POST', '/api/importar/unidade/' + encodeURIComponent(contratoId) + '/' + tri + '/simas/confirmar', { ordem_meses: om }); toast(r.confirmados + ' número(s) confirmado(s).'); fechar(); depois(); } catch (e) { msg.textContent = e.message; }
+      } }, v.resumo.propostos ? 'Confirmar ' + v.resumo.propostos + ' números' : 'Tudo confirmado'),
+      h('button', { type: 'button', class: 'sec', id: 'imp-simas-achados', onclick: async () => { try { const r = await api('POST', '/api/importar/unidade/' + encodeURIComponent(contratoId) + '/' + tri + '/simas/achados', {}); toast(r.novos ? r.novos + ' ponto(s) a conferir na Fila de achados.' : 'Nenhum ponto novo para a Fila de achados.'); } catch (e) { msg.textContent = e.message; } } }, 'Atualizar os achados (depois de ler o RM)'),
+      h('button', { type: 'button', class: 'leve', onclick: () => fechar() }, 'Fechar'));
+    const corpo = h('div', { class: 'imp-est imp-simas' },
+      h('p', { class: 'peq' }, (cab.unidade || '') + (cab.periodos && cab.periodos.length ? ' · período ' + cab.periodos.map(rotMes).join(', ') : '') + (cab.gerado_por ? ' · gerado por ' + cab.gerado_por : '') + (cab.gerado_em ? ' em ' + new Date(cab.gerado_em).toLocaleString('pt-BR') : '')),
+      (v.avisos || []).length ? aviso('atencao', v.avisos.join(' ')) : null,
+      h('p', { class: 'peq mudo' }, v.resumo.grupos + ' grupos, ' + v.resumo.linhas + ' linhas, ' + v.resumo.indicadores + ' indicadores. Nada é definitivo até você confirmar.'),
+      ordem, tabelaProd, tabelaInd, divs, msg, fim);
+    janela('Números do SIMAS · ' + tri, corpo, []);
+  }
   async function verEstrutura(contratoId) {
     let v;
     try { v = await api('GET', '/api/importar/unidade/' + encodeURIComponent(contratoId) + '/lista'); } catch (e) { toast(e.message, true); return; }
@@ -313,6 +353,11 @@
             const obs = h('input', { type: 'text', class: 'imp-obs', placeholder: 'Valores lançados / observação', value: s.observacao || '', 'aria-label': 'Observação de ' + it.nome, disabled: por, onchange: () => { if (sel.value !== 'nao_pedido') salvar(s, { situacao: sel.value, data_pedido: dt.value, processo_sei: pr.value, observacao: obs.value }); } });
             return h('div', { class: 'imp-slot', 'data-mes': s.mes, 'data-situacao': s.situacao }, h('div', { class: 'linha' }, rot(s) ? h('strong', null, rot(s)) : null, sel, dt, pr), obs, por ? h('div', { class: 'peq mudo' }, 'Recebido pelo arquivo enviado.') : null);
           }
+          if (it.origem === 'gerado_simas') {
+            const obs = h('input', { type: 'text', class: 'imp-obs', placeholder: 'Por que sem o consolidado agora?', value: s.alternativa_manual ? (s.observacao || '') : '', 'aria-label': 'Observação: SIMAS sem acesso agora', disabled: por, onchange: async () => { if (caixa.checked) await salvar(s, { situacao: 'recebido', observacao: obs.value }); } });
+            const caixa = h('input', Object.assign({ type: 'checkbox', 'aria-label': 'SIMAS sem acesso agora', disabled: por, onchange: async (ev) => { await salvar(s, ev.target.checked ? { situacao: 'recebido', observacao: obs.value } : { marcado: false }); } }, s.alternativa_manual ? { checked: true } : {}));
+            return h('div', { class: 'imp-slot', 'data-mes': s.mes }, por ? h('div', { class: 'peq' }, 'Consolidado recebido: ' + s.arquivos.map((a) => AL().bonito(a.nome)).join('; ')) : h('label', { class: 'imp-slot-chk' }, caixa, ' SIMAS sem acesso agora (segue sem o consolidado)'), por ? null : obs);
+          }
           if (it.origem === 'processo_parecer') {
             const obs = h('input', { type: 'text', class: 'imp-obs', placeholder: 'Informação anotada (ex.: o que a CMA concluiu)', value: s.observacao || '', 'aria-label': 'Informação de ' + it.nome, onchange: async () => { if (caixa.checked) await salvar(s, { situacao: 'consultado', observacao: obs.value }); } });
             const caixa = h('input', Object.assign({ type: 'checkbox', 'aria-label': 'Consultado: ' + it.nome, onchange: async (ev) => { await salvar(s, ev.target.checked ? { situacao: 'consultado', observacao: obs.value } : { marcado: false }); } }, s.check === 'consultado' ? { checked: true } : {}));
@@ -331,6 +376,8 @@
           h('div', { class: 'imp-tx' },
             h('div', { class: 'imp-nm' }, it.nome, ' ', h('span', { class: 'imp-tag' }, it.obrigatorio ? 'obrigatório' : 'opcional'), TAG_FONTE[it.origem] ? h('span', { class: 'imp-tag ext' }, TAG_FONTE[it.origem]) : null, it.estado === 'pedido' ? h('span', { class: 'imp-tag ext' }, 'pedido, aguardando') : null, cont ? h('span', { class: 'imp-cont', title: 'Recebidos' }, cont) : null),
             aviso1 ? h('div', { class: 'imp-regra', role: 'alert' }, h('strong', null, 'Atenção: '), aviso1.texto, ' Falta em: ' + aviso1.meses_sem.map((m) => (est.meses.find((x) => x.mes === m) || {}).rotulo || m).join(', ') + '. Estado: sem planilha → meta não cumprida (regra da CTAI).') : null,
+            it.origem === 'gerado_simas' ? h('div', { class: 'peq mudo imp-simas-dica' }, 'O parecer usa o SIMAS como fonte principal de produção e qualidade. Gere o relatório "Metas atingidas - consolidado" no SIMAS (PDF) e solte aqui; os números são lidos e ficam esperando a sua conferência.') : null,
+            it.origem === 'gerado_simas' && est.simas && est.simas.lido ? h('div', { class: 'linha' }, h('button', { type: 'button', class: 'sec', id: 'imp-simas-ver', onclick: () => verSimas(contratoId, tri, atualizar) }, 'Ver e confirmar os números do SIMAS'), h('span', { class: 'peq mudo' }, est.simas.grupos + ' grupos, ' + est.simas.linhas + ' linhas, ' + est.simas.indicadores + ' indicadores · ' + (est.simas.propostos ? est.simas.propostos + ' esperando conferência' : 'todos confirmados'))) : null,
             extra, arqs.length ? h('div', { class: 'peq mudo imp-arq' }, arqs.map((n) => AL().bonito(n)).join('; ')) : null));
       };
       const avulsos = est.avulsos.length ? h('div', { class: 'imp-avulsos', id: 'imp-avulsos' }, h('h3', null, 'Avulsos (' + est.avulsos.length + ')'), h('p', { class: 'peq mudo' }, 'O sistema não soube em qual item entram. Aponte o item de cada um.'),

@@ -16,3 +16,6 @@ Nota de projeto. O parecer automático (Redator CTAI) **não** foi construído; 
 
 ## Origens dos itens
 O extrator sugere a origem de cada fonte citada: `unidade` (upload), `pedida_setor` (despacho da Gerência de Prestação de Contas, informação financeira da GGCCG, relatório de prestação de contas), `processo_parecer` (Parecer Conclusivo da CMA) e `fonte_externa` (SIMAS). Quando o Redator montar as seções 7 e 8, deve ler a observação lançada nesses itens (`imp_checks.observacao`) e o estado "sem planilha → meta não cumprida" em `imp_ausencias`.
+
+## SIMAS
+O consolidado do SIMAS (`simas_metas`, origem `gerado_simas`) é lido por `server/simas.js` e guardado em `imp_simas` (leitura) e `imp_simas_numeros` (fonte SIMAS, estado proposto/confirmado, trecho de origem, mês presumido ou confirmado dos indicadores). O Redator deve usar só números `confirmado`; o mês de indicadores com `mes_estado = 'presumido'` não pode ser afirmado.

@@ -399,3 +399,10 @@ dialog:has(.imp-ed) .corpo,dialog:has(.imp-est) .corpo{max-height:72vh;overflow:
 .imp-regra{margin-top:6px;padding:8px 10px;border-left:4px solid var(--verm,#b3261e);background:rgba(179,38,30,.08);border-radius:6px;font-size:.92em}
 .imp-slot .linha{align-items:center;flex-wrap:wrap;gap:8px}
 .imp-sit,.imp-data,.imp-proc{min-width:130px}
+.imp-simas table{width:100%;border-collapse:collapse;font-size:.9em}
+.imp-simas th,.imp-simas td{padding:3px 6px;border-bottom:1px solid var(--borda,#ddd);text-align:left}
+.imp-simas td.num{text-align:right;font-variant-numeric:tabular-nums}
+.imp-simas .imp-total td{font-weight:600}
+.imp-simas-grupo{margin:6px 0}
+.imp-simas-ordem{margin:8px 0;padding:8px 10px;border-left:4px solid var(--ambar,#b7791f);background:rgba(183,121,31,.08);border-radius:6px}
+.imp-simas-dica{margin-top:4px}

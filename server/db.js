@@ -304,6 +304,18 @@ CREATE TABLE IF NOT EXISTS imp_ausencias (
   id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, mes TEXT NOT NULL, item_codigo TEXT NOT NULL, indicador TEXT NOT NULL,
   estado TEXT NOT NULL, regra TEXT NOT NULL, registrado_por TEXT NOT NULL, registrado_em TEXT NOT NULL, UNIQUE (contrato_id, trimestre, item_codigo, mes, indicador)
 );
+-- Consolidado do SIMAS ("METAS ATINGIDAS - CONSOLIDADO"): uma leitura por unidade e trimestre; números PROPOSTOS até a analista confirmar.
+-- Os blocos de indicadores vêm sem rótulo de mês: mes_estado 'presumido' (pela ordem) até a analista confirmar.
+CREATE TABLE IF NOT EXISTS imp_simas (
+  contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, arquivo_id INTEGER, cabecalho TEXT, avisos TEXT, grupos INTEGER, linhas INTEGER, indicadores INTEGER, lido_por TEXT NOT NULL, lido_em TEXT NOT NULL,
+  PRIMARY KEY (contrato_id, trimestre)
+);
+CREATE TABLE IF NOT EXISTS imp_simas_numeros (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, contrato_id TEXT NOT NULL, trimestre TEXT NOT NULL, arquivo_id INTEGER, fonte TEXT NOT NULL DEFAULT 'SIMAS', tipo TEXT NOT NULL, secao TEXT, grupo TEXT, descricao TEXT NOT NULL, chave TEXT,
+  previsto REAL, realizado REAL, pct REAL, regra TEXT, atingido TEXT, pontuacao TEXT, ocorrencia INTEGER, mes TEXT, mes_estado TEXT, sem_meta INTEGER NOT NULL DEFAULT 0, trecho TEXT,
+  estado TEXT NOT NULL DEFAULT 'proposto', confirmado_por TEXT, confirmado_em TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_imp_simas_num ON imp_simas_numeros (contrato_id, trimestre);
 CREATE TABLE IF NOT EXISTS alimentar_liberacao (usuario_id INTEGER PRIMARY KEY, liberado_em TEXT NOT NULL, por TEXT NOT NULL, motivo TEXT);
 -- Histórico dos relatórios e pareceres anteriores, por unidade e trimestre. Nasce como 'rascunho' e só vira 'confirmado' quando a pessoa da carteira confere.
 CREATE TABLE IF NOT EXISTS hist_relatorios (
@@ -376,7 +388,7 @@ const COLUNAS_NOVAS = {
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
   alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER', 'origem TEXT', 'imp_trimestre TEXT', 'imp_modelo INTEGER'],
   imp_checks: ['situacao TEXT', 'data_pedido TEXT', 'processo_sei TEXT'],
-  achados: ['encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
+  achados: ['contrato_id TEXT', 'trimestre TEXT', 'chave TEXT', 'encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
 };
 function migrar(db) {
   for (const [tabela, colunas] of Object.entries(COLUNAS_NOVAS)) {

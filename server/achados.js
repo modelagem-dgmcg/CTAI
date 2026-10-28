@@ -28,14 +28,15 @@ function listar(db, filtro) {
   if (filtro.origem_id) { where.push('a.origem_id = ?'); args.push(Number(filtro.origem_id)); }
   if (filtro.cid) { where.push('a.cid = ?'); args.push(Number(filtro.cid)); }
   if (filtro.status) { where.push('a.status = ?'); args.push(filtro.status); }
-  if (filtro.contrato_id) { where.push('k.contrato_id = ?'); args.push(filtro.contrato_id); }
-  return db.all('SELECT a.*, k.competencia_id, k.contrato_id, c.unidade FROM achados a LEFT JOIN competencias k ON k.cid = a.cid LEFT JOIN contratos c ON c.contrato_id = k.contrato_id'
+  if (filtro.contrato_id) { where.push('COALESCE(a.contrato_id, k.contrato_id) = ?'); args.push(filtro.contrato_id); }
+  // achados sem competência (ex.: divergências do consolidado do SIMAS) trazem a unidade na própria linha
+  return db.all('SELECT a.*, k.competencia_id, COALESCE(a.contrato_id, k.contrato_id) AS contrato_id, c.unidade FROM achados a LEFT JOIN competencias k ON k.cid = a.cid LEFT JOIN contratos c ON c.contrato_id = COALESCE(a.contrato_id, k.contrato_id)'
     + (where.length ? ' WHERE ' + where.join(' AND ') : '')
     + " ORDER BY CASE a.gravidade WHEN 'ALTA' THEN 0 WHEN 'MÉDIA' THEN 1 ELSE 2 END, a.achado_id", ...args);
 }
 
 function obter(db, id) {
-  const a = db.get('SELECT a.*, k.contrato_id FROM achados a LEFT JOIN competencias k ON k.cid = a.cid WHERE a.achado_id = ?', Number(id));
+  const a = db.get('SELECT a.*, COALESCE(a.contrato_id, k.contrato_id) AS contrato_id FROM achados a LEFT JOIN competencias k ON k.cid = a.cid WHERE a.achado_id = ?', Number(id));
   if (!a) throw erro(404, 'Achado não encontrado.');
   return a;
 }

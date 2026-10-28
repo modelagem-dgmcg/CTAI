@@ -12,7 +12,7 @@ const CART = require('../../server/carteira');
 const F = require('../fixtures-importar');
 const { chromium } = require('playwright');
 
-const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_1_1', 'anexo_5', 'anexo_II', 'simas', 'despacho_financeiro', 'financeiro', 'parecer_cma', 'prestacao_contas'];
+const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_1_1', 'anexo_5', 'anexo_II', 'simas_metas', 'despacho_financeiro', 'financeiro', 'parecer_cma', 'prestacao_contas'];
 
 (async () => {
   const S = await H.iniciar(); const base = S.base;
@@ -104,7 +104,8 @@ const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_
     // ---------- 5b) três origens + planilha de monitoramento ausente ----------
     const tag = (c) => p.innerText('#imp-i-' + c + ' .imp-tag.ext');
     assert.match(await tag('despacho_financeiro'), /pedida a outro setor/); assert.match(await tag('financeiro'), /pedida a outro setor/);
-    assert.match(await tag('parecer_cma'), /no processo do parecer/); assert.match(await tag('simas'), /fonte externa/);
+    assert.match(await tag('parecer_cma'), /no processo do parecer/); assert.match(await tag('simas_metas'), /gerado no SIMAS/);
+    assert.match(await p.innerText('#imp-i-simas_metas'), /fonte principal de produção e qualidade/);
     const regra = p.locator('#imp-i-anexo_II .imp-regra');
     assert.ok(await regra.isVisible(), 'aviso visível quando falta a planilha');
     assert.match(await regra.innerText(), /sem a planilha de monitoramento, estes indicadores contam como meta não cumprida/i);
@@ -123,11 +124,32 @@ const MANTER = ['anexo_I', 'anexo_IV', 'anexo_V', 'anexo_VI', 'anexo_1', 'anexo_
     await p.waitForFunction(() => /CMA: metas/.test(document.querySelector('#imp-i-parecer_cma .imp-obs').value), null, { timeout: 8000 });
     assert.ok(S.db.get("SELECT 1 AS x FROM imp_checks WHERE item_codigo = 'parecer_cma' AND situacao = 'consultado'"));
 
-    // ---------- 6) fonte externa: check manual com observação ----------
-    const slot = p.locator('#imp-i-simas .imp-slot').first();
-    await slot.locator('input[type=text]').fill('Despacho 123'); await slot.locator('input[type=checkbox]').check();
-    await p.waitForFunction(() => /Despacho 123/.test(document.querySelector('#imp-i-simas .imp-obs').value), null, { timeout: 8000 });
-    assert.ok(S.db.get("SELECT 1 AS x FROM imp_checks WHERE observacao = 'Despacho 123'"));
+    // ---------- 6) SIMAS: alternativa manual, depois o consolidado em PDF (lido no navegador; os números só são propostos) ----------
+    const slot = p.locator('#imp-i-simas_metas .imp-slot').first();
+    await slot.locator('input[type=text]').fill('SIMAS fora do ar'); await slot.locator('input[type=checkbox]').check();
+    await p.waitForFunction(() => /SIMAS fora do ar/.test(document.querySelector('#imp-i-simas_metas .imp-obs').value), null, { timeout: 8000 });
+    assert.ok(S.db.get("SELECT 1 AS x FROM imp_checks WHERE item_codigo = 'simas_metas' AND observacao = 'SIMAS fora do ar'"));
+    const per = MM.map((m) => m + '/' + ano).join(', ');
+    await p.setInputFiles('#imp-arquivos', { name: 'METAS_ATINGIDAS_CONSOLIDADO_UPAE_Teste.pdf', mimeType: 'application/pdf', buffer: await F.pdfDe(F.simasTexto({ periodos: per })) });
+    await p.waitForSelector('#imp-simas-ver', { timeout: 60000 });
+    assert.match(await p.innerText('#imp-i-simas_metas'), /\d+ grupos, \d+ linhas, \d+ indicadores · \d+ esperando conferência/);
+    assert.equal(S.db.get("SELECT COUNT(*) AS n FROM imp_simas_numeros WHERE estado <> 'proposto'").n, 0, 'nada definitivo sem confirmar');
+    assert.deepEqual(enviados.filter((e) => e.pdf), [], 'o consolidado também só sobe como texto');
+    await p.click('#imp-simas-ver'); await p.waitForSelector('dialog .imp-simas');
+    const dlgTxt = await p.innerText('dialog');
+    assert.match(dlgTxt, /presumido pela ordem, conferir/); assert.match(dlgTxt, /Para conferir/); assert.match(dlgTxt, /Mamografia/);
+    assert.match(dlgTxt, /só sinaliza/i);
+    // confirma trocando a ordem dos blocos (o 1º bloco passa a ser o 2º mês)
+    await p.locator('dialog select[aria-label="Mês do bloco 1"]').selectOption(ano + '-' + MM[1]);
+    assert.ok(S.db.get("SELECT 1 AS x FROM achados WHERE origem_tipo = 'simas' AND gravidade = 'A CONFERIR' AND contrato_id = 'UPAE-TESTE'"), 'divergências viram achados');
+    assert.ok(await p.isVisible('dialog a:has-text("Fila de achados")'));
+    await p.click('dialog button:has-text("Confirmar")'); // sem ordem válida (dois blocos no mesmo mês) o servidor recusa
+    await p.waitForSelector('#imp-simas-msg:not(:empty)', { timeout: 8000 });
+    assert.match(await p.innerText('#imp-simas-msg'), /mesmo mês/);
+    await p.locator('dialog select[aria-label="Mês do bloco 1"]').selectOption(ano + '-' + MM[0]);
+    await p.click('#imp-simas-confirmar'); await p.waitForSelector('dialog', { state: 'detached' });
+    assert.equal(S.db.get("SELECT COUNT(*) AS n FROM imp_simas_numeros WHERE estado = 'proposto'").n, 0);
+    assert.equal(S.db.get("SELECT COUNT(*) AS n FROM imp_simas_numeros WHERE tipo = 'indicador' AND mes_estado = 'confirmado'").n, 9);
 
     // ---------- 7) concluir com faltas -> pergunta; reabrir; fechar a lista com checks ----------
     await p.click('#imp-concluir'); await p.waitForSelector('dialog:has-text("Concluir mesmo assim?")');

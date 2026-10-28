@@ -7,6 +7,7 @@ const U = require('../core/util');
 const C = require('./catalogo');
 const G = require('./gaveta');
 const EST = require('./importar-estrutura');
+const SIMAS = require('./simas');
 const trilha = require('./trilha');
 const { erro } = require('./auth');
 
@@ -221,7 +222,7 @@ function textoDoArquivo(db, r) {
 // Decide item e mês de um arquivo. Devolve { item, por, mes, aviso }.
 function decidir(efetivos, tri, nome, texto) {
   const meses = mesesDe(tri);
-  const m = EST.casar(efetivos.filter((i) => i.origem === 'unidade' || i.origem === 'pedida_setor'), nome, texto);
+  const m = EST.casar(efetivos.filter((i) => i.origem === 'unidade' || i.origem === 'pedida_setor' || i.origem === 'gerado_simas'), nome, texto);
   const item = m ? efetivos.find((i) => i.codigo === m.codigo) : null;
   const mesBruto = mesDe(nome, texto);
   const avisos = [];
@@ -267,6 +268,10 @@ function guardarArquivo(db, usuario, d) {
   const id = Number(db.run('INSERT INTO imp_arquivos (contrato_id, trimestre, mes, item_codigo, casamento, nome_arquivo, hash, paginas, caracteres, texto, gaveta_id, mascarados, aviso, criado_por, criado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
     c.contrato_id, d.trimestre, dec.mes, dec.item ? dec.item.codigo : null, dec.por, nome, hash, d.paginas || null, texto.length, gavetaId ? null : texto, gavetaId, json(d.mascarados || {}), avisos.filter(Boolean).join(' ') || null, usuario.login, agora()).lastInsertRowid);
   trilha.registrar(db, { usuario: usuario.login, tabela: 'imp_arquivos', registro: id, campo: 'arquivo_guardado', valor_novo: { contrato: c.contrato_id, trimestre: d.trimestre, item: dec.item ? dec.item.codigo : null, mes: dec.mes, por: dec.por, caracteres: texto.length, paginas: d.paginas || null, mascarados: d.mascarados || {} } });
+  if (dec.item && dec.item.codigo === SIMAS.ITEM_CODIGO) {
+    const r = SIMAS.registrar(db, usuario, c, d.trimestre, id, texto);
+    avisos.push('Consolidado do SIMAS lido: ' + r.grupos + ' grupos, ' + r.linhas + ' linhas e ' + r.indicadores + ' indicadores (números propostos, falta você confirmar).' + (r.aviso ? ' ' + r.aviso : ''));
+  }
   const avulso = !dec.item || (dec.item.periodicidade === 'mensal' && !dec.mes);
   return { estado: 'lido', arquivo_id: id, item: dec.item ? dec.item.codigo : null, itemNome: dec.item ? dec.item.nome : null, mes: dec.mes, avulso, aviso: avisos.filter(Boolean).join(' ') || null };
 }
@@ -307,6 +312,7 @@ function recasar(db, c) {
     const novoItem = dec.item ? dec.item.codigo : null;
     if (novoItem !== r.item_codigo || dec.mes !== r.mes) {
       db.run('UPDATE imp_arquivos SET item_codigo = ?, mes = ?, casamento = ? WHERE id = ?', novoItem, dec.mes, dec.por, r.id); mudou++;
+      if (novoItem === SIMAS.ITEM_CODIGO) SIMAS.registrar(db, { login: 'sistema' }, c, r.trimestre, r.id, texto);
     }
   }
   return mudou;
@@ -330,6 +336,7 @@ function apontar(db, usuario, d) {
     db.run('UPDATE imp_arquivos SET item_codigo = ?, mes = ?, casamento = ? WHERE id = ?', item ? item.codigo : null, mes, 'manual', r.id);
     trilha.registrar(db, { usuario: usuario.login, tabela: 'imp_arquivos', registro: r.id, campo: 'item_apontado', valor_anterior: { item: r.item_codigo, mes: r.mes }, valor_novo: { item: item ? item.codigo : null, mes } });
   });
+  if (item && item.codigo === SIMAS.ITEM_CODIGO) SIMAS.registrar(db, usuario, c, r.trimestre, r.id, textoDoArquivo(db, r));
   return { ok: true };
 }
 
@@ -339,6 +346,7 @@ function tirarArquivo(db, usuario, id) {
   unidade(db, usuario, r.contrato_id);
   db.tx(() => {
     db.run('DELETE FROM imp_arquivos WHERE id = ?', r.id);
+    db.run('DELETE FROM imp_simas_numeros WHERE arquivo_id = ?', r.id); db.run('DELETE FROM imp_simas WHERE arquivo_id = ?', r.id);
     trilha.registrar(db, { usuario: usuario.login, tabela: 'imp_arquivos', registro: r.id, campo: 'arquivo_retirado', valor_anterior: { nome: r.nome_arquivo, item: r.item_codigo, mes: r.mes, trimestre: r.trimestre } });
   });
   return { ok: true };
@@ -348,7 +356,7 @@ function tirarArquivo(db, usuario, id) {
 //  - pedida_setor: a CTAI pede a outro setor. situacao nao_pedido | pedido (data e nº do processo SEI) | recebido (o arquivo é opcional);
 //  - processo_parecer: fica no processo do parecer. situacao consultado, com a informação anotada;
 //  - fonte_externa: consulta da analista (SIMAS). Check simples com observação.
-const SITUACOES = { pedida_setor: ['nao_pedido', 'pedido', 'recebido'], processo_parecer: ['consultado'], fonte_externa: ['recebido'] };
+const SITUACOES = { gerado_simas: ['recebido'], pedida_setor: ['nao_pedido', 'pedido', 'recebido'], processo_parecer: ['consultado'], fonte_externa: ['recebido'] };
 function marcarCheck(db, usuario, contratoId, tri, d) {
   const c = unidade(db, usuario, contratoId); exigirTri(tri);
   const item = listaEfetiva(db, c).itens.find((i) => i.codigo === d.item);
@@ -411,7 +419,7 @@ function estado(db, usuario, contratoId, tri) {
       const ch = checks.find((x) => x.item_codigo === it.codigo && x.mes === m);
       const sit = ch ? (ch.situacao || 'recebido') : null; // checks antigos (sem situação) valem como recebido
       const check = a.length ? 'arquivo' : (ch ? (sit === 'pedido' ? 'pedido' : (sit === 'consultado' ? 'consultado' : 'manual')) : null);
-      return { mes: m, rotulo: m ? C.nomeMes(m) : 'Trimestre', check, situacao: a.length ? 'recebido' : (sit || 'nao_pedido'), data_pedido: ch ? ch.data_pedido : null, processo_sei: ch ? ch.processo_sei : null, arquivos: a.map((x) => ({ id: x.id, nome: x.nome_arquivo })), observacao: ch ? ch.observacao : null, por: ch ? ch.marcado_por : null };
+      return { mes: m, rotulo: m ? C.nomeMes(m) : 'Trimestre', check, alternativa_manual: it.origem === 'gerado_simas' && !a.length && !!ch, situacao: a.length ? 'recebido' : (sit || 'nao_pedido'), data_pedido: ch ? ch.data_pedido : null, processo_sei: ch ? ch.processo_sei : null, arquivos: a.map((x) => ({ id: x.id, nome: x.nome_arquivo })), observacao: ch ? ch.observacao : null, por: ch ? ch.marcado_por : null };
     });
     const recebidos = slots.filter((s) => s.check && s.check !== 'pedido').length, esperados = slots.length, pedidos = slots.filter((s) => s.check === 'pedido').length;
     const estadoItem = !esperados ? 'nao_exigido' : (recebidos === esperados ? 'completo' : (recebidos ? 'parcial' : (pedidos ? 'pedido' : (it.obrigatorio ? 'falta' : 'opcional'))));
@@ -442,6 +450,7 @@ function estado(db, usuario, contratoId, tri) {
     modelo: mod ? { id: mod.id, trimestre: mod.trimestre, nome_arquivo: mod.nome_arquivo, criado_em: mod.criado_em, criado_por: mod.criado_por, ia: !!mod.ia } : null,
     itens, avulsos, arquivos: arqs.length,
     ausencias: ausenciasDe(itens, tipoDe(c)),
+    simas: SIMAS.resumoSimples(db, c.contrato_id, tri),
     resumo: { recebidos: completos, total: contados.length, faltam, texto },
     feitaPorChecks, concluida: con ? { em: con.concluida_em, por: con.por, faltantes: ler(con.faltantes, []), observacao: con.observacao } : null,
     feita: !!con || feitaPorChecks,
@@ -503,4 +512,4 @@ function fila(db, usuario, ids) {
 }
 
 function ausenciasRegistradas(db, usuario, contratoId, tri) { const c = unidade(db, usuario, contratoId); return db.all('SELECT mes, item_codigo, indicador, estado, regra, registrado_por, registrado_em FROM imp_ausencias WHERE contrato_id = ? AND trimestre = ? ORDER BY mes, indicador', c.contrato_id, tri); }
-module.exports = { ausenciasRegistradas, ausenciasDe, estado, visaoLista, listaEfetiva, salvarRascunho, completarComPadrao, descartarRascunho, confirmarLista, guardarModelo, textoDoModelo, guardarArquivo, daFila, recasar, apontar, tirarArquivo, marcarCheck, concluir, reabrir, fila, decidir, mesDe, ia, modeloAtivo, textoDoArquivo };
+module.exports = { simas: SIMAS, ausenciasRegistradas, ausenciasDe, estado, visaoLista, listaEfetiva, salvarRascunho, completarComPadrao, descartarRascunho, confirmarLista, guardarModelo, textoDoModelo, guardarArquivo, daFila, recasar, apontar, tirarArquivo, marcarCheck, concluir, reabrir, fila, decidir, mesDe, ia, modeloAtivo, textoDoArquivo };

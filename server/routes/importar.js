@@ -18,6 +18,9 @@ module.exports = (db) => {
   // Texto completo (mascarado) do relatório-modelo: base do Redator CTAI (ainda não construído).
   r.get('/unidade/:c/modelo', (req, res) => res.json(I.textoDoModelo(db, req.usuario, req.params.c)));
   r.get('/unidade/:c/:tri', (req, res) => res.json(I.estado(db, req.usuario, req.params.c, req.params.tri)));
+  r.get('/unidade/:c/:tri/simas', (req, res) => res.json(I.simas.visao(db, req.usuario, req.params.c, req.params.tri)));
+  r.post('/unidade/:c/:tri/simas/confirmar', (req, res) => res.json(I.simas.confirmar(db, req.usuario, req.params.c, req.params.tri, b(req))));
+  r.post('/unidade/:c/:tri/simas/achados', (req, res) => res.json(I.simas.atualizarAchados(db, req.usuario, req.params.c, req.params.tri)));
   r.get('/unidade/:c/:tri/ausencias', (req, res) => res.json({ ausencias: I.ausenciasRegistradas(db, req.usuario, req.params.c, req.params.tri) }));
   r.post('/unidade/:c/:tri/check', (req, res) => res.json(I.marcarCheck(db, req.usuario, req.params.c, req.params.tri, b(req))));
   r.post('/unidade/:c/:tri/concluir', (req, res) => res.json(I.concluir(db, req.usuario, req.params.c, req.params.tri, b(req))));

@@ -6,7 +6,7 @@ const C = require('./catalogo');
 
 const sem = C.sem;
 // unidade = chega pelo SEI (upload); pedida_setor = a CTAI pede a outro setor (despacho, informação financeira); processo_parecer = fica no próprio processo do parecer (parecer da CMA); fonte_externa = consulta da analista (SIMAS)
-const ORIGENS = ['unidade', 'pedida_setor', 'processo_parecer', 'fonte_externa'];
+const ORIGENS = ['unidade', 'pedida_setor', 'processo_parecer', 'gerado_simas', 'fonte_externa'];
 const PERIODOS = ['mensal', 'trimestral'];
 
 // ---------- utilidades ----------
@@ -133,7 +133,7 @@ const FONTES = [
   { codigo: 'sia_sus', nome: 'SIA/SUS', re: /\bSIA\s*\/?\s*SUS\b|\bSIA\b/, origem: 'unidade', periodicidade: 'mensal', obrigatorio: true, padroes: ['\\bsia\\b', 'sia sus'], equivale: ['anexo_V'] },
   { codigo: 'cnes', nome: 'CNES (cadastro de profissionais)', re: /\bCNES\b/, origem: 'unidade', periodicidade: 'mensal', obrigatorio: true, padroes: ['\\bcnes\\b'], equivale: ['anexo_VI', 'anexo_VII'] },
   { codigo: 'ouvidoria', nome: 'Ouvidoria e satisfação do usuário', re: /ouvidoria|\bNPS\b|\bCSAT\b|queixas? recebidas|satisfa[cç][aã]o do usu[aá]rio/i, origem: 'unidade', periodicidade: 'mensal', obrigatorio: true, padroes: ['ouvidoria', '\\bnps\\b', '\\bcsat\\b', 'satisfacao'], equivale: ['anexo_1', 'anexo_1_1'] },
-  { codigo: 'simas', nome: 'SIMAS (consulta da analista)', re: /\bSIMAS\b/, origem: 'fonte_externa', periodicidade: 'mensal', obrigatorio: true, padroes: ['\\bsimas\\b'] },
+  { codigo: 'simas_metas', nome: 'SIMAS – Metas atingidas (consolidado do trimestre)', re: /\bSIMAS\b/, origem: 'gerado_simas', periodicidade: 'trimestral', obrigatorio: true, padroes: ['metas atingidas', '\\bsimas\\b', 'consolidado'], padroes_texto: ['metas atingidas consolidado'] },
   { codigo: 'despacho_financeiro', nome: 'Despacho financeiro / prestação de contas', re: /despachos?\b[^\n]{0,160}(?:ger[eê]ncia|presta[cç][aã]o de contas|financeir|GAFCG|GGCCG|GAOCG)|(?:ger[eê]ncia de presta[cç][aã]o de contas|prestac[aã]o de contas)[^\n]{0,80}despacho/i, origem: 'pedida_setor', periodicidade: 'mensal', obrigatorio: true, padroes: ['despacho'] },
   { codigo: 'financeiro', nome: 'Informação financeira (GGCCG), trimestre anterior', re: /informa[cç][oõ]es financeiras|INFORMA[CÇ][AÃ]O N[.º°o]*\s*\d+[^\n]{0,40}GG|gasto com pessoal|\bGAOCG\b/, origem: 'pedida_setor', periodicidade: 'trimestral', obrigatorio: true, padroes: ['informacao', 'financeir', 'gaocg'] },
   { codigo: 'parecer_cma', nome: 'Parecer conclusivo da CMA', re: /parecer conclusivo da (?:CMA|Comiss[aã]o Mista)/i, origem: 'processo_parecer', periodicidade: 'trimestral', obrigatorio: false, padroes: ['\\bcma\\b', 'comissao mista'] },
@@ -190,7 +190,7 @@ function fontesDe(linhas, ctx) {
       const per = contextoPeriodo(l) || padrao;
       poe({ codigo, nome, origem: 'unidade', periodicidade: per, obrigatorio: true, padroes: anexoPadrao(id), palavras: [], tipo: 'anexo', ordem: ordemAnexo(id) }, i, titulo || doCat ? {} : { confianca: 'media' });
     }
-    for (const f of FONTES) if (f.re.test(l)) poe({ codigo: f.codigo, nome: f.nome, origem: f.origem, periodicidade: f.periodicidade, obrigatorio: f.obrigatorio, padroes: f.padroes.slice(), palavras: [], tipo: 'fonte', equivale: f.equivale || [], ordem: 500 + FONTES.indexOf(f) }, i);
+    for (const f of FONTES) if (f.re.test(l)) poe({ codigo: f.codigo, nome: f.nome, origem: f.origem, periodicidade: f.periodicidade, obrigatorio: f.obrigatorio, padroes: f.padroes.slice(), padroes_texto: (f.padroes_texto || []).slice(), palavras: [], tipo: 'fonte', equivale: f.equivale || [], ordem: 500 + FONTES.indexOf(f) }, i);
     let r;
     REF.lastIndex = 0;
     while ((r = REF.exec(l))) {
@@ -278,6 +278,7 @@ function propostaLista(estrutura, tipo) {
       itens.push(Object.assign({}, p, f ? { trecho: corta((f.pagina ? 'p. ' + f.pagina + ': ' : '') + f.trecho, 300), confianca: 'alta' } : {}));
       if (!f) acrescentou++;
     }
+    if (!tem.has('simas_metas')) { const f = fontes.find((x) => x.codigo === 'simas_metas'); itens.push(limparItem(Object.assign(itemSimas(), f ? { trecho: corta((f.pagina ? 'p. ' + f.pagina + ': ' : '') + f.trecho, 300), confianca: 'alta' } : {}), itens.length + 1)); }
     if (acrescentou) aviso = acrescentou + ' item(ns) vieram da lista padrão da ' + tipo + ' porque o relatório não os cita.';
     // ordem: anexos na ordem do catálogo, depois as demais fontes na ordem em que o modelo as citou
     const ordemCat = new Map(padrao.map((p, k) => [p.codigo, k]));
@@ -287,6 +288,8 @@ function propostaLista(estrutura, tipo) {
   return { itens, aviso, vazia: false };
 }
 
+// Consolidado "METAS ATINGIDAS" gerado no SIMAS pela analista (PDF; trimestral: um arquivo cobre os 3 meses).
+const itemSimas = () => { const f = FONTES.find((x) => x.codigo === 'simas_metas'); return { codigo: f.codigo, nome: f.nome, obrigatorio: true, periodicidade: 'trimestral', origem: 'gerado_simas', padroes: f.padroes.slice(), padroes_texto: f.padroes_texto.slice(), palavras: [], trecho: 'O parecer usa o SIMAS como fonte principal de produção e qualidade. A analista gera o relatório no SIMAS e anexa.', confianca: 'catalogo' }; };
 // Lista padrão por tipo de unidade (reserva quando não há relatório anterior).
 function listaDoCatalogo(tipo) {
   const cat = C.catalogoDoTipo(tipo);
@@ -296,6 +299,7 @@ function listaDoCatalogo(tipo) {
     codigo: d.codigo, nome: d.nome, obrigatorio: !!d.obrigatorio, periodicidade: d.periodicidade || base, origem: 'unidade',
     padroes: d.padroes_nome || [], padroes_texto: d.padroes_texto || [], palavras: [], trecho: d.observacao || null, confianca: 'catalogo', a_partir_de: d.a_partir_de || null,
   }, k + 1));
+  if (cat.fluxo === 'gaveta') itens.push(limparItem(itemSimas(), itens.length + 1)); // UPAE: o consolidado do SIMAS é item da lista padrão
   return { itens, tipo };
 }
 
@@ -303,6 +307,10 @@ function listaDoCatalogo(tipo) {
 // Devolve { codigo, por: 'nome'|'conteudo' } ou null. nome e texto crus; aqui tudo é normalizado.
 const rx = (p) => { try { return new RegExp(p); } catch (_) { return null; } };
 function casar(itens, nome, texto) {
+  // o consolidado do SIMAS se reconhece primeiro pelo conteúdo ("METAS ATINGIDAS - CONSOLIDADO"), antes que "consolidad" do nome case com a planilha de monitoramento
+  itens = itens.slice().sort((a, b) => (a.codigo === 'simas_metas' ? -1 : 0) - (b.codigo === 'simas_metas' ? -1 : 0));
+  const simas = itens.find((i) => i.codigo === 'simas_metas');
+  if (simas && /metas atingidas consolidado/.test(sem(String(texto || '').slice(0, 1500)))) return { codigo: 'simas_metas', por: 'conteudo' };
   const n = sem(C.limpaNome(nome));
   const inicio = sem(String(texto || '').slice(0, 600));
   const acha = (alvo, it, lista) => (lista || []).some((p) => { const r = rx(p); return r && r.test(alvo); });
@@ -319,4 +327,4 @@ function casar(itens, nome, texto) {
   return null;
 }
 
-module.exports = { extrairEstrutura, propostaLista, listaDoCatalogo, casar, limparItem, padroesDoNome, codigoUnico, trimestreDe, secoesDe, tabelasDe, indicadoresDe, fontesDe, ORIGENS, PERIODOS, corta, slug };
+module.exports = { itemSimas, extrairEstrutura, propostaLista, listaDoCatalogo, casar, limparItem, padroesDoNome, codigoUnico, trimestreDe, secoesDe, tabelasDe, indicadoresDe, fontesDe, ORIGENS, PERIODOS, corta, slug };

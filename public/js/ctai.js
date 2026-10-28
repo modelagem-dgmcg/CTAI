@@ -232,7 +232,7 @@
     const hoje = new Date().toISOString().slice(0, 10);
     return h('div', { class: 'item-mesa ' + (a.status === 'fixado' || a.status === 'respondido' ? 'ok' : '') },
       h('div', { class: 'linha espaco' }, h('strong', null, a.tipo || 'Ponto a conferir'), h('div', { class: 'linha' }, seloGrav(a.gravidade), a.status && a.status !== 'novo' ? selo(a.status, STATUS_TIPO[a.status] || '') : null, a.setor_sugerido ? selo('setor: ' + a.setor_sugerido) : null)),
-      a.unidade ? h('p', { class: 'peq mudo', style: 'margin:2px 0' }, a.unidade + (a.competencia_id ? ' · ' + fmt.comp(a.competencia_id) : '')) : null,
+      a.unidade ? h('p', { class: 'peq mudo', style: 'margin:2px 0' }, a.unidade + (a.competencia_id ? ' · ' + fmt.comp(a.competencia_id) : (a.trimestre ? ' · ' + a.trimestre : ''))) : null,
       a.trecho ? h('blockquote', { style: 'margin:8px 0;padding:6px 12px;border-left:3px solid var(--borda);color:var(--cinza)' }, a.trecho) : null,
       a.risco ? h('p', { class: 'peq', style: 'margin:4px 0' }, h('strong', null, 'Por que importa: '), a.risco) : null,
       a.sugestao ? h('p', { class: 'peq', style: 'margin:4px 0' }, h('strong', null, 'O que pedir: '), a.sugestao) : null,
