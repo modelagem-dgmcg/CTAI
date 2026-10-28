@@ -45,7 +45,7 @@ function lerBR(t) {
 const numOk = (v) => { if (v === null || v === undefined || v === '') return null; const n = typeof v === 'number' ? v : lerBR(v); return Number.isFinite(n) ? n : null; };
 
 // ---------- caminho A (cálculo) ----------
-function pctA(soma, metaTotal) { return metaTotal > 0 ? Math.round((soma / metaTotal) * 10000) : null; } // pontos-base (49,77% = 4977)
+function pctA(soma, metaTotal) { return metaTotal > 0 ? Math.round((soma / metaTotal) * 10000) : null; } // pontos-base (ex.: 44,44% = 4444)
 function descA(totalCent, bp) { return Math.round(totalCent * bp / 10000); }
 // ---------- caminho B (independente: BigInt, arredondamento meio para cima) ----------
 function pctB(soma, metaTotal) {
