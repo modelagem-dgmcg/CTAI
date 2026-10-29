@@ -239,7 +239,7 @@
       montar(cabecalho('importar'),
         aviso('info', h('strong', null, 'Como funciona. '), 'Carregue um CSV (UTF-8, separado por ; ou ,) com as colunas tipo (UPA, UPAE ou Hospital), unidade, municipio (opcional) e analista (login ou nome; vários separados por |). A unidade é identificada por tipo + nome + município. Nada é gravado antes de você conferir a prévia.'),
         h('div', { class: 'cartao' },
-          h('div', { class: 'linha' }, h('a', { href: '/api/gestao/carteira/importar/modelo.csv', download: 'modelo-importacao-carteira.csv', class: 'btn sec', id: 'imp-modelo' }, 'Baixar modelo (dados fictícios)')),
+          h('div', { class: 'linha' }, h('a', { href: '/api/gestao/carteira/importar/modelo.csv', download: 'modelo-importacao-carteira.csv', class: 'btn sec', id: 'imp-modelo' }, 'Baixar modelo em branco'), h('a', { href: '/api/gestao/carteira/importar/atual.csv', download: 'carteira-atual.csv', class: 'btn sec', id: 'imp-atual', style: 'margin-left:8px' }, 'Baixar a carteira de hoje')),
           h('div', { class: 'campo' }, h('label', { for: 'imp-arquivo' }, 'Arquivo CSV'), arquivo, E.nomeArquivo ? h('span', { class: 'mudo peq' }, E.nomeArquivo) : null),
           h('div', { class: 'campo' }, h('label', { for: 'imp-modo' }, 'Modo'), modo),
           h('label', { class: 'ck' }, ign, ' Ignorar linhas com erro (grava só as boas)')),

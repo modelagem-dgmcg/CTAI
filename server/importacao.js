@@ -328,16 +328,12 @@ function historico(db) {
   return db.all('SELECT importacao_id, em, quem, modo, resumo FROM importacoes ORDER BY importacao_id DESC LIMIT 20').map((r) => Object.assign(r, { resumo: r.resumo ? JSON.parse(r.resumo) : null }));
 }
 
-const MODELO = [
-  'tipo;unidade;municipio;analista',
-  'UPA;UPA Exemplo Alfa;Cidade Alfa;analista.um',
-  'UPA;UPA Exemplo Beta;Cidade Beta;analista.um',
-  'UPAE;UPAE Exemplo Alfa;Cidade Alfa;analista.dois',
-  'UPAE;UPAE Exemplo Gama;Cidade Gama;analista.dois',
-  'Hospital;Hospital Exemplo Alfa;Cidade Alfa;analista.tres',
-  'Hospital;Hospital Exemplo Delta;Cidade Delta;analista.tres|analista.quatro',
-  'UPA;UPA Exemplo Epsilon;Cidade Epsilon;analista.quatro',
-].join('\n');
+const MODELO = 'tipo;unidade;municipio;analista';
+// Carteira como está hoje, no mesmo formato da importação: serve de ponto de partida para ajustar e reenviar.
+function atualCsv(db) {
+  const linhas = db.all("SELECT c.tipo, c.unidade, c.municipio, c.demo, GROUP_CONCAT(u.login, '|') AS analistas FROM contratos c LEFT JOIN carteira k ON k.contrato_id = c.contrato_id AND k.ate IS NULL LEFT JOIN usuarios u ON u.usuario_id = k.usuario_id GROUP BY c.contrato_id ORDER BY c.tipo, c.unidade").filter((r) => !r.demo);
+  return '\ufeff' + [MODELO].concat(linhas.map((r) => [r.tipo || '', r.unidade, r.municipio || '', r.analistas || ''].join(';'))).join('\n') + '\n';
+}
 const modeloCsv = () => '﻿' + MODELO + '\n';
 
-module.exports = { previa, gravar, historico, modeloCsv, tipoDe, TIPOS };
+module.exports = { previa, gravar, historico, modeloCsv, atualCsv, tipoDe, TIPOS };

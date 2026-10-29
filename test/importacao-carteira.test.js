@@ -21,6 +21,7 @@ async function post(rota, corpo) { const r = await nath.post(IMP + rota, corpo);
 test('o modelo CSV é baixável e só tem dados fictícios; só superintendente/admin usam', async () => {
   const r = await nath.get(IMP + 'modelo.csv');
   assert.equal(r.status, 200);
+  assert.equal((await nath.get(IMP + 'atual.csv')).status, 200);
   assert.equal((await cleuton.get(IMP + 'modelo.csv')).status, 403);
   assert.equal((await cleuton.post(IMP + 'previa', { csv: 'x' })).status, 403);
   assert.equal((await post('previa', {})).status, 400, 'sem arquivo');

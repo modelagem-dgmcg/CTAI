@@ -1,6 +1,6 @@
 /* Service worker: guarda só os arquivos estáticos (telas, fontes, estilos). Nenhuma resposta da API é guardada.
    O leitor de PDF (/vendor/pdf.min.js e pdf.worker.min.js, 1,5 MB) não vai na instalação: entra no cache na primeira vez que alguém solta um PDF. */
-const VERSAO = 'ctai-v77';
+const VERSAO = 'ctai-v78';
 const ESTATICOS = ['/', '/unidade', '/ctai', '/css/app.css', '/js/core.js', '/js/login.js', '/js/unidade.js', '/js/ctai.js', '/js/pagina-unidade.js', '/js/documentos.js', '/js/ensinar.js', '/js/historico.js', '/js/contratos-drive.js', '/js/mascara-comum.js', '/js/texto-comum.js', '/js/leitor-pdf.js', '/js/alimentar.js', '/js/importar.js', '/js/parecer-trimestre.js', '/vendor/jszip.min.js', '/js/comece-aqui.js', '/js/sala-guiada.js', '/css/sala-guiada.css', '/js/usuario-form.js', '/js/rack-ia.js', '/js/gestao.js', '/js/caixa.js', '/js/mensageiro.js', '/icons/icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSAO).then((c) => c.addAll(ESTATICOS).catch(() => {})).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSAO).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
