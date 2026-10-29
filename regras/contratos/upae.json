@@ -12,7 +12,7 @@
    "oss": "ASSOC DE PROT A MATERNIDADE E A INFANCIA DE SURUBIM - APAMI SURUBIM",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": 20,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "producao",

@@ -11,7 +11,7 @@
    "oss": "",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": 20,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "producao",
@@ -951,7 +951,7 @@
    "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": null,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "qualidade",
@@ -1983,7 +1983,7 @@
    ],
    "contrato_numero": "023/2022",
    "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES – FGH",
-   "valor_mensal": "8.485.577,12",
+   "valor_mensal": "10.031.199,74",
    "fixa_pct": 70,
    "variavel_pct": 30,
    "indicadores": [
