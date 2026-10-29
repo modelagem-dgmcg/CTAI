@@ -226,6 +226,16 @@
       try { await api('POST', '/api/analista/achados/' + a.achado_id + '/encaminhar', { setor: setor.value || null, prazo: prazo.value || null, mensagem: msg.value }); toast('Encaminhado à unidade.'); recarregar(); return; } catch (e) { erroMsg.textContent = e.message; }
     }
   }
+  // De onde veio o achado: fonte, documento, parte e data. O que não foi registrado é dito, nunca inventado.
+  function origemBloco(a) {
+    const linha = (rot, v, falta) => h('div', { style: 'font-size:16px;margin:2px 0' }, h('strong', null, rot + ': '), v || h('span', { class: 'mudo' }, falta));
+    return h('div', { class: 'aviso info', style: 'margin:8px 0' },
+      h('div', { style: 'font-size:16px;font-weight:600;margin-bottom:4px' }, 'De onde vem este achado'),
+      linha('Fonte', a.origem_fonte, 'não registrada (achado anterior a esta função)'),
+      linha('Documento', a.origem_doc, 'não registrado neste achado'),
+      a.origem_local ? linha('Onde no documento', a.origem_local) : null,
+      a.origem_data ? linha('Referente a', a.origem_data) : null);
+  }
   function achadoCard(a, recarregar) {
     const mudar = async (status) => { let motivo = null; if (status === 'descartado') { motivo = await perguntar('Descartar o achado', 'Por que descartar?', { longo: true }); if (!motivo) return; } try { await api('PATCH', '/api/analista/achados/' + a.achado_id, { status, motivo }); recarregar(); } catch (e) { toast(e.message, true); } };
     const podeEncaminhar = recarregar && a.cid && ['novo', 'fixado', 'respondido'].includes(a.status) && ['criador', 'admin', 'superintendente'].includes(EU.perfil);
@@ -233,6 +243,7 @@
     return h('div', { class: 'item-mesa ' + (a.status === 'fixado' || a.status === 'respondido' ? 'ok' : '') },
       h('div', { class: 'linha espaco' }, h('strong', null, a.tipo || 'Ponto a conferir'), h('div', { class: 'linha' }, seloGrav(a.gravidade), a.status && a.status !== 'novo' ? selo(a.status, STATUS_TIPO[a.status] || '') : null, a.setor_sugerido ? selo('setor: ' + a.setor_sugerido) : null)),
       a.unidade ? h('p', { class: 'peq mudo', style: 'margin:2px 0' }, a.unidade + (a.competencia_id ? ' · ' + fmt.comp(a.competencia_id) : (a.trimestre ? ' · ' + a.trimestre : ''))) : null,
+      origemBloco(a),
       a.trecho ? h('blockquote', { style: 'margin:8px 0;padding:6px 12px;border-left:3px solid var(--borda);color:var(--cinza)' }, a.trecho) : null,
       a.risco ? h('p', { class: 'peq', style: 'margin:4px 0' }, h('strong', null, 'Por que importa: '), a.risco) : null,
       a.sugestao ? h('p', { class: 'peq', style: 'margin:4px 0' }, h('strong', null, 'O que pedir: '), a.sugestao) : null,

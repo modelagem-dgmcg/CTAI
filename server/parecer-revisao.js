@@ -61,7 +61,8 @@ async function revisar(db, parecerId, usuario) {
   const todos = locais.concat(gc.achados, rq.achados, ia.achados);
   const ordem = ['ALTA', 'MÉDIA', 'BAIXA'];
   todos.sort((a, b) => ordem.indexOf(a.gravidade) - ordem.indexOf(b.gravidade));
-  const salvos = achadosDb.salvar(db, { origem_tipo: 'minuta', origem_id: p.parecer_id, cid: comp ? comp.cid : null, achados: todos, provedor: 'revisão completa · ' + ia.provedor, usuario: usuario.login });
+  const salvos = achadosDb.salvar(db, { origem_tipo: 'minuta', origem_id: p.parecer_id, cid: comp ? comp.cid : null, achados: todos, provedor: 'revisão completa · ' + ia.provedor, usuario: usuario.login,
+    origem: { fonte: 'Minuta lida pela IA', documento: 'Minuta do parecer ' + (c.identificacao.numero_parecer || '(sem número)') + ' · ' + (c.identificacao.unidade || ''), data: new Date().toISOString().slice(0, 10) } });
   trilha.registrar(db, { usuario: usuario.login, tabela: 'pareceres', registro: p.parecer_id, campo: 'revisao_completa', valor_novo: { achados: todos.length, busca_externa: ext.ok } });
   return { achados: todos, salvos, provedor: ia.provedor, tentativas: ia.tentativas, externa: ext, relatorios: { usado: rq.usado, n: rq.relatorios || 0 }, gaocg: { usado: gc.usado, lido_em: gc.lido_em || null, da_copia: !!gc.da_copia, informacao: gc.informacao || null }, normasDaUnidade: normas.length };
 }

@@ -249,8 +249,8 @@ test('achado "A CONFERIR" sem decisão bloqueia; fixado vira sugestão de consid
   v = (await cle.get(url('PT-4'))).json;
   assert.ok(!v.bloqueios.some((b) => /Achado/.test(b)));
   assert.ok(v.sugestoes.some((s) => s.marca === 'sugestão, revisar' && /Mamografia/.test(s.texto)));
-  assert.ok(v.sugestoes.some((s) => s.origem === 'cálculo' && /53,33%/.test(s.texto)));
-  assert.ok(v.sugestoes.some((s) => /^modelo/.test(s.origem) && /outubro a dezembro/.test(s.texto)), 'itens do modelo viram sugestões, com o período trocado');
+  assert.ok(v.sugestoes.some((s) => /^cálculo do sistema/.test(s.origem) && /53,33%/.test(s.texto)));
+  assert.ok(v.sugestoes.some((s) => /^relatório-modelo/.test(s.origem) && /outubro a dezembro/.test(s.texto)), 'itens do modelo viram sugestões, com o período trocado');
   assert.deepEqual(v.consideracoes_finais, [], 'sugestão não entra sozinha');
 });
 test('pronto para conferência: grava hash e trilha; mudar um número depois derruba o pronto; PDF só com pronto', async () => {

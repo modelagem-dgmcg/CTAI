@@ -231,8 +231,10 @@ function gerarAchados(db, usuario, c, tri) {
       const chave = [d.tipo, sem(d.indicador), d.periodo].join('|');
       if (db.get("SELECT 1 AS x FROM achados WHERE origem_tipo = 'simas' AND contrato_id = ? AND trimestre = ? AND chave = ?", c.contrato_id, tri, chave)) continue;
       const trecho = d.detalhe + ' [Fonte: ' + d.a.fonte + (arq ? ', arquivo ' + arq.nome_arquivo : '') + (d.trecho_origem ? ', trecho: "' + String(d.trecho_origem).slice(0, 200) + '"' : '') + '; comparado com ' + d.b.fonte + '.]';
-      db.run('INSERT INTO achados (origem_tipo, origem_id, cid, contrato_id, trimestre, chave, gravidade, tipo, trecho, risco, sugestao, setor_sugerido, provedor, status, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        'simas', origemId, null, c.contrato_id, tri, chave, 'A CONFERIR', 'SIMAS × RM × planilha: ' + d.indicador, trecho.slice(0, 1500), 'As fontes não coincidem neste ponto. O sistema só sinaliza e não diz qual está certa.', 'Conferir nas fontes e decidir: fixar (aceitar o ponto) ou descartar com observação.', null, 'conferidor SIMAS', 'novo', agora_, agora_);
+      const docsAB = [d.a, d.b].map((x) => x.fonte + (x.documento ? ' (' + x.documento + ')' : ' (arquivo não identificado)')).join(' × ');
+      db.run('INSERT INTO achados (origem_tipo, origem_id, cid, contrato_id, trimestre, chave, gravidade, tipo, trecho, risco, sugestao, setor_sugerido, provedor, status, criado_em, atualizado_em, origem_fonte, origem_doc, origem_local, origem_data) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'simas', origemId, null, c.contrato_id, tri, chave, 'A CONFERIR', 'SIMAS × RM × planilha: ' + d.indicador, trecho.slice(0, 1500), 'As fontes não coincidem neste ponto. O sistema só sinaliza e não diz qual está certa.', 'Conferir nas fontes e decidir: fixar (aceitar o ponto) ou descartar com observação.', null, 'conferidor SIMAS', 'novo', agora_, agora_,
+        'SIMAS × RM × planilha', docsAB, d.trecho_origem ? String(d.trecho_origem).slice(0, 300) : null, tri);
       novos++;
     }
     if (novos) trilha.registrar(db, { usuario: usuario.login, tabela: 'achados', registro: 'simas/' + c.contrato_id + '/' + tri, campo: 'achados_simas', valor_novo: novos + ' ponto(s) a conferir (SIMAS × RM × planilha)' });
@@ -315,6 +317,14 @@ function conferir(db, c, tri, numeros) {
   for (const [, lista] of porInd) {
     if (lista.length && lista.every((x) => x.realizado === 0) && /maior ou igual/i.test(lista[0].regra || '')) div({ tipo: 'indicador_zero', indicador: lista[0].descricao, trecho_origem: origem(lista[0]), periodo: tri, a: { fonte: 'SIMAS', valor: 0 }, b: { fonte: lista[0].regra, valor: null }, detalhe: 'O SIMAS mostra 0 e "Não" em todos os blocos (' + lista[0].regra + '). Pode ser dado não importado para o SIMAS.' });
   }
+  // Documento de onde veio cada lado da diferença (arquivo guardado), para a analista abrir e conferir.
+  const sm = db.get('SELECT arquivo_id FROM imp_simas WHERE contrato_id = ? AND trimestre = ?', c.contrato_id, tri);
+  const sa = sm && sm.arquivo_id ? db.get('SELECT nome_arquivo FROM imp_arquivos WHERE id = ?', sm.arquivo_id) : null;
+  const porMes = (cod) => db.all("SELECT mes, nome_arquivo, paginas FROM gaveta_documentos WHERE contrato_id = ? AND codigo = ? AND mes IN (" + meses.map(() => '?').join(',') + ') ORDER BY mes', c.contrato_id, cod, ...meses)
+    .map((d) => C.rotuloMes(d.mes) + ': ' + d.nome_arquivo + (d.paginas ? ' (' + d.paginas + ' pág.)' : ''));
+  const docs = { SIMAS: sa ? [sa.nome_arquivo] : [], RM: porMes('anexo_I'), Planilha: porMes('anexo_II') };
+  const docDe = (fonte) => { const k = /^SIMAS/.test(fonte) ? 'SIMAS' : /^RM/.test(fonte) ? 'RM' : /^Planilha/.test(fonte) ? 'Planilha' : null; return k && docs[k].length ? docs[k].join('; ') : null; };
+  for (const d of out) { if (d.a) d.a.documento = docDe(d.a.fonte); if (d.b) d.b.documento = docDe(d.b.fonte); }
   return out;
 }
 

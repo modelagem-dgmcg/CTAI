@@ -212,7 +212,8 @@ async function analisarEnvio(db, envioId, usuarioLogin) {
     texto: t.texto, tabelas: t.tabelas, tipo: 'relatorio_unidade',
     contexto: contextoDoEnvio(db, envio, t),
   });
-  const n = achadosDb.salvar(db, { origem_tipo: 'envio', origem_id: envio.envio_id, cid: envio.cid, achados: res.achados, provedor: res.provedor, usuario: usuarioLogin });
+  const n = achadosDb.salvar(db, { origem_tipo: 'envio', origem_id: envio.envio_id, cid: envio.cid, achados: res.achados, provedor: res.provedor, usuario: usuarioLogin,
+    origem: { fonte: 'Relatório da unidade, lido pela IA', documento: 'Relatório de ' + t.comp.unidade + ', competência ' + t.comp.competencia_id + ' (envio versão ' + envio.versao + ')', data: String(envio.enviado_em || '').slice(0, 10) || null } });
   return { provedor: res.provedor, achados: n, tentativas: res.tentativas };
 }
 

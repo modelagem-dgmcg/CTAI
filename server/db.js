@@ -406,13 +406,15 @@ const COLUNAS_NOVAS = {
   alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER', 'origem TEXT', 'imp_trimestre TEXT', 'imp_modelo INTEGER'],
   perguntas_contrato: ['o_que_e TEXT', 'doc_origem TEXT', 'trecho_origem TEXT', 'data_origem TEXT', 'por_que_importa TEXT', 'o_que_fazer TEXT', 'impacto INTEGER'],
   imp_checks: ['situacao TEXT', 'data_pedido TEXT', 'processo_sei TEXT'],
-  achados: ['contrato_id TEXT', 'trimestre TEXT', 'chave TEXT', 'encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
+  achados: ['contrato_id TEXT', 'trimestre TEXT', 'chave TEXT', 'encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT', 'origem_fonte TEXT', 'origem_doc TEXT', 'origem_local TEXT', 'origem_data TEXT'],
 };
 function migrar(db) {
   for (const [tabela, colunas] of Object.entries(COLUNAS_NOVAS)) {
     const existentes = new Set(db.prepare('PRAGMA table_info(' + tabela + ')').all().map((c) => c.name));
     for (const def of colunas) if (!existentes.has(def.split(' ')[0])) db.exec('ALTER TABLE ' + tabela + ' ADD COLUMN ' + def);
   }
+  // Achados antigos: só se preenche o que o próprio tipo de origem já diz (de onde o achado nasceu). Documento, trecho e data NÃO são inventados: ficam vazios e a tela avisa.
+  db.exec("UPDATE achados SET origem_fonte = CASE origem_tipo WHEN 'simas' THEN 'SIMAS × RM × planilha' WHEN 'envio' THEN 'Relatório da unidade, lido pela IA' WHEN 'minuta' THEN 'Minuta do parecer' WHEN 'texto' THEN 'Texto colado e lido pela IA' END WHERE origem_fonte IS NULL AND origem_tipo IN ('simas','envio','minuta','texto')");
 }
 
 function abrir(arquivo) {

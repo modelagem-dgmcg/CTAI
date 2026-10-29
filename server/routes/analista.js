@@ -38,7 +38,8 @@ module.exports = (db) => {
     let salvos = 0;
     if (b.salvar) {
       const proximo = db.get("SELECT IFNULL(MAX(origem_id),0)+1 AS n FROM achados WHERE origem_tipo = 'texto'").n;
-      salvos = achadosDb.salvar(db, { origem_tipo: 'texto', origem_id: proximo, cid, achados: res1.achados, provedor: res1.provedor, usuario: req.usuario.login });
+      salvos = achadosDb.salvar(db, { origem_tipo: 'texto', origem_id: proximo, cid, achados: res1.achados, provedor: res1.provedor, usuario: req.usuario.login,
+        origem: { fonte: 'Texto colado e lido pela IA', documento: 'Texto colado em "Analisar outro texto" (' + (b.tipo || 'relatório da OSS') + (contexto.unidade ? ', ' + contexto.unidade : '') + '); o texto não fica guardado', data: new Date().toISOString().slice(0, 10) } });
     }
     res.json(Object.assign(res1, { salvos }));
   });
@@ -59,7 +60,7 @@ module.exports = (db) => {
     const texto = [c.texto.abertura, c.texto.analise, c.texto.conclusao].join('\n\n');
     const comp = c.indicadores.competencias[c.indicadores.competencias.length - 1];
     const out = await analista.analisar({ texto, tipo: 'minuta de parecer', contexto: { competencia: comp ? comp.competencia : null, unidade: c.identificacao.unidade } });
-    const salvos = achadosDb.salvar(db, { origem_tipo: 'minuta', origem_id: p.parecer_id, cid: comp ? comp.cid : null, achados: out.achados, provedor: out.provedor, usuario: req.usuario.login });
+    const salvos = achadosDb.salvar(db, { origem_tipo: 'minuta', origem_id: p.parecer_id, cid: comp ? comp.cid : null, achados: out.achados, provedor: out.provedor, origem: { fonte: 'Minuta lida pela IA', documento: 'Minuta do parecer · ' + (c.identificacao.unidade || ''), data: new Date().toISOString().slice(0, 10) }, usuario: req.usuario.login });
     res.json(Object.assign(out, { salvos }));
   });
 

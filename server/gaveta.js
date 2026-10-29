@@ -77,7 +77,7 @@ function documentos(db, contratoId, mes) {
   return db.all('SELECT id, codigo, parte, nome_arquivo, paginas, paginas_imagem, caracteres, mascarados, versao, criado_em, atualizado_em FROM gaveta_documentos WHERE contrato_id = ? AND mes = ? ORDER BY id', contratoId, mes)
     .map((x) => { let m = {}; try { m = JSON.parse(x.mascarados || '{}'); } catch (_) { /* vazio */ } return Object.assign(x, { mascarados: m, paginas_imagem: x.paginas_imagem ? x.paginas_imagem.split(',').map(Number) : [] }); });
 }
-const numeros = (db, contratoId, mes) => db.all('SELECT * FROM gaveta_numeros WHERE contrato_id = ? AND mes = ? ORDER BY doc_id, id', contratoId, mes);
+const numeros = (db, contratoId, mes) => db.all('SELECT n.*, d.nome_arquivo AS arquivo, d.paginas AS paginas_arquivo FROM gaveta_numeros n LEFT JOIN gaveta_documentos d ON d.id = n.doc_id WHERE n.contrato_id = ? AND n.mes = ? ORDER BY n.doc_id, n.id', contratoId, mes);
 
 function resumoLinha(cat, mes, lac) {
   const total = lac.obrigatorios + lac.chegaram.filter((d) => !d.obrigatorio).length;

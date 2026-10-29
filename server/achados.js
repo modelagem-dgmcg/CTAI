@@ -8,14 +8,26 @@ const { erro } = require('./auth');
 const SETORES = ['assistencia', 'qualidade', 'ouvidoria', 'educacao', 'bid', 'rh'];
 const STATUS = ['novo', 'fixado', 'descartado', 'encaminhado', 'respondido'];
 
-function salvar(db, { origem_tipo, origem_id, cid, achados, provedor, usuario }) {
+// De onde veio cada achado: quem apontou (fonte), em qual documento, em que parte e de que data. O achado pode trazer isso (a.origem como texto ou objeto) ou herdar o padrão da chamada.
+const FONTES = { 'conferência local': 'Conferência do sistema na minuta', 'GAOCG': 'Conferência com a base do GAOCG' };
+function origemDe(a, padrao, origemTipo) {
+  const o = a && a.origem && typeof a.origem === 'object' ? a.origem : { fonte: a && typeof a.origem === 'string' ? a.origem : null };
+  const p = padrao || {};
+  const fonte = o.fonte || (a && a.origem_fonte) || p.fonte || null;
+  let local = o.local || (a && a.origem_local) || p.local || null;
+  if (!local && origemTipo === 'minuta' && a && a.trecho && String(a.trecho).length <= 80) local = String(a.trecho);
+  return { fonte: fonte ? (FONTES[fonte] || fonte) : null, doc: o.documento || (a && a.origem_doc) || p.documento || null, local, data: o.data || (a && a.origem_data) || p.data || null };
+}
+
+function salvar(db, { origem_tipo, origem_id, cid, achados, provedor, usuario, origem }) {
   // Substitui os achados ainda "novos" da mesma origem. Fixados, descartados, encaminhados e respondidos ficam como estão.
   db.run("DELETE FROM achados WHERE origem_tipo = ? AND origem_id = ? AND status = 'novo'", origem_tipo, origem_id);
   const agora = new Date().toISOString();
   let n = 0;
   for (const a of achados) {
-    db.run('INSERT INTO achados (origem_tipo, origem_id, cid, gravidade, tipo, trecho, risco, sugestao, setor_sugerido, provedor, status, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      origem_tipo, origem_id, cid || null, a.gravidade, a.tipo || null, a.trecho || null, a.risco || null, a.sugestao || null, a.setor_sugerido || null, provedor || null, 'novo', agora, agora);
+    const og = origemDe(a, origem, origem_tipo);
+    db.run('INSERT INTO achados (origem_tipo, origem_id, cid, gravidade, tipo, trecho, risco, sugestao, setor_sugerido, provedor, status, criado_em, atualizado_em, origem_fonte, origem_doc, origem_local, origem_data) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      origem_tipo, origem_id, cid || null, a.gravidade, a.tipo || null, a.trecho || null, a.risco || null, a.sugestao || null, a.setor_sugerido || null, provedor || null, 'novo', agora, agora, og.fonte, og.doc, og.local, og.data);
     n++;
   }
   trilha.registrar(db, { usuario: usuario || 'sistema', tabela: 'achados', registro: origem_tipo + '/' + origem_id, campo: 'analise', valor_novo: n + ' achado(s) pelo provedor ' + (provedor || '—') });
@@ -90,7 +102,8 @@ function daUnidade(db, usuario) {
   return lista
     .filter((a) => usuario.perfil !== 'setor_unidade' || !a.encaminhado_a || require('./auth').setoresDe(usuario).includes(a.encaminhado_a))
     .map((a) => ({ achado_id: a.achado_id, cid: a.cid, competencia_id: a.competencia_id, status: a.status, gravidade: a.gravidade, tipo: a.tipo, trecho: a.trecho, mensagem: a.mensagem,
-      setor: a.encaminhado_a, prazo: a.prazo, encaminhado_em: a.encaminhado_em, resposta: a.resposta, respondido_por: a.respondido_por, respondido_em: a.respondido_em }));
+      setor: a.encaminhado_a, prazo: a.prazo, encaminhado_em: a.encaminhado_em, resposta: a.resposta, respondido_por: a.respondido_por, respondido_em: a.respondido_em,
+      origem_fonte: a.origem_fonte, origem_doc: a.origem_doc, origem_local: a.origem_local, origem_data: a.origem_data }));
 }
 
 function contagens(db) {
@@ -101,4 +114,4 @@ function contagens(db) {
   return o;
 }
 
-module.exports = { salvar, listar, obter, mudarStatus, encaminhar, responder, daUnidade, contagens, SETORES, STATUS };
+module.exports = { origemDe, salvar, listar, obter, mudarStatus, encaminhar, responder, daUnidade, contagens, SETORES, STATUS };

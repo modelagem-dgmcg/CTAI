@@ -163,7 +163,7 @@ function gerar(ctx) {
     out.secoes['9'] = { numero: '9', titulo: s9.titulo, paragrafos: pars, n_trocas: contar(pars, 'trocado'), n_revisar: contar(pars, 'revisar'), fixo: false };
     out.sugestoes = itens.map((it, k) => {
       const ps = processar(it.join(' '), Object.assign({ perfil: 'completo' }, base));
-      return { origem: 'modelo (trimestre anterior), item ' + (k + 1), texto: ps.map(plano).join(' '), segs: ps[0].segs, marca: 'sugestão, revisar' };
+      return { origem: 'relatório-modelo (parecer do trimestre anterior), considerações finais, item ' + (k + 1), texto: ps.map(plano).join(' '), segs: ps[0].segs, marca: 'sugestão, revisar' };
     });
   }
   const R = base.repasseModeloCent, N = base.repasseNovoCent;

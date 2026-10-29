@@ -310,9 +310,9 @@ function montar(db, c, tri) {
   if (mudouMeta && !s3tas) bloqueios.push('A meta de algum indicador mudou dentro do trimestre (provável termo aditivo): descreva o termo aditivo na identificação (campo da seção 3).');
   if (gerado && gerado.aviso_repasse && repOk) avisos.push('Seção 3: ' + gerado.aviso_repasse);
   // considerações finais: sugestões (achados fixados, indicadores abaixo de 85% e itens do modelo); só entram as que a analista aceitar
-  const fixados = db.all("SELECT achado_id, tipo, trecho FROM achados WHERE contrato_id = ? AND trimestre = ? AND status = 'fixado' ORDER BY achado_id", cid, tri);
-  const sugestoes = fixados.map((a) => ({ origem: 'achado #' + a.achado_id, texto: String(a.tipo || 'Achado').slice(0, 160) + ': ' + String(a.trecho || '').slice(0, 300), marca: 'sugestão, revisar' }));
-  for (const q of q1) if (q.pct_bp !== null && q.pct_bp < 8500) sugestoes.push({ origem: 'cálculo', texto: 'Recomenda-se à Contratada atenção ao indicador "' + q.nome + '", que alcançou ' + pctTxt(q.pct_bp) + ' no trimestre, abaixo do mínimo contratual de 85%.', marca: 'sugestão, revisar' });
+  const fixados = db.all("SELECT achado_id, tipo, trecho, origem_fonte, origem_doc, origem_local FROM achados WHERE contrato_id = ? AND trimestre = ? AND status = 'fixado' ORDER BY achado_id", cid, tri);
+  const sugestoes = fixados.map((a) => ({ origem: 'achado #' + a.achado_id + ' fixado por você · ' + (a.origem_fonte || 'fonte não registrada') + (a.origem_doc ? ' · ' + a.origem_doc : ' · documento não registrado neste achado') + (a.origem_local ? ' · ' + a.origem_local : ''), texto: String(a.tipo || 'Achado').slice(0, 160) + ': ' + String(a.trecho || '').slice(0, 300), marca: 'sugestão, revisar' }));
+  for (const q of q1) if (q.pct_bp !== null && q.pct_bp < 8500) sugestoes.push({ origem: 'cálculo do sistema: ' + q.nome + ' no trimestre = soma dos meses confirmados ÷ soma das metas (SIMAS, RM e planilha conforme a fonte confirmada)', texto: 'Recomenda-se à Contratada atenção ao indicador "' + q.nome + '", que alcançou ' + pctTxt(q.pct_bp) + ' no trimestre, abaixo do mínimo contratual de 85%.', marca: 'sugestão, revisar' });
   if (gerado) for (const s of gerado.sugestoes) sugestoes.push(Object.assign({}, s, { segs: undefined }));
   const finais = Array.isArray(dados.consideracoes_finais) ? dados.consideracoes_finais : [];
 
