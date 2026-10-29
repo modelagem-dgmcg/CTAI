@@ -417,6 +417,12 @@
       if (!forcar && sig === assinaturaBase) return; assinaturaBase = sig;
       const r = est.resumo;
       const prontos = est.itens.filter((i) => i.estado === 'pronto');
+      // Só fica à vista o que pede ação: dúvida de unidade/período, problema, divergência a olhar ou arquivo ainda sendo lido. O resto vai para uma lista recolhida.
+      const pede = (i) => ['espera', 'fila', 'lendo', 'montando', 'precisa_dados', 'problema'].includes(i.estado) || ((i.divergencias || []).length > 0 && i.estado === 'pronto') || (i.estado === 'lido' && !!i.motivo);
+      const precisam = est.itens.filter(pede), quietos = est.itens.filter((i) => !pede(i));
+      const tabelaArq = (lista) => h('div', { class: 'rolagem' }, h('table', { class: 'al-arq' },
+        h('thead', null, h('tr', null, ['', 'Arquivo', 'Andamento', 'Dados mascarados', 'Divergências', ''].map((t) => h('th', null, t)))),
+        h('tbody', null, lista.map(linha))));
       const zipsMap = new Map();
       for (const i of est.itens) { const k = i.zip_nome || i.lote; if (!k) continue; const z = zipsMap.get(k) || { nome: i.zip_nome || 'Envio de ' + String(i.lote).slice(0, 16).replace('T', ' '), qtd: 0, meses: [], chave: i.zip_nome ? { zip_nome: i.zip_nome } : { lote: i.lote } }; z.qtd++; if (i.mesRotulo && !z.meses.includes(i.mesRotulo)) z.meses.push(i.mesRotulo); zipsMap.set(k, z); }
       const zips = [...zipsMap.values()];
@@ -433,9 +439,9 @@
           h('details', { class: 'al-expl', open: true }, h('summary', null, 'Como o sistema conferiu cada arquivo'),
             h('p', null, 'Esta é a primeira leitura, só documental. O sistema compara o que a IA extraiu com o texto do próprio arquivo (cada item precisa ter um trecho que o comprove), soma as notas dos indicadores, procura a nota total e verifica se já existe outro relatório da mesma unidade e trimestre. Ele ainda não cruza com SIMAS, planilha de monitoramento, Relatórios Mensais nem contrato: isso acontece quando você abre a unidade e vai produzir o parecer, com uma nova leitura de tudo o que estiver guardado.'),
             h('p', null, h('strong', null, 'Divergências'), ' são avisos para você olhar, não erros definitivos. ', h('strong', null, 'Excluir'), ' apaga o arquivo e o texto lido; o documento original já não fica guardado. Você pode enviar de novo quando quiser. Arquivos já aprovados não podem ser excluídos.')),
-          h('div', { class: 'rolagem' }, h('table', { class: 'al-arq' },
-            h('thead', null, h('tr', null, ['', 'Arquivo', 'Andamento', 'Dados mascarados', 'Divergências', ''].map((t) => h('th', null, t)))),
-            h('tbody', null, est.itens.map(linha)))),
+          precisam.length ? h('h4', { class: 'al-sub-t' }, 'Precisam de você (' + precisam.length + ')') : aviso('ok', 'Nenhum arquivo precisa de ação agora.'),
+          precisam.length ? tabelaArq(precisam) : null,
+          quietos.length ? h('details', { class: 'al-quietos' }, h('summary', null, 'Sem pendência (' + quietos.length + '): lidos e sem divergência' + (quietos.some((i) => i.estado === 'pronto') ? ' (os que aguardam aprovação entram em "Aprovar todos sem divergência")' : '') + '. Clique para ver a lista.'), tabelaArq(quietos)) : null,
           prontos.length ? h('div', { class: 'linha', id: 'al-lote' },
             h('button', { id: 'al-aprovar-sel', onclick: () => aprovar(Array.from(marcados)) }, 'Aprovar selecionados'),
             limpos.length ? h('button', { class: 'sec', id: 'al-aprovar-limpos', onclick: () => aprovar(limpos.map((i) => i.id)) }, 'Aprovar todos sem divergência (' + limpos.length + ')') : null,

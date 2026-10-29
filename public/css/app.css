@@ -438,3 +438,4 @@ table.al-arq td select{width:100%;min-width:0;padding:7px 8px}
 table.al-arq td ul{padding-left:16px}
 .al-expl{background:#f8f9fa;border:1px solid var(--borda);border-radius:var(--r);padding:10px 16px;margin:10px 0 14px;font-size:15px}.al-expl summary{cursor:pointer;font-weight:700}.al-expl p{margin:8px 0 0;line-height:1.5}
 .al-zips{background:#fff8ec;border:1px solid #f1d29b;border-radius:var(--r);padding:10px 16px;margin:10px 0}.al-zip{padding:6px 0;border-top:1px solid #f1e3c7;margin-top:6px;font-size:15px}
+.al-sub-t{margin:14px 0 4px;font-size:17px}.al-quietos{margin:14px 0;border:1px solid var(--borda);border-radius:var(--r);padding:8px 14px;background:#f8f9fa}.al-quietos summary{cursor:pointer;font-weight:600;font-size:15px}.al-quietos .rolagem{margin-top:8px}
