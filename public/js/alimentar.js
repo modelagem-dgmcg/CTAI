@@ -440,7 +440,7 @@
             h('button', { id: 'al-aprovar-sel', onclick: () => aprovar(Array.from(marcados)) }, 'Aprovar selecionados'),
             limpos.length ? h('button', { class: 'sec', id: 'al-aprovar-limpos', onclick: () => aprovar(limpos.map((i) => i.id)) }, 'Aprovar todos sem divergência (' + limpos.length + ')') : null,
             h('span', { class: 'peq mudo' }, 'Só o que for aprovado entra nos cruzamentos. Rascunho em branco precisa ser aberto e preenchido antes.')) : null,
-          r.problemas || r.precisaDados ? h('div', { class: 'linha' }, h('button', { class: 'leve', id: 'al-pular', onclick: pular }, 'Pular os que deram problema')) : null) : null,
+          r.problemas || r.precisaDados ? h('div', { class: 'linha' }, r.precisaDados ? h('button', { class: 'sec', id: 'al-reavaliar', title: 'Lê de novo, com as regras atuais, os arquivos que esperam você. Não precisa enviar outra vez.', onclick: reavaliar }, 'Reavaliar os que esperam você') : null, h('button', { class: 'leve', id: 'al-pular', onclick: pular }, 'Pular os que deram problema')) : null) : null,
         est.trava ? h('div', { class: 'cartao' },
           h('h3', null, 'Terminou?'),
           h('p', { class: 'peq' }, est.podeLiberar ? 'Tudo foi lido. Você pode abrir o menu completo e continuar a conferência depois, pelo Histórico.' : r.pendentes ? 'Aguarde o fim da leitura.' : r.precisaDados ? 'Indique a unidade e o período dos arquivos que esperam, ou use "Pular os que deram problema".' : 'Envie ao menos um arquivo. Se não tiver nenhum agora, peça à administração para liberar o seu acesso.'),
@@ -455,6 +455,9 @@
         toast(o.aprovados + ' aprovado(s)' + (o.falhas.length ? ', ' + o.falhas.length + ' não puderam ser aprovados: ' + o.falhas[0].motivo : '') + '.', !!o.falhas.length && !o.aprovados);
         await atualizar(); desenharBase(true);
       } catch (e) { toast(e.message, true); }
+    }
+    async function reavaliar() {
+      try { const o = await api('POST', '/api/alimentar/reavaliar', {}); toast(o.resolvidos + ' resolvido(s) sozinho(s)' + (o.restantes ? ', ' + o.restantes + ' ainda precisam da sua escolha' : '') + '.'); await atualizar(); desenharBase(true); desenharPainel(); } catch (e) { toast(e.message, true); }
     }
     async function pular() {
       try { const o = await api('POST', '/api/alimentar/pular-problemas', {}); toast(o.puladas + ' arquivo(s) pulados.'); await atualizar(); desenharBase(true); desenharPainel(); } catch (e) { toast(e.message, true); }

@@ -243,6 +243,11 @@ async function umArquivo(db, item) {
   if (iaPronta()) { const r = await M.reforcarComIA(texto); if (r.usada) { texto = r.texto; if (r.nomes) mascarados = M.somar(mascarados, { 'nome (IA)': r.nomes }); } }
   // Veio da página da unidade (Importar Arquivos): guarda o texto, casa com a lista de conferência e não passa pelo Histórico.
   if (item.imp_trimestre) { await require('./importar').daFila(db, u, item, ex, texto, mascarados, (campos) => set(db, item.id, campos)); return; }
+  await decidir(db, u, item, ex, texto, mascarados);
+}
+
+// Daqui em diante só se usa o texto já lido: serve tanto à leitura nova quanto à reavaliação de arquivos que esperam.
+async function decidir(db, u, item, ex, texto, mascarados) {
   const meus = CART.doUsuario(db, u.usuario_id);
   const lote = loteDe(db, item);
   let un = unidadeDe(db, meus, item.nome, texto);
@@ -459,6 +464,20 @@ async function identificar(db, u, id, d) {
   return { ok: true };
 }
 
+// Aplica de novo as regras (unidade, mês, trimestre) aos arquivos que esperam a pessoa, usando o texto já guardado: não precisa enviar de novo.
+async function reavaliar(db, u) {
+  const itens = db.all("SELECT * FROM alimentar_fila WHERE usuario_id = ? AND estado = 'precisa_dados' AND texto IS NOT NULL AND imp_trimestre IS NULL ORDER BY id", u.usuario_id);
+  let resolvidos = 0;
+  for (const i of itens) {
+    let masc = {}; try { masc = JSON.parse(i.mascarados || '{}'); } catch (_) { /* vazio */ }
+    const ex = { paginas: i.paginas, paginasImagem: i.paginas_imagem ? String(i.paginas_imagem).split(',').map(Number) : [] };
+    try { await decidir(db, u, i, ex, i.texto, masc); } catch (e) { set(db, i.id, { estado: 'problema', motivo: String(e.message || e).slice(0, 200) }); continue; }
+    const depois = db.get('SELECT estado FROM alimentar_fila WHERE id = ?', i.id);
+    if (depois && depois.estado !== 'precisa_dados') resolvidos++;
+  }
+  return { reavaliados: itens.length, resolvidos, restantes: itens.length - resolvidos };
+}
+
 function descartar(db, u, id) {
   const i = doItem(db, u, id);
   if (OCUPADOS.includes(i.estado)) throw erro(409, 'Este arquivo está sendo lido. Aguarde.');
@@ -513,4 +532,4 @@ function liberarProprio(db, u) {
   return liberar(db, u, u.login, 'Concluiu o primeiro envio (' + e.resumo.lidos + ' lidos, ' + e.resumo.problemas + ' com problema)');
 }
 
-module.exports = { trava, estado, receber, registrarLote, receberDoLote, receberTexto, avisoOrigem, agendar, IGNORAR, MAX_LOTE, ESPERA_MAX_MIN, loteDe, mesDoDocumento, identificar, resolverTrimestre, descartar, descartarLote, aprovar, pularProblemas, liberar, liberarProprio, recuperar, processar, trimestreDe, unidadeDe, ELEGIVEIS };
+module.exports = { trava, estado, receber, registrarLote, receberDoLote, receberTexto, avisoOrigem, agendar, IGNORAR, MAX_LOTE, ESPERA_MAX_MIN, loteDe, mesDoDocumento, identificar, reavaliar, resolverTrimestre, descartar, descartarLote, aprovar, pularProblemas, liberar, liberarProprio, recuperar, processar, trimestreDe, unidadeDe, ELEGIVEIS };

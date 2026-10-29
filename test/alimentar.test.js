@@ -101,3 +101,15 @@ test('trimestre deduzido do mês dito no texto, sem pedir ao usuário', () => {
   assert.equal(AL.resolverTrimestre(null, { nome: 'x_2026-T2.pdf' }, '', {}).aviso, null);
   assert.equal(AL.resolverTrimestre(null, { nome: 'Anexo.pdf' }, 'sem pistas', { tri: '2026-T3' }).tri, '2026-T3');
 });
+
+test('reavaliar: arquivo que esperava a pessoa é refeito com o texto guardado, sem novo envio', async () => {
+  const uid = S.db.get("SELECT usuario_id FROM usuarios WHERE login = 'cleuton'").usuario_id;
+  const texto = 'Relatório de produção referente a julho/2026 da unidade, com texto de enchimento suficiente para passar do mínimo de caracteres legíveis do arquivo. '.repeat(3);
+  const id = Number(S.db.run("INSERT INTO alimentar_fila (usuario_id, lote, nome, tamanho, estado, texto, caracteres, criado_em, atualizado_em) VALUES (?,?,?,?,?,?,?,?,?)", uid, null, 'preso.txt', texto.length, 'precisa_dados', texto, texto.length, new Date().toISOString(), new Date().toISOString()).lastInsertRowid);
+  const r = await a.post('/api/alimentar/reavaliar', {});
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  assert.ok(r.json.reavaliados >= 1);
+  const depois = S.db.get('SELECT estado, trimestre FROM alimentar_fila WHERE id = ?', id);
+  assert.notEqual(depois.estado, 'precisa_dados', JSON.stringify(depois));
+  assert.equal(depois.trimestre, '2026-T3');
+});
