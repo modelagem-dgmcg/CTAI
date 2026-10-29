@@ -56,16 +56,12 @@ test('mesmo arquivo de novo vira duplicado; ZIP vira vários; tipo não aceito v
   assert.ok(e.resumo.problemas >= 1);
 });
 
-test('arquivo sem trimestre espera a pessoa indicar; depois monta', async () => {
+test('arquivo sem nenhuma pista de período assume o trimestre em fechamento, avisa para conferir e vira rascunho', async () => {
   await a.upload('/api/alimentar/arquivo', 'sem-data.txt', Buffer.from('Relatório sem indicação de período algum, apenas texto de enchimento para passar do mínimo de caracteres legíveis do arquivo da unidade. '.repeat(2)));
   const e = await espera(async () => { const x = (await a.get('/api/alimentar/estado')).json; return x.resumo.pendentes === 0 ? x : null; });
   const it = e.itens.find((i) => i.nome === 'sem-data.txt');
-  assert.equal(it.estado, 'precisa_dados');
-  assert.equal((await a.post('/api/alimentar/liberar')).status, 409, 'não libera com arquivo esperando');
-  const r = await a.post('/api/alimentar/' + it.id + '/identificar', { contrato_id: 'DEMO-UPA', trimestre: '2026-T1' });
-  assert.equal(r.status, 200);
-  const e2 = (await a.get('/api/alimentar/estado')).json;
-  assert.equal(e2.itens.find((i) => i.id === it.id).estado, 'pronto');
+  assert.equal(it.estado, 'pronto');
+  assert.match(it.trimestre, /^20\d\d-T[1-4]$/);
 });
 
 test('aprovar em bloco confirma; só o confirmado destrava; pular problemas e liberar', async () => {
@@ -95,4 +91,13 @@ test('administração libera uma pessoa sem esperar; quem não é admin não con
   assert.equal((await c2.post('/api/alimentar/liberar-usuario', { login: 'colega2' })).status, 403);
   assert.equal((await adm.post('/api/alimentar/liberar-usuario', { login: 'colega2', motivo: 'teste' })).status, 200);
   assert.equal((await c2.get('/api/alimentar/estado')).json.trava, false);
+});
+
+test('trimestre deduzido do mês dito no texto, sem pedir ao usuário', () => {
+  const AL = require('../server/alimentar');
+  assert.equal(typeof AL.resolverTrimestre, 'function');
+  const r = AL.resolverTrimestre(null, { nome: '[13]-95748824_Anexo.pdf' }, 'HOSPITAL REGIONAL EMILIA CAMARA julho/2026 SADT Procedimento', { zip: null, tri: null });
+  assert.equal(r.tri, '2026-T3'); assert.match(r.aviso, /Julho\/2026|julho/i);
+  assert.equal(AL.resolverTrimestre(null, { nome: 'x_2026-T2.pdf' }, '', {}).aviso, null);
+  assert.equal(AL.resolverTrimestre(null, { nome: 'Anexo.pdf' }, 'sem pistas', { tri: '2026-T3' }).tri, '2026-T3');
 });

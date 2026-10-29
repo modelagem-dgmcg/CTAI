@@ -63,6 +63,17 @@ function trimestreDe(s) {
   if (m) return m[2] + '-T' + m[1];
   return null;
 }
+// Trimestre do arquivo, da pista mais forte para a mais fraca: escrito no nome ou no texto (2026-T3, 3º tri), mês dito no nome, no ZIP ou no texto,
+// maioria dos arquivos do mesmo envio e, por fim, o trimestre que a equipe está fechando agora (o anterior ao atual), sempre com aviso para conferir.
+function resolverTrimestre(db, item, texto, lote) {
+  const explicito = trimestreDe(item.nome) || trimestreDe(String(texto || '').slice(0, 4000));
+  if (explicito) return { tri: explicito, aviso: null };
+  const mes = C.mesDoNome(item.nome) || (lote && lote.zip ? C.mesDoNome(lote.zip) : null) || (C.mesDoTexto(texto) || {}).mes || null;
+  if (mes) return { tri: C.trimestreDoMes(mes), aviso: 'Trimestre deduzido do mês ' + C.rotuloMes(mes) + '. Confira.' };
+  if (lote && lote.tri) return { tri: lote.tri, aviso: 'Trimestre igual ao dos outros arquivos do mesmo envio. Confira.' };
+  try { const GE = require('./gestao'); const t = GE.anterior(GE.trimestreAtual()); if (t) return { tri: t, aviso: 'Trimestre assumido: ' + t + ' (o que está sendo fechado agora). Confira.' }; } catch (_) { /* sem palpite */ }
+  return { tri: null, aviso: null };
+}
 function unidadeDe(db, meus, nome, texto) {
   const base = sem(nome + ' ' + String(texto || '').slice(0, 6000));
   const unidades = meus.map((id) => db.get('SELECT contrato_id, unidade FROM contratos WHERE contrato_id = ?', id)).filter(Boolean);
@@ -206,10 +217,10 @@ async function receberTexto(db, usuario, filaId, corpo) {
 
 // Contexto do lote (vários arquivos soltos juntos, em geral de um mesmo ZIP): unidade e mês que a maioria dos arquivos já mostrou.
 function loteDe(db, item) {
-  if (!item.lote) return { zip: null, contrato_id: null, mes: null };
-  const rows = db.all("SELECT contrato_id, mes FROM alimentar_fila WHERE usuario_id = ? AND lote = ? AND id <> ? AND estado NOT IN ('descartado','problema')", item.usuario_id, item.lote, item.id);
+  if (!item.lote) return { zip: null, contrato_id: null, mes: null, tri: null };
+  const rows = db.all("SELECT contrato_id, mes, trimestre FROM alimentar_fila WHERE usuario_id = ? AND lote = ? AND id <> ? AND estado NOT IN ('descartado','problema')", item.usuario_id, item.lote, item.id);
   const topo = (arr) => { const m = new Map(); arr.filter(Boolean).forEach((x) => m.set(x, (m.get(x) || 0) + 1)); const o = [...m.entries()].sort((a, b) => b[1] - a[1]); return o.length && (o.length === 1 || o[0][1] > o[1][1]) ? o[0][0] : null; };
-  return { zip: item.zip_nome || null, contrato_id: topo(rows.map((r) => r.contrato_id)), mes: topo(rows.map((r) => r.mes)) };
+  return { zip: item.zip_nome || null, contrato_id: topo(rows.map((r) => r.contrato_id)), mes: topo(rows.map((r) => r.mes)), tri: topo(rows.map((r) => r.trimestre)) };
 }
 // Ordem de confiança para o mês: nome do arquivo, texto que diz a competência com clareza, nome do ZIP, maioria do lote, qualquer pista no texto.
 function mesDoDocumento(nome, texto, lote) {
@@ -241,7 +252,8 @@ async function umArquivo(db, item) {
     const c = db.get('SELECT * FROM contratos WHERE contrato_id = ?', un.contrato_id);
     if (G.usaGaveta(c) && (await viaGaveta(db, u, item, ex, texto, mascarados, c, lote, un))) return;
   }
-  const tri = trimestreDe(item.nome) || trimestreDe(texto.slice(0, 4000));
+  const rt = resolverTrimestre(db, item, texto, lote);
+  const tri = rt.tri;
   const tipo = tipoDe(item.nome, texto);
   if (!un || !tri) {
     set(db, item.id, { estado: 'precisa_dados', texto, paginas: ex.paginas || null, mascarados: JSON.stringify(mascarados), contrato_id: un ? un.contrato_id : null, trimestre: tri, documento_tipo: tipo,
@@ -249,7 +261,7 @@ async function umArquivo(db, item) {
       motivo: !un && !tri ? 'Não identifiquei a unidade nem o trimestre.' : !un ? 'Não identifiquei a unidade.' : 'Não identifiquei o trimestre.' });
     return;
   }
-  await montar(db, item.id, u, { contrato_id: un.contrato_id, trimestre: tri, documento_tipo: tipo, texto, paginas: ex.paginas || null, mascarados, nome: item.nome, aviso: juntar(un.assumida ? 'Unidade assumida (única da sua carteira). Confira.' : null, avisoOrigem(item.origem)) });
+  await montar(db, item.id, u, { contrato_id: un.contrato_id, trimestre: tri, documento_tipo: tipo, texto, paginas: ex.paginas || null, mascarados, nome: item.nome, aviso: juntar(un.assumida ? 'Unidade assumida (única da sua carteira). Confira.' : null, rt.aviso, avisoOrigem(item.origem)) });
 }
 
 const avisoImagens = (pg, total) => (pg && pg.length ? pg.length + ' página(s) parecem só imagem (pouco texto) e podem ter ficado de fora' + (total ? ' (de ' + total + ')' : '') + ': ' + pg.slice(0, 12).join(', ') + (pg.length > 12 ? '...' : '') + '.' : null);
@@ -501,4 +513,4 @@ function liberarProprio(db, u) {
   return liberar(db, u, u.login, 'Concluiu o primeiro envio (' + e.resumo.lidos + ' lidos, ' + e.resumo.problemas + ' com problema)');
 }
 
-module.exports = { trava, estado, receber, registrarLote, receberDoLote, receberTexto, avisoOrigem, agendar, IGNORAR, MAX_LOTE, ESPERA_MAX_MIN, loteDe, mesDoDocumento, identificar, descartar, descartarLote, aprovar, pularProblemas, liberar, liberarProprio, recuperar, processar, trimestreDe, unidadeDe, ELEGIVEIS };
+module.exports = { trava, estado, receber, registrarLote, receberDoLote, receberTexto, avisoOrigem, agendar, IGNORAR, MAX_LOTE, ESPERA_MAX_MIN, loteDe, mesDoDocumento, identificar, resolverTrimestre, descartar, descartarLote, aprovar, pularProblemas, liberar, liberarProprio, recuperar, processar, trimestreDe, unidadeDe, ELEGIVEIS };
