@@ -18,6 +18,12 @@ CREATE TABLE IF NOT EXISTS registro_instrumentos (
   tipo_ta TEXT, regular TEXT, situacao_cg TEXT, inicio TEXT, fim TEXT, observacao TEXT, importado_por TEXT, importado_em TEXT, confirmado_por TEXT, confirmado_em TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_reg_instr ON registro_instrumentos (contrato_id);
+-- Perguntas de contrato por unidade: decisões e pedidos de documento para a analista dona da carteira. A resposta só registra; não altera regra sozinha.
+CREATE TABLE IF NOT EXISTS perguntas_contrato (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, chave TEXT NOT NULL UNIQUE, contrato_id TEXT NOT NULL, analista TEXT, tipo TEXT NOT NULL, pergunta TEXT NOT NULL, opcoes TEXT, documento_pedido TEXT, onde_encontrar TEXT,
+  valor_atual TEXT, valor_proposto TEXT, resposta TEXT, observacao TEXT, respondida_por TEXT, respondida_em TEXT, anexo_ok INTEGER NOT NULL DEFAULT 0, anexo_em TEXT, importado_por TEXT, importado_em TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_perg_contrato ON perguntas_contrato (contrato_id);
 CREATE TABLE IF NOT EXISTS regras (
   regra_id TEXT PRIMARY KEY, versao TEXT NOT NULL, contrato_id TEXT, vigente_de TEXT, vigente_ate TEXT, arquivo_json TEXT, conteudo TEXT NOT NULL,
   pendencias TEXT, aprovada_por TEXT, data_aprovacao TEXT
@@ -398,6 +404,7 @@ const COLUNAS_NOVAS = {
   contratos: ['tipo TEXT', 'municipio TEXT', 'criado_por TEXT', 'criado_em TEXT'],
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
   alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER', 'origem TEXT', 'imp_trimestre TEXT', 'imp_modelo INTEGER'],
+  perguntas_contrato: ['o_que_e TEXT', 'doc_origem TEXT', 'trecho_origem TEXT', 'data_origem TEXT', 'por_que_importa TEXT', 'o_que_fazer TEXT', 'impacto INTEGER'],
   imp_checks: ['situacao TEXT', 'data_pedido TEXT', 'processo_sei TEXT'],
   achados: ['contrato_id TEXT', 'trimestre TEXT', 'chave TEXT', 'encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT'],
 };

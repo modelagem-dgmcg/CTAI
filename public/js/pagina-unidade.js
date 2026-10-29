@@ -214,13 +214,32 @@
         lista,
         g.conferido ? null : h('div', { class: 'linha' }, h('button', { type: 'button', class: 'sec', onclick: async () => { try { await api('POST', '/api/ctai/contratos/' + encodeURIComponent(id) + '/instrumentos/confirmar', {}); toast('Registro conferido.'); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Conferi: está certo'))));
     }).catch(() => {});
+    // Antes do parecer: perguntas de contrato (decisões e documentos) para a analista dona da carteira. A resposta só registra; não altera regra nem valor.
+    const slotPerguntas = h('div', { id: 'un-perguntas' });
+    const irParaImportar = () => { const d = slotImportar.closest('details'); if (d) d.open = true; slotImportar.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    const desenharPerguntas = (dados) => {
+      const lista = dados.perguntas || [];
+      if (!lista.length) { slotPerguntas.replaceChildren(); return; }
+      const abertas = lista.filter((q) => q.aberta).length;
+      const dec = lista.filter((q) => q.tipo === 'decisao'), docs = lista.filter((q) => q.tipo === 'documento');
+      const PQ = window.CTAI_PERGUNTAS;
+      const opc = { recarregar: recarregarPerguntas, anexarAgora: () => irParaImportar() };
+      const cartaoDecisao = (q) => PQ.cartao(q, opc), cartaoDocumento = (q) => PQ.cartao(q, opc), caminho = PQ.caminho();
+      slotPerguntas.replaceChildren(h('div', { class: 'cartao', id: 'un-perguntas-cartao' },
+        h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, 'Antes do parecer: confirme o contrato'), abertas ? selo(abertas + ' em aberto', 'atencao') : selo('tudo respondido', 'ok')),
+        h('p', { style: 'font-size:16px;line-height:1.5' }, 'Ao ler os contratos e termos aditivos desta unidade, o sistema encontrou pontos que só você pode decidir ou documentos que faltam. Sua resposta fica registrada para a superintendente e para o Redator; ela não muda valores nem regras sozinha.'),
+        dec.length ? h('h4', { style: 'margin:12px 0 4px' }, 'Decisões (' + dec.filter((q) => q.aberta).length + ' em aberto)') : null, dec.map(cartaoDecisao),
+        docs.length ? h('h4', { style: 'margin:12px 0 4px' }, 'Documentos para anexar (' + docs.filter((q) => q.aberta).length + ' em aberto)') : null, docs.length ? caminho : null, docs.map(cartaoDocumento)));
+    };
+    const recarregarPerguntas = async () => { try { desenharPerguntas(await api('GET', '/api/ctai/contratos/' + encodeURIComponent(id) + '/perguntas')); } catch (_) { slotPerguntas.replaceChildren(); } };
+    recarregarPerguntas().then(() => { try { if (sessionStorage.getItem('ctai_abrir_importar') === id) { sessionStorage.removeItem('ctai_abrir_importar'); setTimeout(irParaImportar, 400); } } catch (_) { /* sem memória do navegador */ } });
     const slotContrato = h('div', { id: 'un-contrato' });
     if (window.CTAI_CONTRATOS) window.CTAI_CONTRATOS.preencher(slotContrato, id).catch(() => {});
     const seletor = h('select', { id: 'un-tri', 'aria-label': 'Trimestre', onchange: (e) => { guardaTri(id, e.target.value); recarregar(); } }, tris.map((t) => h('option', Object.assign({ value: t }, t === T ? { selected: true } : {}), t)));
     montar(avDup,
       h('div', { class: 'topo' }, h('div', null, h('h1', null, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null), h('p', null, [c.tipo, c.oss, c.numero_cg].filter(Boolean).join(' · '))),
         h('div', { class: 'linha' }, h('label', { for: 'un-tri', class: 'mudo peq', style: 'margin:0' }, 'Trimestre'), seletor, h('button', { type: 'button', class: 'sec', onclick: () => configuracoes(id, recarregar).catch((e) => toast(e.message, true)) }, 'Configurações'))),
-      acessosProv, slotRegistro, slotContrato, barra, secoes);
+      acessosProv, slotRegistro, slotPerguntas, slotContrato, barra, secoes);
   }
 
   // Painel de consulta do editor: dados do trimestre e regras do contrato, para conferir sem trocar de janela.

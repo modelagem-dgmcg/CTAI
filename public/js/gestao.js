@@ -42,8 +42,12 @@
         kpi('Prazos vencidos', prz.vencido, prz.a_vencer + ' a vencer · ' + prz.atraso + ' com atraso', prz.vencido ? 'alta' : ''),
         kpi('Achados abertos', k.achados_abertos, k.achados_vencidos + ' vencido(s)', k.achados_vencidos ? 'alta' : ''),
         kpi('Pareceres', k.pareceres_rascunho + ' / ' + k.pareceres_congelados, 'rascunho / congelados'),
-        kpi('Sem carteira', k.sem_carteira, 'unidades', k.sem_carteira ? 'atencao' : '')),
+        kpi('Sem carteira', k.sem_carteira, 'unidades', k.sem_carteira ? 'atencao' : ''),
+        kpi('Perguntas de contrato', (p.perguntas_contrato || {}).abertas || 0, 'abertas de ' + ((p.perguntas_contrato || {}).total || 0), ((p.perguntas_contrato || {}).abertas || 0) ? 'atencao' : '')),
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Alertas'), linhaAlertas),
+      (p.perguntas_contrato && p.perguntas_contrato.total) ? h('div', { class: 'cartao', id: 'painel-perguntas' }, h('h2', { style: 'margin-top:0' }, 'Perguntas de contrato por analista'),
+        h('p', { class: 'mudo peq' }, 'Dúvidas sobre valor, instrumento vigente e documentos que cada analista responde ao entrar na unidade.'),
+        tabela([{ t: 'Analista' }, { t: 'Abertas', n: true }, { t: 'Total', n: true }], p.perguntas_contrato.porAnalista.map((a) => [a.nome, a.abertas ? selo(String(a.abertas), 'atencao') : selo('0', 'ok'), a.total]))) : null,
       p.sem_carteira.length ? h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Unidades sem carteira'),
         h('p', { class: 'mudo peq' }, 'O envio dessas unidades não tem funcionário responsável. Escolha quem acompanha:'),
         p.sem_carteira.map((u) => {
@@ -180,6 +184,37 @@
     montar(cabecalho('ia'), window.CTAI_RACK_IA());
   }
 
+  // ---------- Perguntas de contrato para as analistas (CSV com prévia) ----------
+  const PQ = { csv: '', nome: '', previa: null, ultimo: null, dados: null };
+  const pqSlot = h('div', { id: 'pq-slot' });
+  async function pqCarregar() { try { PQ.dados = await api('GET', '/api/gestao/perguntas-contrato'); } catch (_) { PQ.dados = { contagem: { total: 0, abertas: 0, porAnalista: [] }, perguntas: [] }; } pqDesenhar(); }
+  function pqDesenhar() {
+    const p = PQ.previa, d = PQ.dados || { contagem: { total: 0, abertas: 0, porAnalista: [] }, perguntas: [] }; const b = [];
+    const arq = h('input', { type: 'file', id: 'pq-arquivo', accept: '.csv,text/csv,text/plain', onchange: async (e) => { const f = e.target.files[0]; if (!f) return; PQ.csv = await f.text(); PQ.nome = f.name; PQ.ultimo = null;
+      try { PQ.previa = await api('POST', '/api/gestao/perguntas-contrato/previa', { csv: PQ.csv }); } catch (er) { PQ.previa = null; toast(er.message, true); } pqDesenhar(); } });
+    b.push(h('div', { class: 'campo' }, h('label', { for: 'pq-arquivo' }, 'Arquivo CSV de perguntas'), arq, PQ.nome ? h('span', { class: 'mudo peq' }, PQ.nome) : null));
+    if (PQ.ultimo) b.push(aviso('ok', h('strong', null, 'Gravado. '), PQ.ultimo.novas + ' pergunta(s) nova(s), ' + PQ.ultimo.atualizadas + ' atualizada(s). As respostas já dadas foram mantidas.'));
+    if (p) {
+      const r = p.resumo;
+      b.push(h('div', { class: 'kpis' }, kpi('Perguntas', r.linhas, 'de ' + r.unidades + ' unidade(s)'), kpi('Novas', r.novas, ''), kpi('Já existem', r.atualizadas, r.comResposta + ' com resposta (mantidas)')));
+      if (p.naoCasadas.length) b.push(aviso('atencao', h('strong', null, 'Unidade fora do sistema (ignoradas): '), p.naoCasadas.map((x) => x.nome + ' (' + x.linhas + ')').join('; ') + '.'));
+      if (p.analistasInexistentes.length) b.push(aviso('atencao', h('strong', null, 'Analista não encontrada: '), p.analistasInexistentes.join(', ') + '. As perguntas entram, mas sem dona.'));
+      if (p.invalidas.length) b.push(aviso('atencao', h('strong', null, 'Linhas ignoradas: '), p.invalidas.map((x) => x.unidade + ' (' + x.motivo + ')').join('; ') + '.'));
+      b.push(tabela([{ t: 'Analista' }, { t: 'Perguntas', n: true }], p.porAnalista.map((a) => [a.login, a.perguntas])));
+      b.push(h('div', { class: 'linha' }, h('button', { id: 'pq-gravar', disabled: !p.podeGravar, onclick: async () => { try { PQ.ultimo = await api('POST', '/api/gestao/perguntas-contrato/gravar', { csv: PQ.csv }); PQ.csv = ''; PQ.nome = ''; PQ.previa = null; toast('Perguntas gravadas.'); pqCarregar(); } catch (er) { toast(er.message, true); } } }, 'Gravar perguntas'), h('span', { class: 'mudo peq' }, 'Nada é gravado antes deste clique. Respostas já dadas não são apagadas.')));
+    }
+    if (d.contagem.total) {
+      b.push(h('h4', { style: 'margin:14px 0 4px' }, 'Abertas por analista'));
+      b.push(tabela([{ t: 'Analista' }, { t: 'Abertas', n: true }, { t: 'Total', n: true }], d.contagem.porAnalista.map((a) => [a.nome, a.abertas, a.total])));
+      const resp = d.perguntas.filter((x) => (x.tipo === 'decisao' && x.resposta) || (x.tipo === 'documento' && x.anexo_ok));
+      b.push(h('details', { style: 'margin-top:10px' }, h('summary', null, 'Respostas recebidas (' + resp.length + ')'),
+        resp.length ? tabela([{ t: 'Unidade' }, { t: 'Pergunta' }, { t: 'Resposta' }, { t: 'Quem' }], resp.map((x) => [x.unidade, x.pergunta, (x.tipo === 'decisao' ? x.resposta : 'Documento anexado') + (x.observacao ? ' · ' + x.observacao : ''), x.respondida_por || '—'])) : h('p', { class: 'mudo peq' }, 'Ainda não há respostas.')));
+    }
+    pqSlot.replaceChildren(h('div', { class: 'cartao' }, h('h3', { style: 'margin-top:0' }, 'Perguntas de contrato para as analistas'),
+      h('p', { class: 'mudo peq' }, 'Cada analista vê, na página da unidade da sua carteira, o cartão "Antes do parecer: confirme o contrato". A resposta só registra a decisão; não muda regra nem valor sozinha.'), b));
+  }
+  function perguntasContrato() { pqCarregar(); return pqSlot; }
+
   // ---------- Contratos e termos aditivos (CSV da planilha da DGMCG) ----------
   const CT = { csv: '', nome: '', previa: null, ultimo: null };
   async function contratosTas() {
@@ -199,6 +234,7 @@
       }
       blocos.push(h('div', { class: 'cartao' }, h('h3', null, 'Como está hoje'), tabela([{ t: 'Unidade' }, { t: 'Contrato' }, { t: 'Aditivos', n: true }, { t: 'Vigência até' }, { t: 'Situação' }],
         lista.unidades.map((u) => [u.unidade, u.registro ? u.registro.contrato.numero + (u.registro.contrato.oss ? ' · ' + u.registro.contrato.oss : '') : '—', u.registro ? u.registro.contagem.aditivos : '—', u.registro && u.registro.vigencia_fim ? u.registro.vigencia_fim.split('-').reverse().join('/') : '—', u.registro ? (u.registro.conferido ? selo('conferido', 'ok') : selo('a conferir', 'atencao')) : selo('sem registro', '')]))));
+      blocos.push(perguntasContrato());
       montar(cabecalho('contratos'), aviso('info', h('strong', null, 'Contratos e termos aditivos. '), 'Carregue o CSV gerado a partir da planilha "CONTRATOS E T.A.s OSS". Ele traz o contrato vigente, aditivos, apostilamentos e a vigência de cada unidade. Não traz metas nem valores. Nada é gravado antes de você conferir a prévia.'),
         h('div', { class: 'cartao' }, h('div', { class: 'campo' }, h('label', { for: 'ct-arquivo' }, 'Arquivo CSV'), arquivo, CT.nome ? h('span', { class: 'mudo peq' }, CT.nome) : null)), blocos);
     }

@@ -29,6 +29,7 @@ module.exports = (db) => {
 
   // ---------- Painel ----------
   r.get('/contratos', (req, res) => {
+    const perguntasAbertas = require('../perguntas-contrato').contagens(db).porUnidade;
     const lista = db.all('SELECT * FROM contratos ORDER BY demo, contrato_id').filter((c) => !req.escopo || req.escopo.has(c.contrato_id)).map((c) => {
       const comps = db.all('SELECT cid, competencia_id, status, mes_implantacao FROM competencias WHERE contrato_id = ? ORDER BY competencia_id', c.contrato_id).map((k) => {
         const ult = D.ultimoEnvio(db, k.cid);
@@ -37,7 +38,7 @@ module.exports = (db) => {
       });
       let abertas = 0, semRegras = false;
       try { const { regras } = D.regrasDoContrato(db, c.contrato_id); abertas = D.pendenciasDeRegra(db, c.contrato_id, regras).abertas.length; } catch (e) { if (e.status !== 409) throw e; semRegras = true; }
-      return Object.assign(c, { tipo: RC.tipoDe(c), regra: RC.estado(db, c.contrato_id), demo: !!c.demo, competencias: comps, decisoesAbertas: abertas, semRegras: semRegras && !CR.ler(db, c.contrato_id), semGestor: !db.get("SELECT 1 FROM usuarios WHERE perfil = 'gestor_unidade' AND ativo = 1 AND contrato_id = ?", c.contrato_id) });
+      return Object.assign(c, { perguntas_abertas: perguntasAbertas[c.contrato_id] || 0, tipo: RC.tipoDe(c), regra: RC.estado(db, c.contrato_id), demo: !!c.demo, competencias: comps, decisoesAbertas: abertas, semRegras: semRegras && !CR.ler(db, c.contrato_id), semGestor: !db.get("SELECT 1 FROM usuarios WHERE perfil = 'gestor_unidade' AND ativo = 1 AND contrato_id = ?", c.contrato_id) });
     });
     res.json({ contratos: lista, escopo: req.escopo ? 'carteira' : 'todas' });
   });
@@ -179,6 +180,13 @@ module.exports = (db) => {
     res.json({ sugestao });
   });
   r.post('/pareceres/:id/modelo', (req, res) => res.json({ modelo: require('../parecer-modelo').definir(db, req.params.id, req.usuario, req.body && req.body.modo) }));
+  // Perguntas de contrato da unidade (a analista dona da carteira responde; a resposta só registra)
+  const PC = require('../perguntas-contrato');
+  r.get('/urgencias', (req, res) => res.json(PC.urgencias(db, req.usuario, req.escopo)));
+  r.get('/urgencias/contador', (req, res) => res.json({ abertas: PC.urgencias(db, req.usuario, req.escopo).abertas }));
+  r.get('/contratos/:id/perguntas', (req, res) => res.json({ perguntas: PC.listar(db, req.params.id), decisoes: PC.decisoes(db, req.params.id) }));
+  r.post('/perguntas/:pid/responder', (req, res) => res.json(PC.responder(db, req.usuario, req.params.pid, req.body || {})));
+  r.post('/perguntas/:pid/anexo', (req, res) => res.json(PC.marcarAnexo(db, req.usuario, req.params.pid, !(req.body && req.body.desfazer))));
   // Contrato e termos aditivos da unidade (registro importado pela Gestão)
   r.get('/contratos/:id/instrumentos', (req, res) => res.json({ registro: require('../registro-contratos').resumo(db, req.params.id) }));
   r.post('/contratos/:id/instrumentos/confirmar', (req, res) => res.json(require('../registro-contratos').confirmar(db, req.usuario, req.params.id)));

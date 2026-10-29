@@ -124,6 +124,12 @@ module.exports = (db) => {
   r.post('/registro-contratos/gravar', (req, res) => res.json(RC.gravar(db, req.usuario.login, csvReg(req))));
   r.get('/registro-contratos', (req, res) => res.json({ unidades: db.all('SELECT contrato_id, unidade, tipo FROM contratos WHERE demo = 0 ORDER BY unidade').map((u) => Object.assign(u, { registro: RC.resumo(db, u.contrato_id) && Object.assign({}, RC.resumo(db, u.contrato_id), { instrumentos: undefined }) })) }));
 
+  // Perguntas de contrato para as analistas (CSV com prévia; reimportar não apaga resposta)
+  const PC = require('../perguntas-contrato');
+  r.post('/perguntas-contrato/previa', (req, res) => res.json(PC.previa(db, csvReg(req))));
+  r.post('/perguntas-contrato/gravar', (req, res) => res.json(PC.gravar(db, req.usuario.login, csvReg(req))));
+  r.get('/perguntas-contrato', (req, res) => res.json({ contagem: PC.contagens(db), perguntas: PC.todas(db) }));
+
   // Importação em lote de unidades e carteira
   const IMP = require('../importacao');
   const entradaImp = (req) => {

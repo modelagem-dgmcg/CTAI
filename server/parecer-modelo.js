@@ -92,7 +92,8 @@ async function preencherPeloGaocg(db, parecerId, usuario) {
   M.exigirCriador(p, usuario);
   const u = await G.unidadeDoContrato(db, p.contrato_id, usuario.login);
   const reg = require('./registro-contratos').paraParecer(db, p.contrato_id); // contrato e aditivos do registro da DGMCG
-  if (!u.encontrada && !reg) return { encontrada: false };
+  const decisoes = require('./perguntas-contrato').decisoes(db, p.contrato_id).map((x) => x.texto); // só informa: a resposta da analista não muda o texto sozinha
+  if (!u.encontrada && !reg) return { encontrada: false, decisoes };
   const m = p.blocos.modelo || vazio();
   const d = Object.assign({}, u.encontrada ? u.dados : {});
   if (reg) { d.oss = d.oss || reg.oss; d.contrato = d.contrato || reg.contrato; }
@@ -109,7 +110,7 @@ async function preencherPeloGaocg(db, parecerId, usuario) {
   m.secoes.identificacao = txt; m.atualizado_em = agora();
   db.run('UPDATE pareceres SET blocos = ?, atualizado_em = ?, atualizado_por = ? WHERE parecer_id = ?', JSON.stringify(Object.assign(p.blocos, { modelo: m })), agora(), usuario.login, p.parecer_id);
   trilha.registrar(db, { usuario: usuario.login, tabela: 'pareceres', registro: p.parecer_id, campo: 'modelo_gaocg', valor_novo: feitos.join(', ') || 'nada novo' });
-  return { encontrada: true, preenchidos: feitos, lido_em: u.lido_em, da_copia: u.da_copia, do_registro: !!reg };
+  return { encontrada: true, preenchidos: feitos, lido_em: u.lido_em, da_copia: u.da_copia, do_registro: !!reg, decisoes };
 }
 
 module.exports = { preencherPeloGaocg, MODELO, montar, definir, salvar, textoCompleto, campos, periodoPorExtenso };

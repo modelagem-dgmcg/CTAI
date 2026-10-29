@@ -439,3 +439,13 @@ table.al-arq td ul{padding-left:16px}
 .al-expl{background:#f8f9fa;border:1px solid var(--borda);border-radius:var(--r);padding:10px 16px;margin:10px 0 14px;font-size:15px}.al-expl summary{cursor:pointer;font-weight:700}.al-expl p{margin:8px 0 0;line-height:1.5}
 .al-zips{background:#fff8ec;border:1px solid #f1d29b;border-radius:var(--r);padding:10px 16px;margin:10px 0}.al-zip{padding:6px 0;border-top:1px solid #f1e3c7;margin-top:6px;font-size:15px}
 .al-sub-t{margin:14px 0 4px;font-size:17px}.al-quietos{margin:14px 0;border:1px solid var(--borda);border-radius:var(--r);padding:8px 14px;background:#f8f9fa}.al-quietos summary{cursor:pointer;font-weight:600;font-size:15px}.al-quietos .rolagem{margin-top:8px}
+.un-perg{border:1px solid var(--borda);border-radius:var(--r);padding:12px 14px;margin:8px 0;background:#fff}.un-perg.ok{background:#f1f8f4;border-color:#b7dcc4}.un-perg-t{font-size:17px;line-height:1.45;margin:0 0 4px;font-weight:600}.un-ops{flex-wrap:wrap;gap:8px;margin:6px 0}.un-op{font-size:16px;padding:9px 14px;border-radius:8px;border:1px solid #adb5bd;background:#fff;color:var(--escuro);cursor:pointer}.un-op.on{background:var(--ambar);border-color:var(--ambar-esc);color:#fff;font-weight:700}.un-caminho{background:#fff8ec;border:1px solid #f1d29b;border-radius:var(--r);padding:8px 14px;margin:8px 0;font-size:16px}.un-caminho summary{cursor:pointer;font-weight:700}.un-caminho ol{margin:8px 0 0;padding-left:22px;line-height:1.6}
+
+/* URGÊNCIAS: item de menu em destaque e quadros explicativos das perguntas de contrato */
+.lateral a.nav.urgencia{background:var(--verm);color:#fff;font-weight:700;border-radius:8px}
+.lateral a.nav.urgencia.ativo{outline:2px solid #fff;outline-offset:-4px}
+.lateral a.nav.urgencia .contador{background:#fff;color:var(--verm)}
+.pq-quadros{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px;margin:8px 0}
+.pq-quadro{border:1px solid var(--borda);border-radius:var(--r);padding:8px 12px;background:#fafafa}
+.pq-quadro-t{font-size:16px;font-weight:700;margin-bottom:2px}
+.pq-unidade{margin-top:16px}

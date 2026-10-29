@@ -13,7 +13,7 @@
   // ---------- Painel ----------
   const cartaoUnidade = (c) => h('a', { class: 'cartao un-linha', href: location.pathname + '#/u/' + encodeURIComponent(c.contrato_id), target: '_blank', rel: 'noopener', title: 'Abre a unidade em uma nova aba' },
     h('span', { class: 'un-nome' }, h('span', null, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null), h('small', { class: 'mudo' }, [c.oss, c.numero_cg].filter(Boolean).join(' · '))),
-    h('span', { class: 'un-resumo' }, c.competencias.reduce((n, k) => n + (k.divergenciasAbertas || 0), 0) + ' divergência(s) aberta(s) ', c.decisoesAbertas ? selo(c.decisoesAbertas + ' dúvida(s) de regra', 'atencao') : null),
+    h('span', { class: 'un-resumo' }, c.competencias.reduce((n, k) => n + (k.divergenciasAbertas || 0), 0) + ' divergência(s) aberta(s) ', c.decisoesAbertas ? selo(c.decisoesAbertas + ' dúvida(s) de regra', 'atencao') : null, ' ', c.perguntas_abertas ? selo(c.perguntas_abertas + ' pergunta(s) de contrato', 'atencao') : null),
     h('span', { class: 'un-seta', 'aria-hidden': 'true' }, '↗'));
   const TIPOS = [['HOSPITAL', 'Hospitais'], ['UPA', 'UPAs'], ['UPAE', 'UPAEs']];
   const semAcento = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -477,8 +477,9 @@
       troca(caixaRev, h('p', { class: 'mudo' }, 'Consultando o GAOCG…'));
       try {
         const o = await api('POST', base + '/modelo/gaocg', {});
-        if (!o.encontrada) { troca(caixaRev, aviso('info', 'Sem dado no GAOCG ainda: não achei esta unidade/contrato no cadastro de lá (conferi pelo número do contrato e pelo nome). Isso não é erro do parecer; a base do GAOCG ainda está sendo alimentada.')); return; }
-        troca(caixaRev, aviso('ok', 'GAOCG conectado · ' + (o.da_copia ? 'cópia de ' : 'lido agora, ') + new Date(o.lido_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '. ' + (o.preenchidos.length ? 'Preenchi na seção 3: ' + o.preenchidos.join(', ') + '.' : 'Nada a atualizar na seção 3.')));
+        const decs = (o.decisoes && o.decisoes.length) ? aviso('info', h('strong', null, 'Decisões da analista sobre o contrato: '), h('ul', { style: 'margin:4px 0 0 18px' }, o.decisoes.map((t) => h('li', null, t)))) : null;
+        if (!o.encontrada) { troca(caixaRev, aviso('info', 'Sem dado no GAOCG ainda: não achei esta unidade/contrato no cadastro de lá (conferi pelo número do contrato e pelo nome). Isso não é erro do parecer; a base do GAOCG ainda está sendo alimentada.'), decs); return; }
+        troca(caixaRev, aviso('ok', 'GAOCG conectado · ' + (o.da_copia ? 'cópia de ' : 'lido agora, ') + new Date(o.lido_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + '. ' + (o.preenchidos.length ? 'Preenchi na seção 3: ' + o.preenchidos.join(', ') + '.' : 'Nada a atualizar na seção 3.')), decs);
         if (o.preenchidos.length) setTimeout(recarregar, 1500);
       } catch (e) { troca(caixaRev, aviso('erro', e.message)); }
     };
@@ -936,13 +937,14 @@
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
       return;
     }
-    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/unidades', rotulo: 'Unidades' }].concat(itemAlim).concat([{ href: '#/pareceres', rotulo: 'Editor de Documentos' }, { href: '#/historico', rotulo: 'Histórico' }, { href: '#/ensinar', rotulo: 'Ensinar ao Sistema' }]).concat(window.__soGestao || []).concat([{ href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }]) });
+    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/unidades', rotulo: 'Unidades' }, { href: '#/urgencias', rotulo: 'URGÊNCIAS', classe: 'urgencia' }].concat(itemAlim).concat([{ href: '#/pareceres', rotulo: 'Editor de Documentos' }, { href: '#/historico', rotulo: 'Histórico' }, { href: '#/ensinar', rotulo: 'Ensinar ao Sistema' }]).concat(window.__soGestao || []).concat([{ href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }]) });
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_MENSAGEIRO.atualizarContador(); }, 15000);
+    window.CTAI_PERGUNTAS.atualizarSelo(); setInterval(() => { window.CTAI_PERGUNTAS.atualizarSelo(); }, 60000);
     if (ehAdmin()) { const nav = document.querySelector('.lateral .rodape'); nav.parentNode.insertBefore(h('a', { class: 'nav', href: '#/admin', 'data-h': '#/admin' }, 'Administração'), document.querySelector('.lateral .nav-linha.fim') || nav); }
     META = await api('GET', '/api/meta');
-    rotear([['/', window.__semPainel ? () => { location.replace(itemAlim.length ? '#/alimentar' : '#/unidades'); } : painel], ['/unidades', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_ALIMENTAR.rotas).concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_DOCUMENTOS.rotas).concat(window.CTAI_HISTORICO.rotas).concat(window.CTAI_CONTRATOS.rotas).concat(window.CTAI_ENSINAR.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
+    rotear([['/', window.__semPainel ? () => { location.replace(itemAlim.length ? '#/alimentar' : '#/unidades'); } : painel], ['/unidades', painel], ['/c/:cid', competencia], ['/c/:cid/:aba', competencia], ['/pareceres', pareceres], ['/p/:id', parecer], ['/v/:id', mesa], ['/analista', analista], ['/analista/:aba', analista], ['/regras', regras], ['/regras/:contrato', regras], ['/integracoes', integracoes], ['/trilha', trilha], ['/admin', admin]].concat(window.CTAI_ALIMENTAR.rotas).concat(window.CTAI_UNIDADE.rotas).concat(window.CTAI_DOCUMENTOS.rotas).concat(window.CTAI_HISTORICO.rotas).concat(window.CTAI_CONTRATOS.rotas).concat(window.CTAI_ENSINAR.rotas).concat(window.CTAI_PERGUNTAS.rotas).concat(window.CTAI_CAIXA.rotas).concat(window.CTAI_MENSAGEIRO.rotas).concat(eh('superintendente', 'admin') ? window.CTAI_GESTAO.rotas : []), (hash) => window.__marcarMenu && window.__marcarMenu(hash));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
   }
   iniciar();

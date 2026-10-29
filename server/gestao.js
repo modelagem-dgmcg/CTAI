@@ -297,6 +297,7 @@ function painel(db, filtro) {
     filtros: { contrato: filtro.contrato || null, usuario_id: filtro.usuario_id ? Number(filtro.usuario_id) : null },
     cartoes, unidades, recorrentes, alertas, trilha: { ok: v.ok, eventos: v.total },
     sem_carteira: CART.semCarteira(db), sem_gestor: listaSemGestor(db),
+    perguntas_contrato: (() => { try { return require('./perguntas-contrato').contagens(db); } catch (_) { return { total: 0, abertas: 0, porUnidade: {}, porAnalista: [] }; } })(),
   };
 }
 
