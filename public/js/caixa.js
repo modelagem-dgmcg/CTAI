@@ -90,7 +90,7 @@
       const pz = u.pior_prazo;
       const det = h('details', { class: 'cartao un-bloco', 'data-contrato': u.contrato_id },
         h('summary', null, h('span', { class: 'un-nome' }, h('strong', null, u.unidade), h('span', { class: 'mudo peq' }, ' ' + ([u.tipo, u.municipio].filter(Boolean).join(' · ')))),
-          h('span', { class: 'un-selos' }, selo(u.fase, ''), pz ? selo('Prazo ' + pz.canal + ' ' + pz.situacao, tomPrazo(pz.situacao)) : null, u.sem_gestor ? selo('aguardando gestor', 'atencao') : null,
+          h('span', { class: 'un-selos' }, selo(u.fase, ''), pz ? selo('Prazo ' + pz.canal + ' ' + pz.situacao, tomPrazo(pz.situacao)) : null, null,
             u.nao_lidos ? selo(u.nao_lidos + ' não lido(s)', 'alta') : null, selo(u.itens.length + ' item(ns)', u.itens.length ? 'atencao' : 'ok'))),
         h('div', { class: 'un-corpo' },
           h('div', { class: 'linha espaco' }, h('p', { class: 'mudo peq', style: 'margin:0' }, 'Última entrega: ' + (u.ultima_entrega ? fmt.data(u.ultima_entrega) : 'nenhuma ainda') + ' · Achados abertos: ' + u.achados.abertos + ' · Divergências abertas: ' + u.divergencias_abertas),
@@ -151,7 +151,7 @@
           faixa('prazos', rs.prazos_vencidos, rs.prazos_vencidos === 1 ? 'aviso de prazo vencido' : 'avisos de prazo vencido', 'A unidade passou do prazo de entrega no SEI ou no SIMAS.', 'alta', 'prazo_vencido'),
           faixa('prazos2', rs.prazos_a_vencer, rs.prazos_a_vencer === 1 ? 'aviso de prazo a vencer' : 'avisos de prazo a vencer', 'O prazo de entrega da unidade está chegando.', 'atencao', 'prazo_vencer'),
           faixa('resp', rs.respostas, rs.respostas === 1 ? 'achado respondido pela unidade' : 'achados respondidos pelas unidades', 'Pontos que a CTAI encaminhou à unidade e que ela já respondeu.', 'atencao', 'resposta'),
-          faixa('semg', rs.sem_gestor, rs.sem_gestor === 1 ? 'unidade ainda sem gestor cadastrado' : 'unidades ainda sem gestor cadastrado', 'Sem o administrador da unidade no Portal, ninguém da unidade consegue enviar os dados. Cadastre em Gestão > Usuários.', 'atencao', 'sem_gestor')),
+          null && faixa('semg', rs.sem_gestor, rs.sem_gestor === 1 ? 'unidade ainda sem gestor cadastrado' : 'unidades ainda sem gestor cadastrado', 'Sem o administrador da unidade no Portal, ninguém da unidade consegue enviar os dados. Cadastre em Gestão > Usuários.', 'atencao', 'sem_gestor')),
         h('div', { class: 'linha cx-ferramentas', style: 'gap:14px;flex-wrap:wrap;margin-top:12px' },
           busca,
           h('label', { class: 'ck', style: 'margin:0' }, h('input', Object.assign({ type: 'checkbox', id: 'cx-tratados', onchange: (e) => { F.tipo = ''; F.situacao = e.target.checked ? 'todos' : 'pendentes'; caixa(); } }, F.situacao === 'todos' ? { checked: true } : {})), ' Mostrar também o que já foi tratado'),

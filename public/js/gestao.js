@@ -32,7 +32,7 @@
       seletor('gp-func', 'Funcionário', [['', 'Todos']].concat(c.funcionarios.map((f) => [f.usuario_id, f.nome])), F.usuario_id, (v) => { F.usuario_id = v; refazer(); }),
       h('a', { class: 'btn', id: 'gp-pdf', href: '/api/gestao/painel/pdf' + qs(F), target: '_blank', rel: 'noopener' }, 'Exportar PDF'));
     const prz = k.prazos;
-    const linhaAlertas = p.alertas.length ? h('ul', { class: 'alertas' }, p.alertas.slice(0, 14).map((a) => h('li', { class: a.nivel }, h('span', { class: 'selo ' + (a.nivel === 'alta' ? 'alta' : (a.nivel === 'atencao' ? 'atencao' : '')) }, a.tipo), ' ', h('strong', null, a.unidade), ' · ', a.texto)))
+    const linhaAlertas = p.alertas.length ? h('ul', { class: 'alertas' }, p.alertas.filter((a) => a.tipo !== 'sem gestor').slice(0, 14).map((a) => h('li', { class: a.nivel }, h('span', { class: 'selo ' + (a.nivel === 'alta' ? 'alta' : (a.nivel === 'atencao' ? 'atencao' : '')) }, a.tipo), ' ', h('strong', null, a.unidade), ' · ', a.texto)))
       : h('p', { class: 'mudo' }, 'Nenhum alerta no momento.');
     const maxRec = Math.max(1, ...p.recorrentes.map((r) => r.divergencias));
     montar(cabecalho(''), filtros,
@@ -42,8 +42,7 @@
         kpi('Prazos vencidos', prz.vencido, prz.a_vencer + ' a vencer · ' + prz.atraso + ' com atraso', prz.vencido ? 'alta' : ''),
         kpi('Achados abertos', k.achados_abertos, k.achados_vencidos + ' vencido(s)', k.achados_vencidos ? 'alta' : ''),
         kpi('Pareceres', k.pareceres_rascunho + ' / ' + k.pareceres_congelados, 'rascunho / congelados'),
-        kpi('Sem carteira', k.sem_carteira, 'unidades', k.sem_carteira ? 'atencao' : ''),
-        kpi('Sem gestor', k.sem_gestor, 'aguardando gestor', k.sem_gestor ? 'atencao' : '')),
+        kpi('Sem carteira', k.sem_carteira, 'unidades', k.sem_carteira ? 'atencao' : '')),
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Alertas'), linhaAlertas),
       p.sem_carteira.length ? h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Unidades sem carteira'),
         h('p', { class: 'mudo peq' }, 'O envio dessas unidades não tem funcionário responsável. Escolha quem acompanha:'),
@@ -52,9 +51,6 @@
           return h('div', { class: 'linha sem-carteira' }, h('strong', null, u.unidade), u.demo ? selo('demonstração', 'demo') : null, sel,
             h('button', { class: 'sec', onclick: async () => { try { await api('POST', '/api/gestao/carteira/atribuir', { usuario_id: Number(sel.value), contrato_id: u.contrato_id, motivo: 'Distribuição pelo painel' }); toast('Unidade atribuída.'); refazer(); } catch (e) { toast(e.message, true); } } }, 'Atribuir'));
         })) : null,
-      p.sem_gestor.length ? h('div', { class: 'cartao', id: 'fila-sem-gestor' }, h('h2', { style: 'margin-top:0' }, 'Unidades aguardando gestor (' + p.sem_gestor.length + ')'),
-        h('p', { class: 'mudo peq' }, 'Ninguém da unidade foi cadastrado para usar o Portal da Unidade. Cadastre o gestor em Usuários (perfil gestor de unidade).'),
-        h('div', null, p.sem_gestor.map((u) => h('span', { class: 'selo atencao', style: 'margin:0 4px 4px 0' }, u.unidade + (u.municipio ? ' · ' + u.municipio : ''))))) : null,
       h('div', { class: 'unidades-grid' }, p.unidades.length ? p.unidades.map((u) => cartaoUnidade(u, p)) : h('div', { class: 'cartao' }, h('p', { class: 'mudo' }, 'Nenhuma unidade para esse filtro.'))),
       h('div', { class: 'cartao' }, h('h2', { style: 'margin-top:0' }, 'Divergências recorrentes por indicador'),
         h('p', { class: 'mudo peq' }, 'Itens do IGQ que voltam a divergir em mais de uma competência são candidatos a orientação direta à unidade.'),
@@ -125,7 +121,7 @@
       h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h2', { style: 'margin:0' }, 'Quem acompanha cada unidade'),
         h('label', { class: 'ck' }, h('input', Object.assign({ type: 'checkbox', id: 'cart-estrito', onchange: async (e) => { try { await api('PUT', '/api/gestao/carteira-modo', { estrita: e.target.checked }); toast(e.target.checked ? 'Modo estrito ligado.' : 'Modo estrito desligado.'); carteira(); } catch (x) { toast(x.message, true); } } }, c.estrita ? { checked: true } : {})), ' Modo estrito (sem carteira = não vê nada)')),
         tabela([{ t: 'Funcionário' }, { t: 'Perfil' }, { t: 'Unidades da carteira' }, { t: '' }], c.funcionarios.map((f) => [h('strong', null, f.nome), f.perfil, f.unidades.length ? f.unidades.map((id) => { const u = c.unidades.find((x) => x.contrato_id === id); return h('span', { class: 'selo', style: 'margin-right:4px' }, u ? u.unidade : id); }) : h('span', { class: 'mudo' }, f.ativo ? 'vê todas (sem carteira)' : 'desativado'), h('button', { class: 'sec', id: 'cart-ed-' + f.login, onclick: () => editar(f) }, 'Editar carteira')]))),
-      h('div', { class: 'cartao' }, h('h3', null, 'Unidades'), tabela([{ t: 'Unidade' }, { t: 'Responsáveis' }, { t: 'Situação' }], c.unidades.map((u) => [u.unidade + (u.municipio ? ' · ' + u.municipio : '') + (u.demo ? ' (demonstração)' : ''), u.responsaveis.length ? u.responsaveis.map((r) => r.nome).join(', ') : selo('sem carteira', 'atencao'), u.sem_gestor ? selo('aguardando gestor', 'atencao') : selo('com gestor', 'ok')]))),
+      h('div', { class: 'cartao' }, h('h3', null, 'Unidades'), tabela([{ t: 'Unidade' }, { t: 'Responsáveis' }, { t: 'Situação' }], c.unidades.map((u) => [u.unidade + (u.municipio ? ' · ' + u.municipio : '') + (u.demo ? ' (demonstração)' : ''), u.responsaveis.length ? u.responsaveis.map((r) => r.nome).join(', ') : selo('sem carteira', 'atencao'), null]))),
       h('div', { class: 'cartao' }, h('h3', null, 'Histórico de mudanças'), tabela([{ t: 'Funcionário' }, { t: 'Unidade' }, { t: 'Entrou' }, { t: 'Saiu' }, { t: 'Por' }],
         hist.historico.slice(0, 40).map((x) => [x.nome, x.unidade || x.contrato_id, fmt.data(x.desde), x.ate ? fmt.data(x.ate) : h('span', { class: 'selo ok' }, 'ativa'), x.ate ? (x.removido_por || '') : (x.atribuido_por || '')]), { vazio: 'Nenhuma atribuição ainda.' })));
   }
@@ -231,14 +227,14 @@
             p.avisos.length ? tabela([{ t: 'Linha', n: true }, { t: 'Aviso' }], p.avisos.map((e) => [e.linha, e.motivo])) : null));
         }
         blocos.push(h('div', { class: 'cartao' }, h('h3', null, 'Unidades do arquivo'),
-          tabela([{ t: 'Unidade' }, { t: 'Município' }, { t: 'Situação' }, { t: 'Responsáveis' }], p.unidades.map((u) => [u.unidade, u.municipio || '—', u.existente ? selo('já cadastrada', 'ok') : selo('nova · aguardando gestor', 'atencao'), u.conflito ? selo('decidir', 'alta') : (u.analistas.join(', ') || '—')]))));
+          tabela([{ t: 'Unidade' }, { t: 'Município' }, { t: 'Situação' }, { t: 'Responsáveis' }], p.unidades.map((u) => [u.unidade, u.municipio || '—', u.existente ? selo('já cadastrada', 'ok') : selo('nova', 'atencao'), u.conflito ? selo('decidir', 'alta') : (u.analistas.join(', ') || '—')]))));
         const pend = p.pendencias.filter((x) => !x.bloqueia).length;
         blocos.push(h('div', { class: 'linha' }, h('button', Object.assign({ id: 'imp-gravar', onclick: gravar }, p.podeGravar ? {} : { disabled: true }), 'Gravar importação'),
           h('span', { class: 'mudo peq' }, p.podeGravar ? 'Tudo será gravado de uma vez (ou nada).' : (p.pendencias.some((x) => x.bloqueia) ? 'Corrija os analistas indicados no arquivo.' : (pend ? 'Faltam ' + pend + ' decisão(ões).' : (p.resumo.comErro ? 'Corrija as linhas com erro ou marque "ignorar linhas com erro".' : 'Nada para gravar.'))))));
       }
       if (E.ultimo) {
         const u = E.ultimo;
-        blocos.unshift(aviso('ok', h('strong', null, 'Importação #' + u.importacao_id + ' gravada. '), u.unidades_novas + ' unidade(s) criada(s) aguardando gestor, ' + u.entradas + ' entrada(s) e ' + u.saidas + ' saída(s) de carteira' + (u.analistas_criados ? ', ' + u.analistas_criados + ' usuário(s) criado(s) com a senha temporária ' + u.senhaTemporaria : '') + '.'));
+        blocos.unshift(aviso('ok', h('strong', null, 'Importação #' + u.importacao_id + ' gravada. '), u.unidades_novas + ' unidade(s) criada(s), ' + u.entradas + ' entrada(s) e ' + u.saidas + ' saída(s) de carteira' + (u.analistas_criados ? ', ' + u.analistas_criados + ' usuário(s) criado(s) com a senha temporária ' + u.senhaTemporaria : '') + '.'));
       }
       montar(cabecalho('importar'),
         aviso('info', h('strong', null, 'Como funciona. '), 'Carregue um CSV (UTF-8, separado por ; ou ,) com as colunas tipo (UPA, UPAE ou Hospital), unidade, municipio (opcional) e analista (login ou nome; vários separados por |). A unidade é identificada por tipo + nome + município. Nada é gravado antes de você conferir a prévia.'),

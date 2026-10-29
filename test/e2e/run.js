@@ -329,9 +329,8 @@ let base;
     await sup.check('#imp-ignorar'); await sup.waitForFunction(() => !document.querySelector('#imp-gravar').disabled, null, { timeout: 8000 });
     await sup.setViewportSize({ width: 1280, height: 1700 }); await limpa(sup); await sup.screenshot({ path: path.join(CAP, '26-gestao-importar.png') });
     await sup.click('#imp-gravar'); await sup.waitForSelector('.aviso.ok >> text=Importação #', { timeout: 8000 });
-    await ir(sup, '#/gestao', 'text=Alertas'); await sup.waitForSelector('#fila-sem-gestor');
-    assert.match(await sup.textContent('#fila-sem-gestor'), /Exemplo Alfa/);
-    log('importação em lote da carteira e fila de unidades aguardando gestor');
+    await ir(sup, '#/gestao', 'text=Alertas'); assert.equal(await sup.locator('#fila-sem-gestor').count(), 0);
+    log('importação em lote da carteira; sem fila de unidades aguardando gestor (Portal parado)');
     // Caixa de entrada, minhas unidades e entregas por carteira
     const CXs = require('../../server/caixa');
     const uCol = S.db.get("SELECT usuario_id FROM usuarios WHERE login = 'colega1'").usuario_id;
