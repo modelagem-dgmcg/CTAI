@@ -428,3 +428,11 @@ dialog:has(.imp-ed) .corpo,dialog:has(.imp-est) .corpo{max-height:72vh;overflow:
 .pt-div td{background:rgba(217,119,6,.12)}
 .pt-largo{display:flex;width:100%}
 .pt-largo textarea{width:100%}
+
+/* Tabela de arquivos: colunas com largura própria, texto que quebra, listas de escolha legíveis */
+table.al-arq{table-layout:fixed;min-width:860px}
+table.al-arq th:nth-child(1){width:38px}table.al-arq th:nth-child(2){width:27%}table.al-arq th:nth-child(3){width:25%}table.al-arq th:nth-child(4){width:12%}table.al-arq th:nth-child(5){width:26%}table.al-arq th:nth-child(6){width:82px}
+table.al-arq td{vertical-align:top;overflow-wrap:anywhere}
+table.al-arq td .linha{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:6px}
+table.al-arq td select{width:100%;min-width:0;padding:7px 8px}
+table.al-arq td ul{padding-left:16px}
