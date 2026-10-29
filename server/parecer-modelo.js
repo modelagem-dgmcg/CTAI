@@ -91,12 +91,14 @@ async function preencherPeloGaocg(db, parecerId, usuario) {
   const p = M.obter(db, parecerId);
   M.exigirCriador(p, usuario);
   const u = await G.unidadeDoContrato(db, p.contrato_id, usuario.login);
-  if (!u.encontrada) return { encontrada: false };
+  const reg = require('./registro-contratos').paraParecer(db, p.contrato_id); // contrato e aditivos do registro da DGMCG
+  if (!u.encontrada && !reg) return { encontrada: false };
   const m = p.blocos.modelo || vazio();
-  const d = u.dados;
+  const d = Object.assign({}, u.encontrada ? u.dados : {});
+  if (reg) { d.oss = d.oss || reg.oss; d.contrato = d.contrato || reg.contrato; }
   const br = (s) => { const t = String(s); const x = /^(\d{4})-(\d{2})-(\d{2})/.exec(t); return x ? x[3] + '/' + x[2] + '/' + x[1] : t; };
   const dinheiro = (v) => { const t = String(v).trim(); const n = typeof v === 'number' ? v : (/^[\d.,\s]+$/.test(t) ? (t.includes(',') ? Number(t.replace(/\./g, '').replace(',', '.')) : Number(t)) : NaN); return Number.isFinite(n) ? 'R$ ' + n.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : t; };
-  const troca = { 'OSS': d.oss, 'Contrato de Gestão': d.contrato ? 'n.º ' + d.contrato : null, 'Vigência / termos aditivos': d.vigencia_fim ? (d.vigencia_inicio ? br(d.vigencia_inicio) + ' a ' : 'até ') + br(d.vigencia_fim) : null, 'Endereço': d.endereco, 'Repasse mensal': d.repasse_mensal ? dinheiro(d.repasse_mensal) : null };
+  const troca = { 'OSS': d.oss, 'Contrato de Gestão': d.contrato ? 'n.º ' + d.contrato : null, 'Vigência / termos aditivos': reg ? reg.vigencia_texto : d.vigencia_fim ? (d.vigencia_inicio ? br(d.vigencia_inicio) + ' a ' : 'até ') + br(d.vigencia_fim) : null, 'Endereço': d.endereco, 'Repasse mensal': d.repasse_mensal ? dinheiro(d.repasse_mensal) : null };
   const feitos = [];
   let txt = String(m.secoes.identificacao || '');
   for (const [rot, val] of Object.entries(troca)) {
@@ -107,7 +109,7 @@ async function preencherPeloGaocg(db, parecerId, usuario) {
   m.secoes.identificacao = txt; m.atualizado_em = agora();
   db.run('UPDATE pareceres SET blocos = ?, atualizado_em = ?, atualizado_por = ? WHERE parecer_id = ?', JSON.stringify(Object.assign(p.blocos, { modelo: m })), agora(), usuario.login, p.parecer_id);
   trilha.registrar(db, { usuario: usuario.login, tabela: 'pareceres', registro: p.parecer_id, campo: 'modelo_gaocg', valor_novo: feitos.join(', ') || 'nada novo' });
-  return { encontrada: true, preenchidos: feitos, lido_em: u.lido_em, da_copia: u.da_copia };
+  return { encontrada: true, preenchidos: feitos, lido_em: u.lido_em, da_copia: u.da_copia, do_registro: !!reg };
 }
 
 module.exports = { preencherPeloGaocg, MODELO, montar, definir, salvar, textoCompleto, campos, periodoPorExtenso };

@@ -179,6 +179,9 @@ module.exports = (db) => {
     res.json({ sugestao });
   });
   r.post('/pareceres/:id/modelo', (req, res) => res.json({ modelo: require('../parecer-modelo').definir(db, req.params.id, req.usuario, req.body && req.body.modo) }));
+  // Contrato e termos aditivos da unidade (registro importado pela Gestão)
+  r.get('/contratos/:id/instrumentos', (req, res) => res.json({ registro: require('../registro-contratos').resumo(db, req.params.id) }));
+  r.post('/contratos/:id/instrumentos/confirmar', (req, res) => res.json(require('../registro-contratos').confirmar(db, req.usuario, req.params.id)));
   r.post('/pareceres/:id/modelo/gaocg', async (req, res) => res.json(await require('../parecer-modelo').preencherPeloGaocg(db, req.params.id, req.usuario)));
   const RP = require('../relatorios-parecer');
   r.get('/pareceres/:id/relatorios', (req, res) => res.json({ relatorios: RP.listar(db, req.params.id) }));

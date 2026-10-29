@@ -2,7 +2,7 @@
   'use strict';
   // Gestão: painel da superintendente, produção, carteira, usuários e IA. Só superintendente e administrador.
   const { h, api, fmt, toast, janela, confirmar, selo, aviso, tabela, montar } = window.CTAI;
-  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['entregas', 'Entregas por carteira'], ['completude', 'Completude'], ['importar', 'Importar'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
+  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['entregas', 'Entregas por carteira'], ['completude', 'Completude'], ['importar', 'Importar'], ['contratos', 'Contratos e TAs'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
   const kpi = (r, v, nota, tom) => h('div', { class: 'kpi' + (tom ? ' ' + tom : '') }, h('div', { class: 'r' }, r), h('div', { class: 'num-grande' }, String(v)), nota ? h('div', { class: 'r' }, nota) : null);
   const F = { trimestre: '', contrato: '', usuario_id: '' }; // filtros lembrados enquanto a página está aberta
   const qs = (o) => { const p = new URLSearchParams(); for (const k of Object.keys(o)) if (o[k]) p.set(k, o[k]); const s = p.toString(); return s ? '?' + s : ''; };
@@ -180,6 +180,31 @@
     montar(cabecalho('ia'), window.CTAI_RACK_IA());
   }
 
+  // ---------- Contratos e termos aditivos (CSV da planilha da DGMCG) ----------
+  const CT = { csv: '', nome: '', previa: null, ultimo: null };
+  async function contratosTas() {
+    const lista = await api('GET', '/api/gestao/registro-contratos').catch(() => ({ unidades: [] }));
+    const ref = async () => { if (!CT.csv) { CT.previa = null; return desenhar(); } try { CT.previa = await api('POST', '/api/gestao/registro-contratos/previa', { csv: CT.csv }); } catch (e) { CT.previa = null; toast(e.message, true); } desenhar(); };
+    const arquivo = h('input', { type: 'file', id: 'ct-arquivo', accept: '.csv,text/csv,text/plain', onchange: async (e) => { const f = e.target.files[0]; if (!f) return; CT.csv = await f.text(); CT.nome = f.name; CT.ultimo = null; ref(); } });
+    const gravar = async () => { try { CT.ultimo = await api('POST', '/api/gestao/registro-contratos/gravar', { csv: CT.csv }); CT.csv = ''; CT.previa = null; toast('Registro gravado.'); contratosTas(); } catch (e) { toast(e.message, true); } };
+    function desenhar() {
+      const p = CT.previa; const blocos = [];
+      if (CT.ultimo) blocos.push(aviso('ok', h('strong', null, 'Gravado. '), CT.ultimo.novos + ' nova(s), ' + CT.ultimo.atualizados + ' atualizada(s), ' + CT.ultimo.mantidos + ' já conferida(s) mantida(s).'));
+      if (p) {
+        const r = p.resumo;
+        blocos.push(h('div', { class: 'kpis' }, kpi('Linhas', r.linhas, 'de ' + r.unidades + ' unidade(s)'), kpi('Novas', r.novos, ''), kpi('Atualizam', r.atualizados, ''), kpi('Conferidas (mantidas)', r.mantidos, 'não são alteradas')));
+        if (p.naoCasadas.length) blocos.push(aviso('atencao', h('strong', null, 'Fora do sistema (ignoradas): '), p.naoCasadas.map((x) => x.nome + ' (' + x.linhas + ')').join('; ') + '.'));
+        blocos.push(h('div', { class: 'cartao' }, h('h3', null, 'Unidades do arquivo'), tabela([{ t: 'Unidade' }, { t: 'Contratos', n: true }, { t: 'Aditivos', n: true }, { t: 'Apostilamentos', n: true }, { t: 'Novas', n: true }, { t: 'Atualizam', n: true }, { t: 'Mantidas', n: true }], p.unidades.map((u) => [u.unidade, u.contratos, u.aditivos, u.apostilamentos, u.novos, u.atualizados, u.mantidos]))));
+        blocos.push(h('div', { class: 'linha' }, h('button', { id: 'ct-gravar', onclick: gravar, disabled: !p.podeGravar }, 'Gravar registro'), h('span', { class: 'mudo peq' }, 'Tudo é gravado de uma vez. O que a analista já conferiu não é alterado.')));
+      }
+      blocos.push(h('div', { class: 'cartao' }, h('h3', null, 'Como está hoje'), tabela([{ t: 'Unidade' }, { t: 'Contrato' }, { t: 'Aditivos', n: true }, { t: 'Vigência até' }, { t: 'Situação' }],
+        lista.unidades.map((u) => [u.unidade, u.registro ? u.registro.contrato.numero + (u.registro.contrato.oss ? ' · ' + u.registro.contrato.oss : '') : '—', u.registro ? u.registro.contagem.aditivos : '—', u.registro && u.registro.vigencia_fim ? u.registro.vigencia_fim.split('-').reverse().join('/') : '—', u.registro ? (u.registro.conferido ? selo('conferido', 'ok') : selo('a conferir', 'atencao')) : selo('sem registro', '')]))));
+      montar(cabecalho('contratos'), aviso('info', h('strong', null, 'Contratos e termos aditivos. '), 'Carregue o CSV gerado a partir da planilha "CONTRATOS E T.A.s OSS". Ele traz o contrato vigente, aditivos, apostilamentos e a vigência de cada unidade. Não traz metas nem valores. Nada é gravado antes de você conferir a prévia.'),
+        h('div', { class: 'cartao' }, h('div', { class: 'campo' }, h('label', { for: 'ct-arquivo' }, 'Arquivo CSV'), arquivo, CT.nome ? h('span', { class: 'mudo peq' }, CT.nome) : null)), blocos);
+    }
+    desenhar();
+  }
+
   // ---------- Importar unidades e carteira (CSV) ----------
   const E = { csv: '', nomeArquivo: '', modo: 'acrescentar', ignorar: false, decisoes: { conflitos: {}, analistas: {} }, previa: null, ultimo: null };
   const ROT_TIPO = { UPA: 'UPA', UPAE: 'UPAE', HOSPITAL: 'Hospital' };
@@ -306,6 +331,7 @@
     if (h2 === 'producao') return producao();
     if (h2 === 'carteira') return carteira();
     if (h2 === 'importar') return importar();
+    if (h2 === 'contratos') return contratosTas();
     if (h2 === 'entregas') return entregas();
     if (h2 === 'completude') return completude();
     if (h2 === 'usuarios') return usuarios();

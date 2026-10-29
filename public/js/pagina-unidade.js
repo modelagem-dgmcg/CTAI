@@ -202,13 +202,25 @@
     if (window.CTAI_PARECER_TRI) window.CTAI_PARECER_TRI.preencher(slotApuracao, { contratoId: id, tri: T }).catch(() => {});
     if (window.CTAI_IMPORTAR) window.CTAI_IMPORTAR.preencher(slotImportar, { contratoId: id, tri: T, estado: imp,
       aoMudar: (novo, recarga) => { if (recarga) { recarregar(); return; } imp = novo; calcular(); repintar(); } }).catch((e) => { slotImportar.replaceChildren(aviso('erro', e.message)); });
+    const slotRegistro = h('div', { id: 'un-registro' });
+    api('GET', '/api/ctai/contratos/' + encodeURIComponent(id) + '/instrumentos').then(({ registro: g }) => {
+      if (!g) return;
+      const lista = h('details', null, h('summary', { class: 'peq' }, 'Ver os ' + g.instrumentos.length + ' instrumentos (contrato, aditivos, apostilamentos)'),
+        h('div', { class: 'rolagem' }, h('table', { class: 'al-arq', style: 'table-layout:auto;min-width:0' }, h('thead', null, h('tr', null, ['Instrumento', 'Nº', 'Objeto', 'Início', 'Fim'].map((t) => h('th', null, t)))),
+          h('tbody', null, g.instrumentos.map((x) => h('tr', null, h('td', null, x.instrumento.toLowerCase()), h('td', null, x.numero || '—'), h('td', null, x.objeto || '—'), h('td', null, x.inicio ? x.inicio.split('-').reverse().join('/') : '—'), h('td', null, x.fim ? x.fim.split('-').reverse().join('/') : '—')))))));
+      slotRegistro.replaceChildren(h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, 'Contrato e termos aditivos'), g.conferido ? selo('conferido', 'ok') : selo('a conferir', 'atencao')),
+        h('p', { style: 'font-size:16px;line-height:1.5' }, g.texto),
+        h('p', { class: 'mudo peq' }, 'Vem do registro da DGMCG (planilha de contratos e T.A.s). Não traz metas nem valores: esses são lidos dos documentos do contrato.'),
+        lista,
+        g.conferido ? null : h('div', { class: 'linha' }, h('button', { type: 'button', class: 'sec', onclick: async () => { try { await api('POST', '/api/ctai/contratos/' + encodeURIComponent(id) + '/instrumentos/confirmar', {}); toast('Registro conferido.'); recarregar(); } catch (e) { toast(e.message, true); } } }, 'Conferi: está certo'))));
+    }).catch(() => {});
     const slotContrato = h('div', { id: 'un-contrato' });
     if (window.CTAI_CONTRATOS) window.CTAI_CONTRATOS.preencher(slotContrato, id).catch(() => {});
     const seletor = h('select', { id: 'un-tri', 'aria-label': 'Trimestre', onchange: (e) => { guardaTri(id, e.target.value); recarregar(); } }, tris.map((t) => h('option', Object.assign({ value: t }, t === T ? { selected: true } : {}), t)));
     montar(avDup,
       h('div', { class: 'topo' }, h('div', null, h('h1', null, c.unidade, ' ', c.demo ? selo('demonstração', 'demo') : null), h('p', null, [c.tipo, c.oss, c.numero_cg].filter(Boolean).join(' · '))),
         h('div', { class: 'linha' }, h('label', { for: 'un-tri', class: 'mudo peq', style: 'margin:0' }, 'Trimestre'), seletor, h('button', { type: 'button', class: 'sec', onclick: () => configuracoes(id, recarregar).catch((e) => toast(e.message, true)) }, 'Configurações'))),
-      acessosProv, slotContrato, barra, secoes);
+      acessosProv, slotRegistro, slotContrato, barra, secoes);
   }
 
   // Painel de consulta do editor: dados do trimestre e regras do contrato, para conferir sem trocar de janela.

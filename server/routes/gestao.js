@@ -117,6 +117,13 @@ module.exports = (db) => {
   r.put('/carteira-modo', (req, res) => { CART.definirCfg(db, req.usuario.login, 'carteira_estrita', req.body && req.body.estrita ? 'sim' : 'nao'); res.json({ estrita: CART.estrita(db) }); });
   r.get('/carteira/historico', (req, res) => res.json({ historico: CART.historico(db, { usuario_id: req.query.usuario_id, contrato_id: req.query.contrato }) }));
 
+  // Registro de contratos e termos aditivos (planilha da DGMCG): prévia e gravação
+  const RC = require('../registro-contratos');
+  const csvReg = (req) => { const b = req.body || {}; if (typeof b.csv !== 'string' || !b.csv.trim()) throw erro(400, 'Envie o conteúdo do arquivo CSV.'); return b.csv; };
+  r.post('/registro-contratos/previa', (req, res) => res.json(RC.previa(db, csvReg(req))));
+  r.post('/registro-contratos/gravar', (req, res) => res.json(RC.gravar(db, req.usuario.login, csvReg(req))));
+  r.get('/registro-contratos', (req, res) => res.json({ unidades: db.all('SELECT contrato_id, unidade, tipo FROM contratos WHERE demo = 0 ORDER BY unidade').map((u) => Object.assign(u, { registro: RC.resumo(db, u.contrato_id) && Object.assign({}, RC.resumo(db, u.contrato_id), { instrumentos: undefined }) })) }));
+
   // Importação em lote de unidades e carteira
   const IMP = require('../importacao');
   const entradaImp = (req) => {

@@ -12,6 +12,12 @@ CREATE TABLE IF NOT EXISTS contratos (
 CREATE TABLE IF NOT EXISTS termos_aditivos (
   ta_id TEXT PRIMARY KEY, contrato_id TEXT, numero TEXT, data_assinatura TEXT, vigencia_inicio TEXT, vigencia_fim TEXT, efeito TEXT, processo_sei TEXT
 );
+-- Registro de contratos e termos aditivos por unidade (importado da planilha da DGMCG). Linhas conferidas pela analista não são sobrescritas por nova importação.
+CREATE TABLE IF NOT EXISTS registro_instrumentos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, chave TEXT NOT NULL UNIQUE, contrato_id TEXT NOT NULL, instrumento TEXT NOT NULL, numero TEXT, contrato_gestao TEXT, sei TEXT, oss TEXT, objeto TEXT,
+  tipo_ta TEXT, regular TEXT, situacao_cg TEXT, inicio TEXT, fim TEXT, observacao TEXT, importado_por TEXT, importado_em TEXT, confirmado_por TEXT, confirmado_em TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_reg_instr ON registro_instrumentos (contrato_id);
 CREATE TABLE IF NOT EXISTS regras (
   regra_id TEXT PRIMARY KEY, versao TEXT NOT NULL, contrato_id TEXT, vigente_de TEXT, vigente_ate TEXT, arquivo_json TEXT, conteudo TEXT NOT NULL,
   pendencias TEXT, aprovada_por TEXT, data_aprovacao TEXT
