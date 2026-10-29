@@ -81,7 +81,7 @@ function aplicarSementes(db) {
   const contratos = db.all('SELECT contrato_id, unidade FROM contratos WHERE demo = 0').map((c) => ({ id: c.contrato_id, nome: semAcento(c.unidade), tipo: String(c.contrato_id).split('-')[0].toUpperCase() }));
   if (!contratos.length) return { aplicadas: 0 };
   const sistema = { login: 'sistema' };
-  let aplicadas = 0;
+  let aplicadas = 0, atualizadas = 0;
   for (const arq of fs.readdirSync(dir).filter((f) => f.endsWith('.json'))) {
     let lista; try { const j = JSON.parse(fs.readFileSync(path.join(dir, arq), 'utf8')); lista = Array.isArray(j) ? j : j.unidades; } catch (_) { continue; }
     for (const it of lista || []) {
@@ -89,7 +89,17 @@ function aplicarSementes(db) {
       const par = contratos.filter((c) => (!it.tipo || c.tipo === String(it.tipo).toUpperCase()) && chaves.some((k) => c.nome.includes(k)));
       if (par.length !== 1) continue;
       const id = par[0].id;
-      if (db.get('SELECT 1 FROM contrato_regras WHERE contrato_id = ?', id)) continue;
+      const ja = db.get('SELECT conteudo, origem, conferida_por FROM contrato_regras WHERE contrato_id = ?', id);
+      if (ja) {
+        // Correção do repositório chega às regras que ainda são a semente original: nunca às que alguém editou, importou ou conferiu.
+        if (!String(ja.origem || '').startsWith('regras do repositório') || ja.conferida_por) continue;
+        try {
+          if (JSON.stringify(normalizar(it)) === JSON.stringify(normalizar(JSON.parse(ja.conteudo)))) continue;
+          gravar(db, sistema, id, it, 'regras do repositório (' + arq + ')'); atualizadas++;
+          trilha.registrar(db, { usuario: 'sistema', tabela: 'contrato_regras', registro: id, campo: 'semente_atualizada', valor_novo: { origem: arq } });
+        } catch (_) { /* segue */ }
+        continue;
+      }
       try {
         gravar(db, sistema, id, it, 'regras do repositório (' + arq + ')'); aplicadas++;
         // identificação do contrato, só onde está vazia
@@ -97,7 +107,7 @@ function aplicarSementes(db) {
       } catch (_) { /* segue */ }
     }
   }
-  return { aplicadas };
+  return { aplicadas, atualizadas };
 }
 
 module.exports = { aplicarSementes, ler, gravar, importar, importarLote, marcarConferida, normalizar, semAcento };

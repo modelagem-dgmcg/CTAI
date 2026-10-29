@@ -71,3 +71,22 @@ test('configuração na unidade: analista da carteira altera a regra com senha e
   assert.equal(lido.contratoRegras.conferida, false, 'depois de alterar, volta a "a conferir"');
   assert.ok(S.db.all("SELECT motivo FROM trilha_auditoria WHERE tabela = 'contrato_regras' AND campo = 'configuração'").some((x) => x.motivo === 'TA 03 mudou a meta'), 'motivo na trilha');
 });
+
+test('semente do repositório corrige regra ainda original, mas não a editada, importada ou conferida', () => {
+  const { abrir, envolver } = require('../server/db');
+  const CR = require('../server/contrato-regras');
+  const db = envolver(abrir(':memory:'));
+  db.run("INSERT INTO contratos (contrato_id, unidade, tipo, demo, criado_por, criado_em) VALUES ('hospital-ma', 'Hospital Miguel Arraes', 'Hospital', 0, 'x', '2026-01-01')");
+  assert.equal(CR.aplicarSementes(db).aplicadas, 1);
+  const base = CR.ler(db, 'hospital-ma').conteudo;
+  const velho = (extra) => db.run('UPDATE contrato_regras SET conteudo = ? WHERE contrato_id = ?', JSON.stringify(Object.assign({}, base, { variavel_pct: 20 }, extra || {})), 'hospital-ma');
+  velho(); // regra ainda é a semente antiga
+  assert.equal(CR.aplicarSementes(db).atualizadas, 1);
+  assert.deepEqual(CR.ler(db, 'hospital-ma').conteudo, base);
+  assert.equal(CR.aplicarSementes(db).atualizadas, 0, 'idempotente');
+  velho(); db.run("UPDATE contrato_regras SET conferida_por = 'analista' WHERE contrato_id = 'hospital-ma'");
+  assert.equal(CR.aplicarSementes(db).atualizadas, 0, 'conferida não é tocada');
+  assert.equal(CR.ler(db, 'hospital-ma').conteudo.variavel_pct, 20);
+  db.run("UPDATE contrato_regras SET conferida_por = NULL, origem = 'edição na unidade' WHERE contrato_id = 'hospital-ma'");
+  assert.equal(CR.aplicarSementes(db).atualizadas, 0, 'editada por pessoa não é tocada');
+});
