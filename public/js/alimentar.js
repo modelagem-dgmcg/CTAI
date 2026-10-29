@@ -417,11 +417,19 @@
       if (!forcar && sig === assinaturaBase) return; assinaturaBase = sig;
       const r = est.resumo;
       const prontos = est.itens.filter((i) => i.estado === 'pronto');
+      const zipsMap = new Map();
+      for (const i of est.itens) { const k = i.zip_nome || i.lote; if (!k) continue; const z = zipsMap.get(k) || { nome: i.zip_nome || 'Envio de ' + String(i.lote).slice(0, 16).replace('T', ' '), qtd: 0, meses: [], chave: i.zip_nome ? { zip_nome: i.zip_nome } : { lote: i.lote } }; z.qtd++; if (i.mesRotulo && !z.meses.includes(i.mesRotulo)) z.meses.push(i.mesRotulo); zipsMap.set(k, z); }
+      const zips = [...zipsMap.values()];
       const limpos = prontos.filter((i) => !(i.divergencias || []).length);
       trocarFilhos(base, 
         est.itens.length ? h('div', { class: 'cartao' },
           h('h3', null, 'Arquivos'),
           h('p', { class: 'peq', id: 'al-resumo' }, r.lidos + ' lidos, ' + r.problemas + ' com problema' + (r.precisaDados ? ', ' + r.precisaDados + ' esperando você' : '') + (r.aprovados ? ', ' + r.aprovados + ' aprovados' : '') + '.'),
+          zips.length ? h('div', { class: 'al-zips' }, h('strong', null, 'Enviou o ZIP errado? Exclua o ZIP inteiro de uma vez:'),
+            zips.map((z) => h('div', { class: 'linha espaco al-zip' }, h('span', null, h('strong', null, z.nome), ' · ' + z.qtd + ' arquivo(s)' + (z.meses.length ? ' · ' + z.meses.join(', ') : '')),
+              h('button', { class: 'leve', title: 'Apaga todos os arquivos deste ZIP e o texto lido deles', onclick: async () => {
+                if (!(await confirmar('Excluir o ZIP inteiro?', z.nome + ': ' + z.qtd + ' arquivo(s) e o texto lido deles serão apagados do sistema. Os já aprovados ficam. Você pode enviar de novo depois.', 'Excluir tudo'))) return;
+                try { const o = await api('POST', '/api/alimentar/descartar-lote', z.chave); toast(o.excluidos + ' arquivo(s) excluído(s)' + (o.mantidos ? ', ' + o.mantidos + ' mantido(s) (já aprovados ou em leitura)' : '') + '.'); await atualizar(); desenharBase(true); desenharPainel(); } catch (er) { toast(er.message, true); } } }, 'Excluir este ZIP')))) : null,
           h('details', { class: 'al-expl', open: true }, h('summary', null, 'Como o sistema conferiu cada arquivo'),
             h('p', null, 'Esta é a primeira leitura, só documental. O sistema compara o que a IA extraiu com o texto do próprio arquivo (cada item precisa ter um trecho que o comprove), soma as notas dos indicadores, procura a nota total e verifica se já existe outro relatório da mesma unidade e trimestre. Ele ainda não cruza com SIMAS, planilha de monitoramento, Relatórios Mensais nem contrato: isso acontece quando você abre a unidade e vai produzir o parecer, com uma nova leitura de tudo o que estiver guardado.'),
             h('p', null, h('strong', null, 'Divergências'), ' são avisos para você olhar, não erros definitivos. ', h('strong', null, 'Excluir'), ' apaga o arquivo e o texto lido; o documento original já não fica guardado. Você pode enviar de novo quando quiser. Arquivos já aprovados não podem ser excluídos.')),

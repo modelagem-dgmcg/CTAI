@@ -453,7 +453,19 @@ function descartar(db, u, id) {
   memoria.delete(i.id);
   if (i.estado === 'aprovado') throw erro(409, 'Este relatório já foi confirmado.');
   if (i.hist_id && i.estado === 'pronto') { try { H.excluirRascunho(db, u, i.hist_id); } catch (_) { /* já descartado */ } }
+  if (i.estado === 'lido' && i.gaveta_id) G.excluirDocumento(db, u, i.gaveta_id); // sai também da gaveta do mês
   set(db, i.id, { estado: 'descartado', texto: null });
+}
+
+// Exclui de uma vez todos os arquivos de um ZIP enviado (os já aprovados e os que ainda estão sendo lidos ficam).
+function descartarLote(db, u, d) {
+  const zip = String((d && d.zip_nome) || ''), lote = String((d && d.lote) || '');
+  if (!zip && !lote) throw erro(400, 'Informe o ZIP.');
+  const itens = zip ? db.all("SELECT id FROM alimentar_fila WHERE usuario_id = ? AND zip_nome = ? AND estado <> 'descartado' AND imp_trimestre IS NULL", u.usuario_id, zip)
+    : db.all("SELECT id FROM alimentar_fila WHERE usuario_id = ? AND lote = ? AND estado <> 'descartado' AND imp_trimestre IS NULL", u.usuario_id, lote);
+  let excluidos = 0, mantidos = 0;
+  for (const x of itens) { try { descartar(db, u, x.id); excluidos++; } catch (_) { mantidos++; } }
+  return { excluidos, mantidos };
 }
 
 function aprovar(db, u, ids) {
@@ -489,4 +501,4 @@ function liberarProprio(db, u) {
   return liberar(db, u, u.login, 'Concluiu o primeiro envio (' + e.resumo.lidos + ' lidos, ' + e.resumo.problemas + ' com problema)');
 }
 
-module.exports = { trava, estado, receber, registrarLote, receberDoLote, receberTexto, avisoOrigem, agendar, IGNORAR, MAX_LOTE, ESPERA_MAX_MIN, loteDe, mesDoDocumento, identificar, descartar, aprovar, pularProblemas, liberar, liberarProprio, recuperar, processar, trimestreDe, unidadeDe, ELEGIVEIS };
+module.exports = { trava, estado, receber, registrarLote, receberDoLote, receberTexto, avisoOrigem, agendar, IGNORAR, MAX_LOTE, ESPERA_MAX_MIN, loteDe, mesDoDocumento, identificar, descartar, descartarLote, aprovar, pularProblemas, liberar, liberarProprio, recuperar, processar, trimestreDe, unidadeDe, ELEGIVEIS };

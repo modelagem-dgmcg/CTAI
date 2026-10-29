@@ -261,3 +261,21 @@ test('unidade UPA segue o fluxo antigo (parecer por trimestre) e não usa a gave
   assert.equal(e.painel.catalogo, false); assert.match(e.painel.resumo, /1 de 1 arquivos lidos/);
   assert.equal(S.db.get("SELECT COUNT(*) AS n FROM gaveta_documentos WHERE contrato_id = 'DEMO-UPA'").n, 0);
 });
+
+test('excluir o ZIP inteiro tira os arquivos da lista e também da gaveta do mês; outro usuário não consegue', async () => {
+  const zip = 'SEI_RM_ERRADO_2026.zip';
+  S.db.run("DELETE FROM gaveta_numeros WHERE mes = '2026-09'"); S.db.run("DELETE FROM gaveta_documentos WHERE mes = '2026-09'"); // este teste parte de um mês limpo
+  const arqs = F.mesCompleto('2026-09');
+  await enviarLote(arqs, zip);
+  assert.ok(gaveta('2026-09').length > 0);
+  const sem = await outro.post('/api/alimentar/descartar-lote', { zip_nome: zip });
+  assert.equal(sem.json.excluidos, 0, 'só o dono do envio exclui');
+  assert.ok(gaveta('2026-09').length > 0);
+  const r = await a.post('/api/alimentar/descartar-lote', { zip_nome: zip });
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  assert.equal(r.json.excluidos, arqs.length);
+  assert.equal(gaveta('2026-09').length, 0, 'saiu da gaveta');
+  assert.equal(S.db.get('SELECT COUNT(*) AS n FROM gaveta_numeros WHERE mes = ?', '2026-09').n, 0);
+  assert.equal((await estado()).itens.filter((i) => i.zip_nome === zip).length, 0);
+  assert.equal((await a.post('/api/alimentar/descartar-lote', {})).status, 400);
+});

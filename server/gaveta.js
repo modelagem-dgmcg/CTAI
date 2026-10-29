@@ -200,4 +200,17 @@ function documento(db, usuario, id, comTexto) {
 
 const total = (db, contratoIds) => (contratoIds.length ? db.get(`SELECT COUNT(*) AS n FROM gaveta_documentos WHERE contrato_id IN (${contratoIds.map(() => '?').join(',')})`, ...contratoIds).n : 0);
 
-module.exports = { gravar, documentos, numeros, conferirMes, mesVisao, visaoUnidade, trimestreVisao, confirmarNumeros, documento, usaGaveta, catalogoDe, exigirUnidade, resumoLinha, total };
+// Apaga um documento da gaveta (e os números lidos dele). Fica na trilha quem apagou e o que era.
+function excluirDocumento(db, usuario, id) {
+  const d = db.get('SELECT * FROM gaveta_documentos WHERE id = ?', Number(id));
+  if (!d) return false;
+  exigirUnidade(db, usuario, d.contrato_id);
+  db.tx(() => {
+    db.run('DELETE FROM gaveta_numeros WHERE doc_id = ?', d.id);
+    db.run('DELETE FROM gaveta_documentos WHERE id = ?', d.id);
+    trilha.registrar(db, { usuario: usuario.login, tabela: 'gaveta_documentos', registro: d.id, campo: 'excluido', valor_anterior: { contrato: d.contrato_id, mes: d.mes, codigo: d.codigo, parte: d.parte, nome: d.nome_arquivo }, motivo: 'Excluído pela analista na tela Alimentar' });
+  });
+  return true;
+}
+
+module.exports = { excluirDocumento, gravar, documentos, numeros, conferirMes, mesVisao, visaoUnidade, trimestreVisao, confirmarNumeros, documento, usaGaveta, catalogoDe, exigirUnidade, resumoLinha, total };

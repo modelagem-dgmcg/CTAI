@@ -34,6 +34,7 @@ module.exports = (db) => {
   });
   r.post('/:id/identificar', async (req, res) => res.json(await AL.identificar(db, req.usuario, req.params.id, req.body || {})));
   r.delete('/:id', (req, res) => { AL.descartar(db, req.usuario, req.params.id); res.json({ ok: true }); });
+  r.post('/descartar-lote', (req, res) => res.json(AL.descartarLote(db, req.usuario, req.body || {})));
   r.post('/aprovar', (req, res) => res.json(AL.aprovar(db, req.usuario, (req.body || {}).ids)));
   r.post('/pular-problemas', (req, res) => res.json(AL.pularProblemas(db, req.usuario)));
   r.post('/liberar', (req, res) => res.json(AL.liberarProprio(db, req.usuario)));
