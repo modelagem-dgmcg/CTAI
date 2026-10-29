@@ -429,7 +429,7 @@
    "oss": "SOCIEDADE PERNAMBUCANA DE COMBATE AO CÂNCER",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": 20,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "producao",

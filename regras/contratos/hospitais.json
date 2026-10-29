@@ -1118,7 +1118,7 @@
    "oss": "FUNDAÇÃO MANOEL DA SILVA ALMEIDA - HOSPITAL MARIA LUCINDA",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": null,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "producao",
