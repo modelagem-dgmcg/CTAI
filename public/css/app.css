@@ -22,7 +22,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .lateral a.nav.ativo{background:var(--lateral-h);color:#fff;box-shadow:inset 3px 0 0 var(--ambar)}
 .lateral .rodape{margin-top:auto;font-size:12.5px;color:#adb5bd;padding:10px 8px;border-top:1px solid rgba(255,255,255,.1)}
 .lateral .rodape button{margin-top:8px}
-.conteudo{padding:26px 32px 60px;max-width:1180px;width:100%;min-width:0}
+.conteudo{padding:26px 32px 60px;max-width:1900px;width:100%;min-width:0}
 .topo{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
 .topo p{margin:0;color:var(--cinza)}
 .migalha{font-size:13px;color:var(--cinza);margin-bottom:6px}
@@ -436,3 +436,4 @@ table.al-arq td{vertical-align:top;overflow-wrap:anywhere}
 table.al-arq td .linha{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:6px}
 table.al-arq td select{width:100%;min-width:0;padding:7px 8px}
 table.al-arq td ul{padding-left:16px}
+.al-expl{background:#f8f9fa;border:1px solid var(--borda);border-radius:var(--r);padding:10px 16px;margin:10px 0 14px;font-size:15px}.al-expl summary{cursor:pointer;font-weight:700}.al-expl p{margin:8px 0 0;line-height:1.5}

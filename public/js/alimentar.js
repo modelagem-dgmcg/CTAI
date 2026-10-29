@@ -396,7 +396,7 @@
         h('td', { class: 'peq' }, resumoMasc(i.mascarados) || '—'),
         h('td', { class: 'peq' }, (i.divergencias || []).length ? h('ul', { style: 'margin:0;padding-left:16px' }, i.divergencias.map((d) => h('li', null, d))) : '—'),
         h('td', null, i.hist_id && ['pronto', 'aprovado', 'duplicado'].includes(i.estado) ? h('a', { href: '#/historico/r/' + i.hist_id }, 'Abrir') : null,
-          !ocup && i.estado !== 'aprovado' ? h('button', { class: 'leve', onclick: async () => { try { await api('DELETE', '/api/alimentar/' + i.id); await atualizar(); desenharBase(true); desenharPainel(); } catch (er) { toast(er.message, true); } } }, 'Tirar') : null));
+          !ocup && i.estado !== 'aprovado' ? h('button', { class: 'leve', title: 'Apaga este arquivo e o texto lido. Você pode enviar de novo.', onclick: async () => { if (!(await confirmar('Excluir este arquivo?', i.nome + ': o texto lido será apagado do sistema. Você pode enviar o arquivo de novo depois.', 'Excluir'))) return; try { await api('DELETE', '/api/alimentar/' + i.id); await atualizar(); desenharBase(true); desenharPainel(); } catch (er) { toast(er.message, true); } } }, 'Excluir') : null));
     }
 
     function desenharTopo() {
@@ -422,6 +422,9 @@
         est.itens.length ? h('div', { class: 'cartao' },
           h('h3', null, 'Arquivos'),
           h('p', { class: 'peq', id: 'al-resumo' }, r.lidos + ' lidos, ' + r.problemas + ' com problema' + (r.precisaDados ? ', ' + r.precisaDados + ' esperando você' : '') + (r.aprovados ? ', ' + r.aprovados + ' aprovados' : '') + '.'),
+          h('details', { class: 'al-expl', open: true }, h('summary', null, 'Como o sistema conferiu cada arquivo'),
+            h('p', null, 'Esta é a primeira leitura, só documental. O sistema compara o que a IA extraiu com o texto do próprio arquivo (cada item precisa ter um trecho que o comprove), soma as notas dos indicadores, procura a nota total e verifica se já existe outro relatório da mesma unidade e trimestre. Ele ainda não cruza com SIMAS, planilha de monitoramento, Relatórios Mensais nem contrato: isso acontece quando você abre a unidade e vai produzir o parecer, com uma nova leitura de tudo o que estiver guardado.'),
+            h('p', null, h('strong', null, 'Divergências'), ' são avisos para você olhar, não erros definitivos. ', h('strong', null, 'Excluir'), ' apaga o arquivo e o texto lido; o documento original já não fica guardado. Você pode enviar de novo quando quiser. Arquivos já aprovados não podem ser excluídos.')),
           h('div', { class: 'rolagem' }, h('table', { class: 'al-arq' },
             h('thead', null, h('tr', null, ['', 'Arquivo', 'Andamento', 'Dados mascarados', 'Divergências', ''].map((t) => h('th', null, t)))),
             h('tbody', null, est.itens.map(linha)))),

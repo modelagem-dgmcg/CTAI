@@ -329,9 +329,9 @@ function divergencias(db, item) {
   const f = H.filhos(db, item.hist_id);
   const d = [];
   if (!item.ia_ok && !f.indicadores.length && !f.achados.length && !f.recomendacoes.length) d.push('A IA não leu este arquivo: preencha à mão.');
-  if (item.ia_ok && r.igq === null) d.push('Nota total não encontrada no texto.');
+  if (item.ia_ok && r.igq === null) d.push('Nota total não encontrada no texto. Confira no documento e preencha à mão.');
   const sem0 = [...f.indicadores, ...f.achados, ...f.recomendacoes].filter((x) => !x.verificada).length;
-  if (sem0) d.push(sem0 + ' item(ns) sem trecho conferido no texto.');
+  if (sem0) d.push(sem0 + ' item(ns) sem trecho conferido no texto. Podem estar certos, mas confira antes de aprovar.');
   const pts = f.indicadores.filter((x) => x.pontos !== null);
   if (r.igq !== null && pts.length) { const s = pts.reduce((t, x) => t + Number(x.pontos), 0); if (Math.abs(s - r.igq) > 1) d.push('A soma das notas dos indicadores (' + s.toFixed(1).replace('.', ',') + ') não bate com a nota total (' + String(r.igq).replace('.', ',') + ').'); }
   const outro = db.get("SELECT hist_id FROM hist_relatorios WHERE contrato_id = ? AND trimestre = ? AND hist_id <> ?", r.contrato_id, r.trimestre, r.hist_id);
