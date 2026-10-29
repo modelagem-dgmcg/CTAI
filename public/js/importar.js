@@ -396,7 +396,7 @@
         h('div', null, h('strong', null, AL().bonito(a.nome)), a.aviso ? h('div', { class: 'peq mudo' }, a.aviso) : null, a.sugestao ? h('div', { class: 'peq' }, 'Parece ser: ' + a.sugestao.nome) : null),
         h('div', { class: 'linha' }, sel, mes,
           h('button', { type: 'button', class: 'sec', onclick: async () => { if (!sel.value) { toast('Escolha o item.', true); return; } try { await api('POST', '/api/importar/arquivos/apontar', { arquivo_id: a.id, item: sel.value, mes: mes.value }); toast('Arquivo apontado.'); await atualizar(); } catch (e) { toast(e.message, true); } } }, 'Apontar'),
-          h('button', { type: 'button', class: 'leve', onclick: async () => { if (!(await confirmar('Tirar este arquivo?', 'O texto guardado dele será apagado.', 'Tirar', true))) return; try { await api('DELETE', '/api/importar/arquivos/' + a.id); await atualizar(); } catch (e) { toast(e.message, true); } } }, 'Tirar')));
+          h('button', { type: 'button', class: 'leve', onclick: async () => { if (!(await confirmar('Excluir este arquivo?', 'O texto guardado dele será apagado.', 'Excluir', true))) return; try { await api('DELETE', '/api/importar/arquivos/' + a.id); await atualizar(); } catch (e) { toast(e.message, true); } } }, 'Excluir')));
     }
     async function marcar(it, s, marcado, caixa, obs) {
       try { await api('POST', u + '/' + tri + '/check', { item: it.codigo, mes: s.mes, marcado, observacao: obs !== undefined ? obs : ((caixa.closest('.imp-slot').querySelector('.imp-obs') || {}).value || '') }); await atualizar(); }
