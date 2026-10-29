@@ -162,7 +162,7 @@
    "oss": "INSTITUTO SOCIAL DAS MEDIANEIRAS DA PAZ - ISMEP",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": 20,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "qualidade",
@@ -780,7 +780,7 @@
    "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": null,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "producao",

@@ -81,7 +81,7 @@
    "oss": "INSTITUTO SOCIAL MEDIANEIRAS DA PAZ - ISMEP (UPAE OURICURI)",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": 20,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "producao",
@@ -492,7 +492,7 @@
    "oss": "FUNDAÇÃO GESTÃO HOSPITALAR MARTINIANO FERNANDES - FGH",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": 20,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "producao",
