@@ -518,7 +518,7 @@
    "oss": "HOSPITAL DO TRICENTENÁRIO",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": 20,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "producao",

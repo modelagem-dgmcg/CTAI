@@ -374,7 +374,7 @@
    "oss": "HOSPITAL DO TRICENTENÁRIO",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": 20,
+   "variavel_pct": 30,
    "indicadores": [],
    "observacoes": [
     "Mínimo de 85% das metas no trimestre; se não atingir, compensação por produção excedente nos dois trimestres seguintes (art. 15-A da Lei 15.210/2013).",
@@ -394,7 +394,7 @@
    "oss": "HOSPITAL DO TRICENTENÁRIO",
    "valor_mensal": "",
    "fixa_pct": 70,
-   "variavel_pct": 20,
+   "variavel_pct": 30,
    "indicadores": [
     {
      "tipo": "producao",
@@ -1479,7 +1479,7 @@
    ],
    "contrato_numero": "025/2022",
    "oss": "HOSPITAL DO TRICENTENÁRIO",
-   "valor_mensal": "6.943.722,39",
+   "valor_mensal": "8.292.592,92",
    "fixa_pct": 70,
    "variavel_pct": 30,
    "indicadores": [
