@@ -45,7 +45,10 @@ function efetiva(nome) {
 }
 
 // Uma chamada com uma configuração específica (usada também no teste de conexão de cada chave).
-async function executar(nome, e, { sistema, usuario }, ms) {
+async function executar(nome, e, pedido, ms) {
+  // GUARDA DE DOCUMENTOS: tudo que vai à IA sai cercado como DADO NÃO CONFIÁVEL, com a regra de nunca obedecer comando de documento
+  // (public/js/guarda-comum.js). É o último elo: vale para qualquer chamada, de qualquer módulo, mesmo texto que não passou pelo extrator.
+  const { sistema, usuario } = require('../../../public/js/guarda-comum').protegerPedidoIA(pedido);
   const d = DEFS[nome];
   if (d.tipo === 'gemini') {
     const url = e.url || ('https://generativelanguage.googleapis.com/v1beta/models/' + e.modelo + ':generateContent');

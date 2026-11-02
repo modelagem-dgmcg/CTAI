@@ -332,7 +332,7 @@ const MODELO = 'tipo;unidade;municipio;analista';
 // Carteira como está hoje, no mesmo formato da importação: serve de ponto de partida para ajustar e reenviar.
 function atualCsv(db) {
   const linhas = db.all("SELECT c.tipo, c.unidade, c.municipio, c.demo, GROUP_CONCAT(u.login, '|') AS analistas FROM contratos c LEFT JOIN carteira k ON k.contrato_id = c.contrato_id AND k.ate IS NULL LEFT JOIN usuarios u ON u.usuario_id = k.usuario_id GROUP BY c.contrato_id ORDER BY c.tipo, c.unidade").filter((r) => !r.demo);
-  return '\ufeff' + [MODELO].concat(linhas.map((r) => [r.tipo || '', r.unidade, r.municipio || '', r.analistas || ''].join(';'))).join('\n') + '\n';
+  return '\ufeff' + [MODELO].concat(linhas.map((r) => [r.tipo || '', r.unidade, r.municipio || '', r.analistas || ''].map((f) => require('../public/js/guarda-comum').celulaSegura(f).valor).join(';'))).join('\n') + '\n';
 }
 const modeloCsv = () => '﻿' + MODELO + '\n';
 

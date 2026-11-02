@@ -1,8 +1,8 @@
 // Leitura de PDF NA MÁQUINA DA ANALISTA (PDF.js, local em /vendor, sem CDN). Devolve o texto página a página; o PDF não sai daqui
 // enquanto houver texto. Um arquivo por vez, memória liberada ao fim (destroy), com limite de tempo e mensagens claras.
 (function (raiz, fabrica) {
-  if (typeof module === 'object' && module.exports) module.exports = fabrica(require('./texto-comum')); else raiz.CTAI_LEITOR_PDF = fabrica(raiz.CTAI_TEXTO);
-})(typeof self !== 'undefined' ? self : this, function (T) {
+  if (typeof module === 'object' && module.exports) module.exports = fabrica(require('./texto-comum'), require('./guarda-comum')); else raiz.CTAI_LEITOR_PDF = fabrica(raiz.CTAI_TEXTO, raiz.CTAI_GUARDA);
+})(typeof self !== 'undefined' ? self : this, function (T, GU) {
   'use strict';
   const G = typeof self !== 'undefined' ? self : globalThis;
 
@@ -50,6 +50,27 @@
     return promessa;
   }
 
+  // Guarda: o que o PDF carrega por dentro (anexos, JavaScript, camadas desligadas). Falha de um item nunca derruba a leitura.
+  async function guardaDoDocumento(doc, achados, corrida) {
+    try { const a = doc.getAttachments ? await corrida(doc.getAttachments()) : null; if (a && Object.keys(a).length) achados.push(GU.achado(GU.ALTA, 'pdf:anexo-embutido', 'PDF', 'O PDF carrega ' + Object.keys(a).length + ' arquivo(s) dentro dele.', Object.keys(a).join(', '))); } catch (_) { /* sem anexos */ }
+    try { const j = doc.getJSActions ? await corrida(doc.getJSActions()) : null; if (j && Object.keys(j).length) achados.push(GU.achado(GU.ALTA, 'pdf:javascript', 'PDF', 'O PDF tem JavaScript.', Object.keys(j).join(', '))); } catch (_) { /* sem js */ }
+    try {
+      const cfg = doc.getOptionalContentConfig ? await corrida(doc.getOptionalContentConfig()) : null; let off = 0;
+      if (cfg && typeof cfg[Symbol.iterator] === 'function') for (const par of cfg) { const g = Array.isArray(par) ? par[1] : par; if (g && g.visible === false) off++; }
+      if (off) achados.push(GU.achado(GU.MEDIA, 'pdf:camada-oculta', 'PDF', 'O PDF tem ' + off + ' camada(s) desligada(s): pode haver conteúdo que ninguém vê.', ''));
+    } catch (_) { /* sem camadas */ }
+  }
+  // Guarda: texto branco/minúsculo/invisível/fora da página e anotações de UMA página.
+  async function guardaDaPagina(lib, pag, conteudo, n, achados, corrida) {
+    try {
+      if (lib.OPS) {
+        const ops = await corrida(pag.getOperatorList());
+        achados.push(...GU.julgarPaginaPdf(n, GU.varrerOperadores(lib.OPS, ops, { view: pag.view }), GU.textoForaDaPagina(conteudo.items, pag.view)));
+      }
+    } catch (e) { if (e && e.codigo === 'tempo') throw e; /* página que não abre por dentro: a guarda do servidor confere o texto */ }
+    try { achados.push(...GU.julgarAnotacoes(n, await corrida(pag.getAnnotations()))); } catch (e) { if (e && e.codigo === 'tempo') throw e; /* sem anotações */ }
+  }
+
   const erroCodigo = (codigo, msg) => { const e = new Error(msg); e.codigo = codigo; return e; };
 
   // Lê o PDF (File ou Blob). opc.aoPagina(n, total) avisa o andamento; opc.limiteMs é o tempo máximo do arquivo (padrão 3 minutos).
@@ -65,12 +86,15 @@
       else f = setTimeout(() => falha(erroCodigo('tempo', 'A leitura passou do tempo limite.')), resta);
       p.then((v) => { clearTimeout(f); ok(v); }, (e) => { clearTimeout(f); falha(e); }); // (sempre ligado à promessa, para o erro tardio de um leitor encerrado não ficar solto)
     });
-    let tarefa = null; let doc = null;
+    let tarefa = null; let doc = null; const achados = [];
     try {
       let dados = new Uint8Array(await arquivo.arrayBuffer());
+      // GUARDA DE DOCUMENTOS (primeira leitura): sinais nos bytes do PDF, antes de o PDF.js receber a memória.
+      if (GU) { try { achados.push(...GU.examinarPdfBytes(new TextDecoder('latin1').decode(dados), { onde: 'PDF' })); } catch (_) { /* a guarda do servidor também confere */ } }
       tarefa = lib.getDocument({ data: dados, disableFontFace: true, isEvalSupported: false, useSystemFonts: false, verbosity: 0 });
       dados = null; // o PDF.js recebe a memória; aqui não fica cópia
       doc = await corrida(tarefa.promise);
+      if (GU) await guardaDoDocumento(doc, achados, corrida);
       const total = doc.numPages; const partes = []; const semTexto = [];
       for (let n = 1; n <= total; n++) {
         const pag = await corrida(doc.getPage(n));
@@ -78,13 +102,15 @@
         const txt = montarLinhas(c.items);
         if (txt.replace(/\s+/g, '').length < T.MIN_CHARS_PAGINA) semTexto.push(n);
         partes.push(T.montarPagina(n, txt));
+        if (GU) await guardaDaPagina(lib, pag, c, n, achados, corrida);
         try { pag.cleanup(); } catch (_) { /* já liberada */ }
         if (opc.aoPagina) opc.aoPagina(n, total);
         if (n % 20 === 0) await new Promise((ok) => setTimeout(ok, 0)); // deixa a tela respirar em computador antigo
       }
       const texto = partes.join('\n');
       const caracteres = texto.replace(/\s+/g, '').length;
-      return { texto, paginas: total, paginasSemTexto: semTexto, caracteres, suficiente: caracteres >= T.MIN_CHARS_ARQUIVO && semTexto.length < total * 0.8 };
+      const guarda = GU ? { achados: achados.slice(0, GU.MAX_ACHADOS).map((a) => ({ g: a.g, codigo: a.codigo, onde: a.onde, msg: a.msg, trecho: a.trecho })) } : null;
+      return { guarda, texto, paginas: total, paginasSemTexto: semTexto, caracteres, suficiente: caracteres >= T.MIN_CHARS_ARQUIVO && semTexto.length < total * 0.8 };
     } catch (e) {
       if (e && e.codigo) throw e;
       throw erroCodigo('erro', (e && e.name === 'PasswordException') ? 'O PDF tem senha.' : 'Não consegui ler o PDF (' + String((e && e.message) || e).slice(0, 80) + ').');

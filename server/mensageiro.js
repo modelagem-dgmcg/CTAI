@@ -63,6 +63,7 @@ function enviar(db, eu, dados, grupo) {
     const buf = Buffer.from(String(a.base64), 'base64');
     if (!buf.length) throw erro(400, 'Arquivo vazio.');
     if (buf.length > MAX) throw erro(413, 'Arquivo acima de 4 MB.');
+    require('./guarda-documentos').examinarAnexo(nome, buf, { usuario: eu.login, origem: 'mensageiro' });
     anexoId = Number(db.run('INSERT INTO msg_anexos (nome, mime, tamanho, dados, criado_em) VALUES (?,?,?,?,?)', nome, TIPOS[ext], buf.length, buf, agora()).lastInsertRowid);
   }
   if (!texto && !anexoId) throw erro(400, 'Escreva uma mensagem ou anexe um arquivo.');

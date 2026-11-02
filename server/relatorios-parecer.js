@@ -20,7 +20,7 @@ async function importar(db, parecerId, usuario, dados) {
   M.exigirCriador(p, usuario);
   const nome = String((dados && dados.nome) || 'relatorio').replace(/[\\/\r\n"]/g, '_').slice(0, 120);
   const buf = Buffer.from(String((dados && dados.base64) || ''), 'base64');
-  const ex = await X.extrair(nome, buf);
+  const ex = await X.extrair(nome, buf, { usuario: usuario.login, origem: 'parecer-relatorio' });
   const hash = U.sha256(ex.texto);
   if (db.get('SELECT 1 FROM parecer_relatorios WHERE parecer_id = ? AND hash = ?', p.parecer_id, hash)) throw erro(409, 'Este relatório já foi importado neste parecer.');
   const id = Number(db.run('INSERT INTO parecer_relatorios (parecer_id, nome, tipo, tamanho, paginas, texto, hash, criado_por, criado_em) VALUES (?,?,?,?,?,?,?,?,?)', p.parecer_id, nome, ex.tipo, buf.length, ex.paginas, ex.texto, hash, usuario.login, agora()).lastInsertRowid);

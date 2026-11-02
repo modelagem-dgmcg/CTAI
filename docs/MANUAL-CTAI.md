@@ -149,6 +149,13 @@ Quem é criador ou colega, tem carteira de unidades e ainda não tem nenhum rela
 5. "Pular os que deram problema" descarta os que falharam. "Concluir e abrir o menu completo" libera o menu. A administração também pode liberar uma pessoa (POST /api/alimentar/liberar-usuario).
 Sem chave de IA válida, os arquivos viram rascunho em branco para preencher à mão (a tela avisa).
 
+## Segurança dos documentos: "Bloqueado por segurança"
+Todo arquivo que chega é examinado antes de qualquer leitura (texto escondido, ordem para a IA, macro, script, fórmula perigosa). Veja o resumo completo em `docs/SEGURANCA-DOCUMENTOS.md`.
+
+- **Arquivo bloqueado** (aparece com ⛔ no Alimentar, no Importar Arquivos e nas demais telas de envio): nada dele foi lido nem guardado. A tela diz o que foi encontrado, onde e o que fazer. Peça à unidade um arquivo novo, exportado de novo do sistema de origem, ou avise a superintendência. Não tente "limpar" abrindo e salvando de novo.
+- **Arquivo com aviso** ("tinham texto escondido e foram lidos só com o texto visível"): o sistema tirou o que estava escondido. Confira o resultado como sempre.
+- **Superintendência e administrador**: Gestão > **Segurança** mostra os bloqueios dos últimos 30 dias. Para liberar um arquivo, escreva o motivo; depois a pessoa envia o arquivo de novo e o sistema lê só o texto neutralizado. Tudo fica na trilha.
+
 ## Mascaramento de dados pessoais
 Antes de guardar qualquer texto extraído e antes de enviar à IA, o sistema troca CPF, CNS, RG, telefone, e-mail, data de nascimento, prontuário/BAM, endereço residencial e nomes de pacientes (depois de "paciente", "usuário", "Sr./Sra.", "acompanhante", "nome:") por marcadores como [CPF] e [PACIENTE]. Mantém CNPJ, nome de unidade/OSS, valores, número de processo SEI e datas de competência. Havendo chave de IA, uma segunda passada procura nomes que restaram. O arquivo original nunca é gravado; a trilha guarda só a contagem por tipo. Limite: é heurística, pode deixar passar nomes sem rótulo. Remova dados de paciente antes de enviar quando der.
 

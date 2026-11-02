@@ -248,7 +248,7 @@
             if (it.estado === 'lendo') {
               const f = await api('GET', '/api/importar/fila?ids=' + it.id).catch(() => ({ itens: [] }));
               const x = (f.itens || [])[0];
-              if (x) { it.estado = x.estado === 'lido' ? 'lido' : (x.estado === 'duplicado' ? 'duplicado' : 'problema'); it.msg = x.motivo || ''; totais.paginas += Number(x.paginas || 0); totais.protegidos += Number(x.protegidos || 0); }
+              if (x) { it.estado = x.estado === 'lido' ? 'lido' : (x.estado === 'duplicado' ? 'duplicado' : (x.estado === 'bloqueado' ? 'bloqueado' : 'problema')); it.msg = x.motivo || ''; totais.paginas += Number(x.paginas || 0); totais.protegidos += Number(x.protegidos || 0); }
               else { it.estado = 'lido'; }
             }
           }
@@ -292,7 +292,7 @@
       P.pct.textContent = pct + '%';
       P.anel.querySelector('.al-anel-barra').setAttribute('stroke-dashoffset', (P.c * (1 - pct / 100)).toFixed(1));
       P.barra.setAttribute('aria-valuenow', String(pct)); P.barra.firstChild.style.width = pct + '%';
-      const probs = lote.filter((x) => x.estado === 'problema').length;
+      const probs = lote.filter((x) => x.estado === 'problema' || x.estado === 'bloqueado').length;
       P.sub.textContent = (est && est.contrato ? est.contrato.unidade : '') + ' · ' + tri;
       P.chip.textContent = trabalhando ? 'Lendo os documentos' : (probs ? 'Pronto, com pontos de atenção' : 'Tudo lido');
       P.chip.className = 'al-chip ' + (trabalhando ? 'lendo' : (probs ? 'atencao' : 'ok'));
@@ -308,14 +308,14 @@
           P.linhas.set(it.id, { li, ic, et, mt }); P.lista.appendChild(li);
         }
       }
-      const ROT = { espera: 'Aguardando', lendo: 'Lendo agora', lido: 'Lido', duplicado: 'Já importado', problema: 'Com problema' };
+      const ROT = { espera: 'Aguardando', lendo: 'Lendo agora', lido: 'Lido', duplicado: 'Já importado', problema: 'Com problema', bloqueado: 'Bloqueado por segurança' };
       for (const it of lote) {
         const r = P.linhas.get(it.id); if (!r) continue;
         const e = it.estado === 'duplicado' ? 'lido' : it.estado;
-        if (r.li.getAttribute('data-estado') !== e) { r.li.setAttribute('data-estado', e); r.ic.innerHTML = e === 'lido' ? ICONE_OK : (e === 'problema' ? ICONE_X : ''); }
+        if (r.li.getAttribute('data-estado') !== e) { r.li.setAttribute('data-estado', e); r.ic.innerHTML = e === 'lido' ? ICONE_OK : (e === 'problema' || e === 'bloqueado' ? ICONE_X : ''); }
         const ro = (it.estado === 'lendo' && fase) ? fase : (ROT[it.estado] || it.estado);
         if (r.et.textContent !== ro) r.et.textContent = ro;
-        const mt = ['lido', 'duplicado', 'problema'].includes(it.estado) ? (it.msg || '') : '';
+        const mt = ['lido', 'duplicado', 'problema', 'bloqueado'].includes(it.estado) ? (it.msg || '') : '';
         if (r.mt.textContent !== mt) r.mt.textContent = mt;
       }
     }

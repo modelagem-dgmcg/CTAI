@@ -11,7 +11,7 @@
   const MESES = []; { const d = new Date(); for (let i = 0; i < 24; i++) { const a = d.getFullYear(), m = d.getMonth() + 1; MESES.push({ v: a + '-' + String(m).padStart(2, '0'), r: NOMES_MES[m - 1][0].toUpperCase() + NOMES_MES[m - 1].slice(1) + '/' + a }); d.setMonth(d.getMonth() - 1); } }
   const ROTULO = {
     espera: 'Aguardando o envio', fila: 'Na fila', lendo: 'Lendo e mascarando dados pessoais', montando: 'Montando o rascunho', lido: 'Lido e guardado na gaveta do mês',
-    pronto: 'Conferido pelo sistema, aguarda sua aprovação', aprovado: 'Aprovado', duplicado: 'Já importado antes', problema: 'Com problema', precisa_dados: 'Precisa da unidade e do período',
+    pronto: 'Conferido pelo sistema, aguarda sua aprovação', aprovado: 'Aprovado', duplicado: 'Já importado antes', problema: 'Com problema', bloqueado: 'Bloqueado por segurança', precisa_dados: 'Precisa da unidade e do período',
   };
   const OCUPADO = ['espera', 'fila', 'lendo', 'montando'];
   const resumoMasc = (m) => Object.entries(m || {}).map(([k, v]) => v + ' ' + k).join(', ');
@@ -67,20 +67,26 @@
 
   // Lê o PDF (ou o HTML do SEI) na máquina da analista e mascara ANTES de o texto sair dela. Devolve { carga } (o que vai ao servidor) ou { fallback }.
   async function lerLocal(nome, ext, blob, aoPagina) {
-    let texto, paginas = null, semTexto = [];
+    let texto, paginas = null, semTexto = []; const GU = window.CTAI_GUARDA; let achados = [];
     try {
       if (ext === 'pdf') {
         const r = await window.CTAI_LEITOR_PDF.lerPdf(blob, { aoPagina });
+        if (r.guarda) achados = achados.concat(r.guarda.achados);
         if (!r.suficiente) return { fallback: 'fallback-sem-texto' };
         texto = r.texto; paginas = r.paginas; semTexto = r.paginasSemTexto;
       } else {
-        texto = window.CTAI_TEXTO.htmlDeBytes(new Uint8Array(await blob.arrayBuffer()));
+        // GUARDA DE DOCUMENTOS: o HTML cru é examinado antes de virar texto; o que estava escondido (display:none, comentário...) não entra no texto.
+        const bruto = window.CTAI_TEXTO.htmlBruto(new Uint8Array(await blob.arrayBuffer()));
+        if (GU) { const g = GU.examinarHtml(bruto, { onde: nome }); achados = achados.concat(g.achados); texto = window.CTAI_TEXTO.htmlParaTexto(g.html); } else texto = window.CTAI_TEXTO.htmlParaTexto(bruto);
       }
     } catch (e) { try { console.warn('Leitura no navegador falhou:', nome, e && e.message); } catch (_) { /* sem console */ } return { fallback: e && e.codigo === 'tempo' ? 'fallback-tempo' : 'fallback-erro' }; }
     let cortado = false;
     if (texto.length > TEXTO_MAX) { texto = texto.slice(0, TEXTO_MAX); cortado = true; }
+    // Segundo exame, no texto: caractere invisível, frase de comando. O texto segue já neutralizado; o servidor examina de novo e decide.
+    if (GU) { const t = GU.examinarTexto(texto, { onde: nome }); achados = achados.concat(t.achados); texto = t.neutro; }
     const m = window.CTAI_MASCARA.mascarar(texto); // mascara ANTES de sair da máquina
-    return { carga: { texto: m.texto, hash: await sha256Hex(m.texto), paginas, paginasSemTexto: semTexto, mascarados: m.mascarados, cortado } };
+    const guarda = { achados: achados.slice(0, 40).map((a) => ({ g: a.g, codigo: a.codigo, onde: a.onde, msg: a.msg, trecho: window.CTAI_MASCARA.mascarar(String(a.trecho || '')).texto })) }; // o trecho também sai mascarado
+    return { carga: { texto: m.texto, hash: await sha256Hex(m.texto), paginas, paginasSemTexto: semTexto, mascarados: m.mascarados, cortado, guarda } };
   }
   async function sha256Hex(txt) {
     try { if (!window.crypto || !window.crypto.subtle) return null; const b = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt)); return Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, '0')).join(''); } catch (_) { return null; }
@@ -135,6 +141,22 @@
         // ZIP que o navegador não abre: se for pequeno, o servidor tenta (caminho antigo)
         if (arq.size <= 40 * 1024 * 1024) { dizer('Enviando ' + arq.name + '...'); try { await api2(arq); } catch (er) { toast(er.message, true); } return; }
         toast('Não consegui abrir o ZIP ' + arq.name + '. Baixe de novo do SEI e solte outra vez.', true); return;
+      }
+      // GUARDA DE DOCUMENTOS: estrutura do ZIP (nome com "..", bomba de compressão) é examinada antes de ler qualquer arquivo dele.
+      const GU = window.CTAI_GUARDA;
+      if (GU) {
+        const todas = Object.values(z.files); let total = 0, pior = 0; const ach = [];
+        for (const f of todas) {
+          const u = (f._data && Number(f._data.uncompressedSize)) || 0, c2 = (f._data && Number(f._data.compressedSize)) || 0;
+          total += u; if (u > 5 * 1048576 && c2 > 0) pior = Math.max(pior, u / c2);
+          if (GU.nomeDeArquivoPerigoso(f.name) && !ach.some((a) => a.codigo === 'zip:nome-perigoso')) ach.push(GU.achado(GU.ALTA, 'zip:nome-perigoso', arq.name, 'Nome de arquivo com caminho perigoso dentro do ZIP.', f.name));
+        }
+        if (todas.length > 6000) ach.push(GU.achado(GU.ALTA, 'zip:muitas-entradas', arq.name, 'O ZIP tem ' + todas.length + ' arquivos: possível bomba de compressão.', ''));
+        if (total > 3 * 1024 * 1048576 || pior > 120) ach.push(GU.achado(GU.ALTA, 'zip:bomba', arq.name, 'Tamanho descompactado ou taxa de compressão anormal: possível bomba de compressão.', ''));
+        if (ach.length) {
+          try { await api('POST', '/api/alimentar/guarda-relato', { nome: arq.name, tamanho: arq.size, achados: ach.map((a) => ({ g: a.g, codigo: a.codigo, onde: a.onde, msg: a.msg, trecho: a.trecho })) }); } catch (_) { /* o aviso na tela vale mesmo assim */ }
+          toast('Bloqueado por segurança: o ZIP ' + arq.name + ' tem estrutura suspeita (' + ach[0].msg.replace(/\.$/, '') + '). Nada foi lido. Peça um ZIP novo à unidade ou avise a superintendência.', true); return;
+        }
       }
       for (const f of Object.values(z.files)) {
         if (f.dir) continue;
@@ -392,7 +414,7 @@
       return h('tr', { 'data-estado': i.estado },
         h('td', null, marca),
         h('td', null, h('strong', null, i.nome), i.unidade || i.trimestre || i.mesRotulo ? h('div', { class: 'peq mudo' }, [i.unidade, i.mesRotulo || i.trimestre].filter(Boolean).join(' · ')) : null),
-        h('td', null, (ocup ? '⏳ ' : i.estado === 'problema' ? '⚠ ' : (i.estado === 'aprovado' || i.estado === 'lido') ? '✓ ' : '') + (ROTULO[i.estado] || i.estado), i.motivo ? h('div', { class: 'peq mudo' }, i.motivo) : null, ident),
+        h('td', null, (ocup ? '⏳ ' : i.estado === 'bloqueado' ? '⛔ ' : i.estado === 'problema' ? '⚠ ' : (i.estado === 'aprovado' || i.estado === 'lido') ? '✓ ' : '') + (ROTULO[i.estado] || i.estado), i.estado === 'bloqueado' ? window.CTAI_GUARDA_UI.cartao(i.bloqueio, { podeLiberar: est.podeLiberarGuarda, aoLiberar: async () => { await atualizar(); desenharBase(true); desenharPainel(); } }) : (i.motivo ? h('div', { class: 'peq mudo' }, i.motivo) : null), ident),
         h('td', { class: 'peq' }, resumoMasc(i.mascarados) || '—'),
         h('td', { class: 'peq' }, (i.divergencias || []).length ? h('ul', { style: 'margin:0;padding-left:16px' }, i.divergencias.map((d) => h('li', null, d))) : '—'),
         h('td', null, i.hist_id && ['pronto', 'aprovado', 'duplicado'].includes(i.estado) ? h('a', { href: '#/historico/r/' + i.hist_id }, 'Abrir') : null,
@@ -418,7 +440,7 @@
       const r = est.resumo;
       const prontos = est.itens.filter((i) => i.estado === 'pronto');
       // Só fica à vista o que pede ação: dúvida de unidade/período, problema, divergência a olhar ou arquivo ainda sendo lido. O resto vai para uma lista recolhida.
-      const pede = (i) => ['espera', 'fila', 'lendo', 'montando', 'precisa_dados', 'problema'].includes(i.estado) || ((i.divergencias || []).length > 0 && i.estado === 'pronto') || (i.estado === 'lido' && !!i.motivo);
+      const pede = (i) => ['espera', 'fila', 'lendo', 'montando', 'precisa_dados', 'problema', 'bloqueado'].includes(i.estado) || ((i.divergencias || []).length > 0 && i.estado === 'pronto') || (i.estado === 'lido' && !!i.motivo);
       const precisam = est.itens.filter(pede), quietos = est.itens.filter((i) => !pede(i));
       const tabelaArq = (lista) => h('div', { class: 'rolagem' }, h('table', { class: 'al-arq' },
         h('thead', null, h('tr', null, ['', 'Arquivo', 'Andamento', 'Dados mascarados', 'Divergências', ''].map((t) => h('th', null, t)))),
@@ -430,7 +452,7 @@
       trocarFilhos(base, 
         est.itens.length ? h('div', { class: 'cartao' },
           h('h3', null, 'Arquivos'),
-          h('p', { class: 'peq', id: 'al-resumo' }, r.lidos + ' lidos, ' + r.problemas + ' com problema' + (r.precisaDados ? ', ' + r.precisaDados + ' esperando você' : '') + (r.aprovados ? ', ' + r.aprovados + ' aprovados' : '') + '.'),
+          h('p', { class: 'peq', id: 'al-resumo' }, r.lidos + ' lidos, ' + r.problemas + ' com problema' + (r.bloqueados ? ' (' + r.bloqueados + ' bloqueado(s) por segurança)' : '') + (est.guardaNeutralizados ? '; ' + est.guardaNeutralizados + ' arquivo(s) tinham texto escondido e foram lidos só com o texto visível' : '') + (r.precisaDados ? ', ' + r.precisaDados + ' esperando você' : '') + (r.aprovados ? ', ' + r.aprovados + ' aprovados' : '') + '.'),
           zips.length ? h('div', { class: 'al-zips' }, h('strong', null, 'Enviou o ZIP errado? Exclua o ZIP inteiro de uma vez:'),
             zips.map((z) => h('div', { class: 'linha espaco al-zip' }, h('span', null, h('strong', null, z.nome), ' · ' + z.qtd + ' arquivo(s)' + (z.meses.length ? ' · ' + z.meses.join(', ') : '')),
               h('button', { class: 'leve', title: 'Apaga todos os arquivos deste ZIP e o texto lido deles', onclick: async () => {

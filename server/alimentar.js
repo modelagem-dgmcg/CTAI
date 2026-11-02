@@ -13,10 +13,11 @@ const M = require('./mascara');
 const C = require('./catalogo');
 const G = require('./gaveta');
 const trilha = require('./trilha');
+const GD = require('./guarda-documentos');
 const { erro } = A;
 
 const ELEGIVEIS = ['criador', 'colega'];
-const FINAIS = ['pronto', 'aprovado', 'duplicado', 'problema', 'descartado'];
+const FINAIS = ['pronto', 'aprovado', 'duplicado', 'problema', 'bloqueado', 'descartado'];
 const OCUPADOS = ['fila', 'lendo', 'montando'];
 const PENDENTES = ['espera'].concat(OCUPADOS); // 'espera': registrado, o navegador ainda vai enviar o arquivo
 const MAX_ZIP = 300;
@@ -104,6 +105,9 @@ async function receber(db, usuario, nomeBruto, buf) {
   if (!buf || !buf.length) throw erro(400, 'Arquivo vazio.');
   if (ext === 'zip') {
     let z;
+    // GUARDA DE DOCUMENTOS: estrutura do ZIP (bomba de compressão, nomes com "..") antes de abrir qualquer arquivo dele.
+    const gz = await GD.examinarArquivo(nome, buf);
+    if (require('../public/js/guarda-comum').decidir(gz.achados).acao === 'bloquear') GD.concluir(gz.achados, { nome, hash: gz.hash, tamanho: buf.length, usuario: usuario.login, origem: 'alimentar-zip' });
     try { z = await JSZip.loadAsync(buf); } catch (_) { throw erro(400, 'Não consegui abrir o ZIP.'); }
     const entradas = Object.values(z.files).filter((f) => !f.dir && !/(^|\/)(\.|__MACOSX)/.test(f.name));
     if (entradas.length > MAX_ZIP) throw erro(413, 'O ZIP tem mais de ' + MAX_ZIP + ' arquivos. Divida em partes.');
@@ -209,7 +213,7 @@ async function receberTexto(db, usuario, filaId, corpo) {
   if (!X.TIPOS_NAVEGADOR.includes(ext)) throw erro(400, 'Só PDF e HTML podem ser enviados já como texto.');
   if (typeof corpo.texto !== 'string' || !corpo.texto.length) throw erro(400, 'Texto vazio.');
   if (typeof corpo.hash === 'string' && corpo.hash && crypto.createHash('sha256').update(corpo.texto, 'utf8').digest('hex') !== corpo.hash) throw erro(400, 'O texto chegou alterado. Envie de novo.');
-  memoria.set(i.id, { texto: corpo.texto, hash: corpo.hash, paginas: corpo.paginas, paginasSemTexto: corpo.paginasSemTexto, mascarados: corpo.mascarados, cortado: corpo.cortado === true });
+  memoria.set(i.id, { texto: corpo.texto, hash: corpo.hash, paginas: corpo.paginas, paginasSemTexto: corpo.paginasSemTexto, mascarados: corpo.mascarados, cortado: corpo.cortado === true, guarda: corpo.guarda });
   set(db, i.id, { estado: 'fila', tamanho: Math.max(i.tamanho || 0, Buffer.byteLength(corpo.texto)), origem: 'navegador' });
   await agendar(db);
   return { id: i.id, estado: db.get('SELECT estado FROM alimentar_fila WHERE id = ?', i.id).estado };
@@ -236,7 +240,15 @@ async function umArquivo(db, item) {
   if (!buf) { set(db, item.id, { estado: 'problema', motivo: 'O servidor foi reiniciado antes de ler este arquivo. Envie de novo.' }); return; }
   set(db, item.id, { estado: 'lendo' });
   let ex;
-  try { ex = Buffer.isBuffer(buf) ? await X.extrair(item.nome, buf) : X.deTexto(item.nome, buf); } catch (e) { set(db, item.id, { estado: 'problema', motivo: String(e.message || e).slice(0, 220) }); memoria.delete(item.id); return; }
+  const opcGuarda = { usuario: u.login, origem: item.imp_trimestre ? 'importar-arquivos' : 'alimentar', filaId: item.id };
+  try { ex = Buffer.isBuffer(buf) ? await X.extrair(item.nome, buf, opcGuarda) : X.deTexto(item.nome, buf, opcGuarda); }
+  catch (e) {
+    memoria.delete(item.id);
+    // Guarda de documentos: arquivo com comando/conteúdo escondido fica em quarentena (só o relatório; nada do conteúdo segue adiante).
+    if (e.bloqueio) set(db, item.id, { estado: 'bloqueado', texto: null, motivo: String(e.message || e).slice(0, 300) });
+    else set(db, item.id, { estado: 'problema', motivo: String(e.message || e).slice(0, 220) });
+    return;
+  }
   memoria.delete(item.id); // o original some da memória assim que é lido
   let texto = ex.texto; let mascarados = ex.mascarados || {};
   // Reforço opcional: segunda passada pela IA para nomes de pacientes que escaparam das regras fixas.
@@ -366,7 +378,7 @@ function encerrarParados(db, usuarioId) {
   }
 }
 
-const ESTADO_PAINEL = (e) => (e === 'espera' || e === 'fila' ? 'espera' : e === 'lendo' || e === 'montando' ? 'lendo' : e === 'problema' ? 'problema' : e === 'precisa_dados' ? 'atencao' : 'lido');
+const ESTADO_PAINEL = (e) => (e === 'espera' || e === 'fila' ? 'espera' : e === 'lendo' || e === 'montando' ? 'lendo' : e === 'problema' || e === 'bloqueado' ? 'problema' : e === 'precisa_dados' ? 'atencao' : 'lido');
 const topo = (arr) => { const m = new Map(); arr.filter(Boolean).forEach((x) => m.set(x, (m.get(x) || 0) + 1)); const o = [...m.entries()].sort((a, b) => b[1] - a[1]); return o.length ? o[0][0] : null; };
 
 // Painel do último lote: unidade e mês, contadores e a lista de documentos do catálogo (cinza, lendo, lido).
@@ -387,7 +399,7 @@ function painel(db, u, linhas) {
     lote: alvo.lote, zip: alvo.zip_nome || null, ativo: pend.length > 0, concluido: pend.length === 0,
     contrato_id: contratoId, unidade: c ? c.unidade : null, tipo: c ? C.tipoDaUnidade(c) : null, mes, mesRotulo: mes ? C.rotuloMes(mes) : null, mesNome: mes ? C.nomeMes(mes) : null, trimestre: mes ? C.trimestreDoMes(mes) : null,
     fallback: doLote.filter((i) => ORIGENS.includes(i.origem)).map((i) => ({ id: i.id, arquivo: i.nome, motivo: avisoOrigem(i.origem) })),
-    catalogo: !!cat, arquivos: { total: doLote.length, feitos, lidos: doLote.filter((i) => ['lido', 'pronto', 'aprovado'].includes(i.estado)).length, duplicados: doLote.filter((i) => i.estado === 'duplicado').length, problemas: doLote.filter((i) => i.estado === 'problema').length, atencao: doLote.filter((i) => i.estado === 'precisa_dados').length },
+    catalogo: !!cat, arquivos: { total: doLote.length, feitos, lidos: doLote.filter((i) => ['lido', 'pronto', 'aprovado'].includes(i.estado)).length, duplicados: doLote.filter((i) => i.estado === 'duplicado').length, problemas: doLote.filter((i) => i.estado === 'problema' || i.estado === 'bloqueado').length, bloqueados: doLote.filter((i) => i.estado === 'bloqueado').length, atencao: doLote.filter((i) => i.estado === 'precisa_dados').length },
     paginas: soma((i) => i.paginas), caracteres: soma((i) => i.caracteres), protegidos: mascarados, paginasImagem: imagens, itens: [], extras: [], faltam: [], resumo: null, avisoTrimestre: null,
   };
   const arqs = (cod) => doLote.filter((i) => i.codigo === cod);
@@ -411,10 +423,18 @@ function painel(db, u, linhas) {
       try { p.avisoTrimestre = G.trimestreVisao(db, u, contratoId, C.trimestreDoMes(mes)).aviso; } catch (_) { /* sem permissão: não mostra */ }
     }
   } else {
-    p.itens = doLote.map((i) => ({ codigo: null, nome: i.nome, curto: i.nome, obrigatorio: false, estado: ESTADO_PAINEL(i.estado), arquivos: [i.nome], ids: [i.id], motivo: ['problema', 'precisa_dados'].includes(i.estado) ? i.motivo : null }));
+    p.itens = doLote.map((i) => ({ codigo: null, nome: i.nome, curto: i.nome, obrigatorio: false, estado: ESTADO_PAINEL(i.estado), arquivos: [i.nome], ids: [i.id], motivo: ['problema', 'bloqueado', 'precisa_dados'].includes(i.estado) ? i.motivo : null }));
     if (p.concluido) p.resumo = p.arquivos.lidos + p.arquivos.duplicados + ' de ' + p.arquivos.total + ' arquivos lidos' + (p.arquivos.problemas ? '; ' + p.arquivos.problemas + ' com problema' : '') + (p.arquivos.atencao ? '; ' + p.arquivos.atencao + ' esperando você' : '') + '.';
   }
   return p;
+}
+
+// Relatório da guarda para um arquivo bloqueado (o que foi achado, onde e o que fazer). Sem o conteúdo do documento.
+function bloqueioDoItem(db, filaId) {
+  const o = db.get('SELECT * FROM guarda_ocorrencias WHERE fila_id = ? AND decisao = ? ORDER BY id DESC LIMIT 1', filaId, 'bloqueado');
+  if (!o) return null;
+  let achados = []; try { achados = JSON.parse(o.achados || '[]'); } catch (_) { /* vazio */ }
+  return Object.assign(GD.resumoPublico({ id: o.id, nome: o.nome, gravidade: o.gravidade, achados }), { liberadoPor: o.liberado_por || null, liberadoEm: o.liberado_em || null });
 }
 
 function estado(db, u) {
@@ -424,17 +444,19 @@ function estado(db, u) {
   const itens = brutos.map((i) => {
     const c = i.contrato_id ? db.get('SELECT unidade FROM contratos WHERE contrato_id = ?', i.contrato_id) : null;
     let masc = {}; try { masc = JSON.parse(i.mascarados || '{}'); } catch (_) { /* vazio */ }
-    return { id: i.id, nome: i.nome, estado: i.estado, motivo: i.motivo, contrato_id: i.contrato_id, unidade: c ? c.unidade : null, trimestre: i.trimestre, documento_tipo: i.documento_tipo, hist_id: i.hist_id, ia_ok: !!i.ia_ok, mascarados: masc, divergencias: divergencias(db, i),
+    const bloqueio = i.estado === 'bloqueado' ? bloqueioDoItem(db, i.id) : null;
+    return { id: i.id, nome: i.nome, estado: i.estado, motivo: i.motivo, bloqueio, contrato_id: i.contrato_id, unidade: c ? c.unidade : null, trimestre: i.trimestre, documento_tipo: i.documento_tipo, hist_id: i.hist_id, ia_ok: !!i.ia_ok, mascarados: masc, divergencias: divergencias(db, i),
       lote: i.lote, zip_nome: i.zip_nome, codigo: i.codigo, parte: i.parte, mes: i.mes, mesRotulo: i.mes ? C.rotuloMes(i.mes) : null, paginas: i.paginas, caracteres: i.caracteres, gaveta_id: i.gaveta_id,
       paginasImagem: i.paginas_imagem ? String(i.paginas_imagem).split(',').map(Number) : [], origem: i.origem || null };
   });
   const n = (...es) => itens.filter((i) => es.includes(i.estado)).length;
   const meus = CART.doUsuario(db, u.usuario_id).map((id) => db.get('SELECT contrato_id, unidade, tipo FROM contratos WHERE contrato_id = ?', id)).filter(Boolean)
     .map((c) => ({ contrato_id: c.contrato_id, unidade: c.unidade, fluxo: G.usaGaveta(c) ? 'gaveta' : 'trimestre', tipo: C.tipoDaUnidade(c) }));
-  const resumo = { total: itens.length, lidos: n('pronto', 'aprovado', 'duplicado', 'lido'), aprovados: n('aprovado'), problemas: n('problema'), pendentes: n(...PENDENTES), precisaDados: n('precisa_dados') };
+  const resumo = { total: itens.length, lidos: n('pronto', 'aprovado', 'duplicado', 'lido'), aprovados: n('aprovado'), problemas: n('problema', 'bloqueado'), bloqueados: n('bloqueado'), pendentes: n(...PENDENTES), precisaDados: n('precisa_dados') };
   const ia = iaPronta();
   return { trava: t.trava, motivo: t.motivo, itens, resumo, unidades: meus, painel: painel(db, u, brutos.map((r, k) => Object.assign({}, r, { mascarados: itens[k].mascarados, paginasImagem: itens[k].paginasImagem }))), ia: { pronta: ia, mensagem: ia ? null : 'A leitura por IA não está ligada. Os arquivos viram rascunho em branco, para você preencher à mão. Peça ao administrador para cadastrar uma chave em Gestão CTAI > IA.' },
-    podeLiberar: resumo.pendentes === 0 && resumo.precisaDados === 0 && resumo.total > 0 };
+    podeLiberar: resumo.pendentes === 0 && resumo.precisaDados === 0 && resumo.total > 0, podeLiberarGuarda: ['admin', 'superintendente'].includes(u.perfil),
+    guardaNeutralizados: (db.get("SELECT COUNT(*) n FROM guarda_ocorrencias WHERE decisao = 'neutralizado' AND fila_id IN (SELECT id FROM alimentar_fila WHERE usuario_id = ? AND estado <> 'descartado')", u.usuario_id) || { n: 0 }).n };
 }
 
 function doItem(db, u, id) {
@@ -515,7 +537,7 @@ function aprovar(db, u, ids) {
 }
 
 function pularProblemas(db, u) {
-  const r = db.run("UPDATE alimentar_fila SET estado = 'descartado', atualizado_em = ? WHERE usuario_id = ? AND estado IN ('problema','precisa_dados')", agora(), u.usuario_id);
+  const r = db.run("UPDATE alimentar_fila SET estado = 'descartado', atualizado_em = ? WHERE usuario_id = ? AND estado IN ('problema','bloqueado','precisa_dados')", agora(), u.usuario_id);
   return { puladas: Number(r.changes || 0) };
 }
 

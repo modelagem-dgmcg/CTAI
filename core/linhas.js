@@ -38,6 +38,31 @@ function pareceDadoPessoal(valor, coluna) {
   return null;
 }
 
+// GUARDA DE DOCUMENTOS: célula que começa com = + - @ vira fórmula quando alguém abre o CSV no Excel. Fórmula que executa comando ou busca dado
+// de fora (DDE, WEBSERVICE, cmd|...) BLOQUEIA o arquivo inteiro; fórmula comum perde o sinal inicial e vira texto.
+function protegerCelulas(cabecalho, registros, bruto) {
+  const GC = require('../public/js/guarda-comum');
+  const cabPerigoso = cabecalho.find((c) => GC.celulaSegura(c).perigosa);
+  for (let n = -1; n < registros.length; n++) {
+    const linha = n < 0 ? null : registros[n];
+    for (const k of (linha ? cabecalho : [])) {
+      const v = linha[k]; if (!v) continue;
+      const c = GC.celulaSegura(v);
+      if (c.perigosa) falhaCelula(GC, 'linha ' + (n + 2) + ', coluna "' + k + '"', v, bruto);
+      if (c.formula) linha[k] = v.replace(/^\s*[=@]+\s*/, '').replace(/^\s*[+-]\s*(?=[A-Za-z(])/, '');
+    }
+  }
+  if (cabPerigoso) falhaCelula(GC, 'cabeçalho', cabPerigoso, bruto);
+}
+function falhaCelula(GC, onde, valor, bruto) {
+  let e;
+  try {
+    require('../server/guarda-documentos').concluir([GC.achado(GC.ALTA, 'formula-perigosa', 'CSV, ' + onde, 'Célula com fórmula que executa comando ou busca dado de fora.', valor)],
+      { nome: 'arquivo CSV', hash: require('crypto').createHash('sha256').update(String(bruto || '')).digest('hex'), origem: 'csv' });
+  } catch (x) { e = x; }
+  if (e) throw e;
+}
+
 // CSV simples: separador ; ou , (detectado), aspas duplas, BOM, linhas em branco ignoradas.
 function lerCSV(texto) {
   let t = String(texto || '').replace(/^﻿/, '');
@@ -67,6 +92,7 @@ function lerCSV(texto) {
     cabecalho.forEach((c, i) => { o[c] = (l[i] === undefined ? '' : l[i]).trim(); });
     return o;
   });
+  protegerCelulas(cabecalho, registros, t);
   return { cabecalho, registros };
 }
 

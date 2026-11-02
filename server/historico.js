@@ -93,7 +93,7 @@ async function importar(db, usuario, d) {
   validarCabeca(d);
   const nome = txt(String(d.nome || 'relatorio').replace(/[\\/\r\n"]/g, '_'), 120);
   const buf = Buffer.from(String(d.base64 || ''), 'base64');
-  const ex = await X.extrair(nome, buf);
+  const ex = await X.extrair(nome, buf, { usuario: usuario.login, origem: 'historico' });
   return importarTexto(db, usuario, Object.assign({}, d, { contrato_id: c.contrato_id, nome, texto: ex.texto, paginas: ex.paginas, mascarados: ex.mascarados }));
 }
 

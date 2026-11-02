@@ -266,6 +266,13 @@ CREATE TABLE IF NOT EXISTS alimentar_fila (
   contrato_id TEXT, trimestre TEXT, documento_tipo TEXT, texto TEXT, paginas INTEGER, mascarados TEXT, hist_id INTEGER, ia_ok INTEGER, criado_em TEXT NOT NULL, atualizado_em TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_alim_fila ON alimentar_fila (usuario_id, estado);
+-- Guarda de documentos: relatório de cada documento bloqueado, neutralizado ou com aviso. NÃO guarda o documento: só o que foi achado, onde, o hash e um trecho curto.
+CREATE TABLE IF NOT EXISTS guarda_ocorrencias (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, criado_em TEXT NOT NULL, usuario TEXT, origem TEXT, nome TEXT, hash TEXT, tamanho INTEGER,
+  gravidade TEXT NOT NULL, decisao TEXT NOT NULL, resumo TEXT, achados TEXT, fila_id INTEGER, liberado_por TEXT, liberado_em TEXT, liberado_motivo TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_guarda_hash ON guarda_ocorrencias (hash);
+CREATE INDEX IF NOT EXISTS ix_guarda_quando ON guarda_ocorrencias (decisao, criado_em);
 -- Gaveta por mês: o TEXTO COMPLETO (já mascarado) de cada documento do catálogo, por unidade + mês + tipo de documento. O trimestre não é arquivo:
 -- é uma visão calculada juntando os 3 meses. O arquivo original nunca é guardado. Reenviar o mesmo documento (conteúdo diferente) substitui o anterior.
 CREATE TABLE IF NOT EXISTS gaveta_documentos (

@@ -23,7 +23,7 @@ module.exports = (db) => {
   // Análise de texto colado (relatório da OSS em PDF/Word, copiado como texto).
   r.post('/analisar', async (req, res) => {
     const b = req.body || {};
-    const texto = String(b.texto || '').slice(0, 200000); // documentos longos: analisa os primeiros 200.000 caracteres
+    const texto = require('../guarda-documentos').protegerTexto(String(b.texto || '').slice(0, 200000), { usuario: req.usuario.login, origem: 'texto-colado', nome: 'texto colado' }); // documentos longos: analisa os primeiros 200.000 caracteres; a guarda tira o que está escondido e barra comando explícito
     if (!texto.trim()) throw erro(400, 'Cole o texto do documento.');
     let contexto = { observacoes: b.observacoes || '' };
     let cid = null;
@@ -47,7 +47,7 @@ module.exports = (db) => {
   // Lê um arquivo (PDF com texto, Word, Excel, CSV, TXT) e devolve o texto, sem guardar nada.
   r.post('/extrair', async (req, res) => {
     const b = req.body || {};
-    const ex = await require('../extrair-texto').extrair(String(b.nome || 'arquivo'), Buffer.from(String(b.base64 || ''), 'base64'));
+    const ex = await require('../extrair-texto').extrair(String(b.nome || 'arquivo'), Buffer.from(String(b.base64 || ''), 'base64'), { usuario: req.usuario.login, origem: 'analista-extrair' });
     res.json({ texto: ex.texto, paginas: ex.paginas, tipo: ex.tipo });
   });
 

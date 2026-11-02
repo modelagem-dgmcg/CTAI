@@ -13,7 +13,7 @@ const agora = () => new Date().toISOString();
 const avaliador = (u) => ['superintendente', 'admin'].includes(u.perfil);
 
 async function receber(db, u, b) {
-  const texto = String(b.texto || '').trim().slice(0, 20000);
+  const texto = require('./guarda-documentos').protegerTexto(String(b.texto || '').trim().slice(0, 20000), { usuario: u.login, origem: 'ensinar-texto', nome: 'texto do ensinar' });
   const a = b.anexo && b.anexo.base64 ? b.anexo : null;
   if (!texto && !a) throw erro(400, 'Escreva o que quer ensinar ou anexe um arquivo.');
   const titulo = (String(b.titulo || '').trim() || texto.split(/\n/)[0] || (a && a.nome) || 'Sem título').slice(0, 100);
@@ -27,8 +27,9 @@ async function receber(db, u, b) {
     if (!buf.length) throw erro(400, 'Arquivo vazio.');
     if (buf.length > MS.MAX) throw erro(413, 'Arquivo acima de 4 MB.');
     const nome = String(a.nome).replace(/[\\/\r\n"]/g, '_').slice(0, 120);
+    require('./guarda-documentos').examinarAnexo(nome, buf, { usuario: u.login, origem: 'ensinar' });
     anexoId = Number(db.run('INSERT INTO msg_anexos (nome, mime, tamanho, dados, criado_em) VALUES (?,?,?,?,?)', nome, MS.TIPOS[ext], buf.length, buf, agora()).lastInsertRowid);
-    if (tipo) { try { textoAnexo = (await extrair(nome, buf)).texto || ''; } catch (_) { /* sem texto: usa só o que foi escrito */ } }
+    if (tipo) { try { textoAnexo = (await extrair(nome, buf, { usuario: u.login, origem: 'ensinar' })).texto || ''; } catch (e) { if (e && e.bloqueio) throw e; /* sem texto: usa só o que foi escrito */ } }
   }
   const id = Number(db.run('INSERT INTO ensinos (usuario_id, titulo, texto, anexo_id, uso_imediato, tipo_documento, criado_em) VALUES (?,?,?,?,?,?,?)', u.usuario_id, titulo, texto, anexoId, tipo ? 1 : 0, tipo, agora()).lastInsertRowid);
   // Modelo de documento para uso imediato: o sistema aprende já, só para quem enviou.

@@ -90,7 +90,7 @@ module.exports = (db) => {
     if (!st) throw erro(404, 'Setor desconhecido.');
     D.exigirSetor(req.usuario, st.id);
     const nome = String((req.body && req.body.nome) || 'arquivo').replace(/[\\/\r\n"]/g, '_').slice(0, 120);
-    const ex = await require('../extrair-texto').extrair(nome, Buffer.from(String((req.body && req.body.base64) || ''), 'base64'));
+    const ex = await require('../extrair-texto').extrair(nome, Buffer.from(String((req.body && req.body.base64) || ''), 'base64'), { usuario: req.usuario.login, origem: 'portal-unidade' });
     const o = await require('../../modules/analista/propor-ficha').propor({ texto: ex.texto, campos: F.camposDoSetor(st.id), mes: c.mes || c.competencia || c.cid });
     trilha.registrar(db, { usuario: req.usuario.login, tabela: 'fichas', registro: c.cid + '/' + st.id, campo: 'leitura_arquivo', valor_novo: { nome, tipo: ex.tipo, caracteres: ex.texto.length, propostos: Object.keys(o.campos).length } });
     res.json(Object.assign({ arquivo: nome, caracteres: ex.texto.length }, o));

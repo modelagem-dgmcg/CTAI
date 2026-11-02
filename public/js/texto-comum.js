@@ -26,14 +26,16 @@
     return t.replace(/\r/g, '').replace(/[ \t ]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{2,}/g, '\n').trim();
   }
   // Bytes de um HTML do SEI: a codificação vem do próprio arquivo (normalmente iso-8859-1).
-  function htmlDeBytes(bytes) {
+  // HTML cru (já na codificação certa), antes de virar texto: é o que a guarda de documentos examina.
+  function htmlBruto(bytes) {
     const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
     const cab = new TextDecoder('latin1').decode(u8.subarray(0, 4000));
     const cs = (/charset\s*=\s*["']?([\w-]+)/i.exec(cab) || [])[1] || 'utf-8';
     let bruto;
     try { bruto = new TextDecoder(cs).decode(u8); } catch (_) { bruto = new TextDecoder('utf-8').decode(u8); }
-    return htmlParaTexto(bruto);
+    return bruto;
   }
+  function htmlDeBytes(bytes) { return htmlParaTexto(htmlBruto(bytes)); }
 
   // Texto de PDF no formato "--- página N ---\n...": devolve as páginas com pouco texto (provável imagem) e quantas páginas há.
   function paginasDoTexto(texto) {
@@ -47,5 +49,5 @@
   }
   const montarPagina = (n, texto) => '--- página ' + n + ' ---\n' + texto;
 
-  return { MIN_CHARS_PAGINA, MIN_CHARS_ARQUIVO, htmlParaTexto, htmlDeBytes, paginasDoTexto, montarPagina, entidade };
+  return { MIN_CHARS_PAGINA, MIN_CHARS_ARQUIVO, htmlParaTexto, htmlBruto, htmlDeBytes, paginasDoTexto, montarPagina, entidade };
 });

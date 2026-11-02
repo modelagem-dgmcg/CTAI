@@ -2,7 +2,7 @@
   'use strict';
   // Gestão: painel da superintendente, produção, carteira, usuários e IA. Só superintendente e administrador.
   const { h, api, fmt, toast, janela, confirmar, selo, aviso, tabela, montar } = window.CTAI;
-  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['entregas', 'Entregas por carteira'], ['completude', 'Completude'], ['importar', 'Importar'], ['contratos', 'Contratos e TAs'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['ia', 'IA']];
+  const ABAS = [['', 'Painel'], ['producao', 'Produção'], ['carteira', 'Carteira'], ['entregas', 'Entregas por carteira'], ['completude', 'Completude'], ['importar', 'Importar'], ['contratos', 'Contratos e TAs'], ['usuarios', 'Usuários'], ['acessos', 'Acessos'], ['seguranca', 'Segurança'], ['ia', 'IA']];
   const kpi = (r, v, nota, tom) => h('div', { class: 'kpi' + (tom ? ' ' + tom : '') }, h('div', { class: 'r' }, r), h('div', { class: 'num-grande' }, String(v)), nota ? h('div', { class: 'r' }, nota) : null);
   const F = { trimestre: '', contrato: '', usuario_id: '' }; // filtros lembrados enquanto a página está aberta
   const qs = (o) => { const p = new URLSearchParams(); for (const k of Object.keys(o)) if (o[k]) p.set(k, o[k]); const s = p.toString(); return s ? '?' + s : ''; };
@@ -22,7 +22,7 @@
 
   // ---------- Painel ----------
   async function painel() {
-    const [p, c] = await Promise.all([api('GET', '/api/gestao/painel' + qs(F)), api('GET', '/api/gestao/carteira')]);
+    const [p, c, g] = await Promise.all([api('GET', '/api/gestao/painel' + qs(F)), api('GET', '/api/gestao/carteira'), api('GET', '/api/gestao/guarda?limite=1').catch(() => null)]);
     F.trimestre = p.trimestre;
     const k = p.cartoes;
     const refazer = () => aba();
@@ -35,7 +35,7 @@
     const linhaAlertas = p.alertas.length ? h('ul', { class: 'alertas' }, p.alertas.filter((a) => a.tipo !== 'sem gestor').slice(0, 14).map((a) => h('li', { class: a.nivel }, h('span', { class: 'selo ' + (a.nivel === 'alta' ? 'alta' : (a.nivel === 'atencao' ? 'atencao' : '')) }, a.tipo), ' ', h('strong', null, a.unidade), ' · ', a.texto)))
       : h('p', { class: 'mudo' }, 'Nenhum alerta no momento.');
     const maxRec = Math.max(1, ...p.recorrentes.map((r) => r.divergencias));
-    montar(cabecalho(''), filtros,
+    montar(cabecalho(''), g && g.aguardando ? aviso('atencao', h('strong', null, 'Documentos bloqueados por segurança: '), g.aguardando + ' aguardando decisão (' + g.bloqueados30d + ' nos últimos 30 dias). ', h('a', { href: '#/gestao/seguranca' }, 'Ver na aba Segurança')) : null, filtros,
       h('div', { class: 'kpis' },
         kpi('Unidades', k.unidades, k.competencias + ' competência(s) em ' + p.trimestre),
         kpi('Envios recebidos', k.recebidos, 'completos'), kpi('Incompletos', k.incompletos, 'itens pendentes', k.incompletos ? 'atencao' : ''), kpi('Pendentes', k.pendentes, 'sem envio recebido', k.pendentes ? 'atencao' : ''),
@@ -361,6 +361,33 @@
       d.sem_carteira.length ? h('div', { class: 'cartao' }, h('h3', null, 'Unidades sem carteira'), tabela(cab, d.sem_carteira.map(linha))) : null);
   }
 
+  // ---------- Segurança dos documentos (guarda de documentos) ----------
+  async function seguranca() {
+    const r = await api('GET', '/api/gestao/guarda');
+    const DEC = { bloqueado: 'Bloqueado', neutralizado: 'Neutralizado', registrado: 'Só registrado' };
+    const linha = (o) => {
+      const det = h('details', null, h('summary', null, o.resumo || '—'), h('ul', { style: 'margin:4px 0;padding-left:18px' }, (o.achados || []).map((a) => h('li', null, a.msg, a.onde ? h('span', { class: 'peq mudo' }, ' (' + a.onde + ')') : null, a.trecho ? h('div', { class: 'peq mudo', style: 'font-family:monospace;word-break:break-word' }, 'Trecho: ' + a.trecho) : null))));
+      const acao = o.decisao === 'bloqueado' && !o.liberadoPor
+        ? h('button', { class: 'leve', title: 'Libera este arquivo: ele precisa ser enviado de novo e será lido só com o texto neutralizado', onclick: async () => {
+          const motivo = await pedirMotivo(o.arquivo); if (!motivo) return;
+          try { const x = await api('POST', '/api/gestao/guarda/' + o.id + '/liberar', { motivo }); toast(x.aviso || 'Liberado.'); seguranca(); } catch (e) { toast(e.message, true); }
+        } }, 'Liberar com motivo')
+        : (o.liberadoPor ? h('span', { class: 'peq mudo' }, 'Liberado por ' + o.liberadoPor + ': ' + (o.liberadoMotivo || '')) : null);
+      return [new Date(o.quando).toLocaleString('pt-BR'), o.usuario || '—', o.origem || '—', h('strong', null, o.arquivo || '—'), h('span', { class: 'selo ' + (o.decisao === 'bloqueado' ? 'alta' : (o.decisao === 'neutralizado' ? 'atencao' : '')) }, DEC[o.decisao] || o.decisao), det, acao];
+    };
+    montar(cabecalho('seguranca'),
+      aviso('info', h('strong', null, 'Guarda de documentos. '), 'Todo arquivo enviado à SES-PE é examinado antes de qualquer leitura: texto escondido, comando para a IA, macro, script e fórmula perigosa. Alta = bloqueado e em quarentena (só o relatório fica); média = o sistema tira o que estava escondido e avisa; baixa = só registro. Regras em docs/SEGURANCA-DOCUMENTOS.md.'),
+      h('div', { class: 'kpis' }, kpi('Bloqueados (30 dias)', r.bloqueados30d, '', r.bloqueados30d ? 'alta' : ''), kpi('Aguardando decisão', r.aguardando, 'bloqueados ainda não liberados', r.aguardando ? 'atencao' : ''), kpi('Neutralizados (30 dias)', r.neutralizados30d, 'texto escondido retirado')),
+      h('div', { class: 'cartao' }, h('h3', null, 'Ocorrências recentes'),
+        tabela([{ t: 'Quando' }, { t: 'Quem enviou' }, { t: 'Por onde' }, { t: 'Arquivo' }, { t: 'Decisão' }, { t: 'O que foi achado' }, { t: '' }], r.lista.filter((o) => o.decisao !== 'registrado').map(linha))));
+  }
+  // Pede o motivo da liberação em uma janelinha da própria tela (nada de caixa do navegador).
+  async function pedirMotivo(arquivo) {
+    const m = await window.CTAI.perguntar('Liberar ' + arquivo, 'Por que é seguro liberar? (uma frase)', { texto: 'O arquivo precisa ser enviado de novo. O sistema vai ler só o texto neutralizado (sem o que estava escondido e sem as linhas com comando). O motivo fica na trilha.', botao: 'Liberar' });
+    if (m && m.length < 10) { toast('Explique em uma frase (mínimo 10 letras).', true); return null; }
+    return m;
+  }
+
   async function aba() {
     const h2 = location.hash.replace(/^#\/gestao\/?/, '');
     if (!F.lista) { try { F.lista = (await api('GET', '/api/gestao/painel?trimestre=' + (F.trimestre || ''))).trimestres; } catch (_) { F.lista = []; } }
@@ -372,6 +399,7 @@
     if (h2 === 'completude') return completude();
     if (h2 === 'usuarios') return usuarios();
     if (h2 === 'acessos') return acessos();
+    if (h2 === 'seguranca') return seguranca();
     if (h2 === 'ia') return ia();
     return painel();
   }

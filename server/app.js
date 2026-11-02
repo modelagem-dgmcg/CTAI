@@ -9,6 +9,7 @@ const M = require('./minuta');
 
 function criarApp(db) {
   const app = express();
+  require('./guarda-documentos').ligar(db); // guarda de documentos: registra bloqueios no banco
   app.disable('x-powered-by');
   app.use(require('./exposicao').barreira(db)); // origem externa só alcança o Portal da Unidade
   app.use(express.json({ limit: '6mb' }));
@@ -100,7 +101,9 @@ function criarApp(db) {
       : esperado ? err.message
       : status >= 500 ? (/constraint|não pode ser|não podem ser/i.test(String(err.message)) ? 'O banco recusou a operação: ' + String(err.message).replace(/^.*?: /, '') : 'Erro interno. Tente de novo; se continuar, avise o administrador.')
       : err.message;
-    res.status(status).json({ erro: msg });
+    const corpo = { erro: msg };
+    if (esperado && err.bloqueio) corpo.bloqueio = err.bloqueio; // arquivo bloqueado pela guarda: a tela explica o motivo
+    res.status(status).json(corpo);
   });
   return app;
 }

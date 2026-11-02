@@ -17,6 +17,11 @@ module.exports = (db) => {
   const r = express.Router();
   r.use(A.exigir(db, ['superintendente']));
 
+  // ---------- Segurança dos documentos (guarda de documentos) ----------
+  r.get('/guarda', (req, res) => res.json(require('../guarda-documentos').ocorrencias(db, req.query.limite)));
+  r.get('/guarda/:id', (req, res) => res.json(require('../guarda-documentos').detalhe(db, req.params.id)));
+  r.post('/guarda/:id/liberar', (req, res) => res.json(require('../guarda-documentos').liberar(db, req.usuario, req.params.id, (req.body || {}).motivo)));
+
   // ---------- Usuários ----------
   const listaUsuarios = () => db.all('SELECT usuario_id, login, nome, perfil, funcao, contrato_id, setor, ativo, trocar_senha, ultimo_login, criado_em FROM usuarios ORDER BY perfil, nome')
     .map((u) => Object.assign(u, { ativo: !!u.ativo, trocar_senha: !!u.trocar_senha, unidades: ['criador', 'colega'].includes(u.perfil) ? CART.doUsuario(db, u.usuario_id) : null }));

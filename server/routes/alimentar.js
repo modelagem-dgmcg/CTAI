@@ -32,6 +32,8 @@ module.exports = (db) => {
     else try { corpo = JSON.parse(Buffer.isBuffer(req.body) ? req.body.toString('utf8') : ''); } catch (_) { throw erro(400, 'O texto enviado não está no formato esperado.'); }
     res.json(await AL.receberTexto(db, req.usuario, Number(req.get('x-fila-id')), corpo));
   });
+  // O navegador conta o que a guarda achou antes de enviar (ex.: ZIP com nomes de arquivo perigosos ou taxa de compressão absurda).
+  r.post('/guarda-relato', (req, res) => res.json(require('../guarda-documentos').relatoDoNavegador(req.usuario, req.body || {})));
   r.post('/:id/identificar', async (req, res) => res.json(await AL.identificar(db, req.usuario, req.params.id, req.body || {})));
   r.delete('/:id', (req, res) => { AL.descartar(db, req.usuario, req.params.id); res.json({ ok: true }); });
   r.post('/descartar-lote', (req, res) => res.json(AL.descartarLote(db, req.usuario, req.body || {})));

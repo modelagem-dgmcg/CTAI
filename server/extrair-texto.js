@@ -6,6 +6,8 @@ const { erro } = require('./auth');
 const { mascarar, somar } = require('./mascara');
 const crypto = require('crypto');
 const T = require('../public/js/texto-comum');
+const GD = require('./guarda-documentos');
+const GC = require('../public/js/guarda-comum');
 
 // Limite por arquivo: 60 MB (cabe no Render Starter, 512 MB, porque o sistema lê um arquivo por vez e solta o original logo depois).
 const MAX_ARQUIVO = 60 * 1024 * 1024;
@@ -30,21 +32,21 @@ async function pdf(buf) {
   } finally { try { await doc.destroy(); } catch (_) { /* já liberado */ } }
 }
 // HTML do SEI (ofícios, despachos): a mesma leitura roda no navegador (public/js/texto-comum.js).
-function html(buf) { return { texto: T.htmlDeBytes(buf), paginas: null }; }
+function html(buf, limpo) { return { texto: limpo != null ? T.htmlParaTexto(limpo) : T.htmlDeBytes(buf), paginas: null }; }
 async function docx(buf) {
   const z = await JSZip.loadAsync(buf);
   const f = z.file('word/document.xml');
   if (!f) throw erro(400, 'Arquivo Word inválido.');
-  const xml = await f.async('string');
+  const xml = GD.limparDocxXml(await f.async('string')); // sem texto oculto, apagado (alterações controladas) nem códigos de campo
   const t = xml.replace(/<\/w:p>/g, '\n').replace(/<\/w:tc>/g, ' | ').replace(/<w:tab\/>/g, ' ').replace(/<[^>]+>/g, '');
   return { texto: ent(t), paginas: null };
 }
-async function xlsx(buf) {
+async function xlsx(buf, ocultas) {
   const z = await JSZip.loadAsync(buf);
   const ss = z.file('xl/sharedStrings.xml');
   const comp = ss ? [...(await ss.async('string')).matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) => ent([...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map((x) => x[1]).join(''))) : [];
   const saidas = [];
-  const planilhas = Object.keys(z.files).filter((n) => /^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort();
+  const planilhas = Object.keys(z.files).filter((n) => /^xl\/worksheets\/sheet\d+\.xml$/.test(n) && !(ocultas && ocultas.has(n))).sort(); // planilha oculta não entra
   for (const n of planilhas) {
     const xml = await z.file(n).async('string');
     const linhas = [...xml.matchAll(/<row[^>]*>([\s\S]*?)<\/row>/g)].map((r) => [...r[1].matchAll(/<c([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)].map((c) => {
@@ -57,25 +59,37 @@ async function xlsx(buf) {
   return { texto: saidas.join('\n'), paginas: planilhas.length };
 }
 
-async function extrair(nome, buf) {
+async function extrair(nome, buf, opc) {
+  opc = opc || {};
   const ext = (String(nome).split('.').pop() || '').toLowerCase();
   if (!TIPOS.includes(ext)) throw erro(400, 'Tipo não aceito. Use PDF, Word (.docx), Excel (.xlsx), CSV, TXT ou HTML.');
   if (!buf.length) throw erro(400, 'Arquivo vazio.');
   if (buf.length > MAX_ARQUIVO) throw erro(413, 'Arquivo grande demais (' + MB(buf.length) + ' MB; o limite é ' + MB(MAX_ARQUIVO) + ' MB).');
+  // GUARDA DE DOCUMENTOS: a primeira leitura de qualquer arquivo. Alta = bloqueia aqui (nada é extraído, mascarado nem guardado).
+  const g = await GD.antes(nome, buf, { usuario: opc.usuario, origem: opc.origem, filaId: opc.filaId });
+  if (GC.decidir(g.achados).acao === 'bloquear') GD.concluir(g.achados, g.ctx); // lança se ninguém liberou este arquivo
   let r;
   try {
     if (ext === 'pdf') { if (buf.slice(0, 5).toString('latin1') !== '%PDF-') throw erro(400, 'O arquivo não é um PDF válido.'); r = await pdf(buf); }
     else if (ext === 'docx') r = await docx(buf);
-    else if (ext === 'xlsx') r = await xlsx(buf);
-    else if (ext === 'html' || ext === 'htm') r = html(buf);
-    else r = { texto: buf.toString('utf8').replace(/^﻿/, ''), paginas: null };
+    else if (ext === 'xlsx') r = await xlsx(buf, g.info.pastasOcultas);
+    else if (ext === 'html' || ext === 'htm') r = html(buf, g.info.htmlLimpo);
+    else r = { texto: buf.toString('utf8').replace(/^\uFEFF/, ''), paginas: null };
   } catch (e) { if (e.status) throw e; throw erro(400, 'Não consegui ler o arquivo (' + String(e.message || e).slice(0, 80) + ').'); }
   const completo = String(r.texto || '').replace(/\u0000/g, '');
-  const texto = completo.slice(0, MAX_TEXTO);
+  // Segundo exame, agora no texto: caractere invisível, frase de comando, fórmula perigosa. Devolve o texto já neutralizado.
+  const gd = GD.depois(g, completo.slice(0, MAX_TEXTO));
+  const texto = gd.texto;
   if (texto.replace(/\s+/g, '').length < 80) throw erro(422, 'O arquivo não tem texto legível. Se for PDF escaneado, o sistema não faz OCR: use o arquivo original (Word/Excel/PDF com texto).');
   // O texto sai já mascarado (CPF, CNS, telefone, nome de paciente...). O arquivo original nunca é guardado.
   const m = mascarar(texto);
-  return { texto: m.texto, paginas: r.paginas || null, tipo: ext, mascarados: m.mascarados, paginasImagem: r.paginasImagem || [], cortado: completo.length > MAX_TEXTO };
+  return { texto: m.texto, paginas: r.paginas || null, tipo: ext, mascarados: m.mascarados, paginasImagem: r.paginasImagem || [], cortado: completo.length > MAX_TEXTO, guarda: resumoGuarda(gd.resultado), hash: g.hash };
+}
+// O que a tela precisa saber do exame (só aviso; o relatório completo fica na quarentena/registro).
+function resumoGuarda(r) {
+  if (!r || r.acao === 'seguir') return null;
+  const med = r.achados.filter((a) => a.g !== 'baixa');
+  return { acao: r.acao, gravidade: r.gravidade, avisos: [...new Set(med.map((a) => a.msg))].slice(0, 4), id: r.id || null, liberado: !!r.liberado };
 }
 
 // Texto que o NAVEGADOR já leu (PDF ou HTML) e mascarou antes de enviar. O servidor não confia: confere tipo, tamanho e integridade (hash),
@@ -83,7 +97,8 @@ async function extrair(nome, buf) {
 const TIPOS_NAVEGADOR = ['pdf', 'html', 'htm'];
 const MAX_CORPO_TEXTO = 8 * 1024 * 1024; // corpo JSON do envio de texto
 const TIPOS_MASCARA = new Set(require('../public/js/mascara-comum').TIPOS);
-function deTexto(nome, d) {
+function deTexto(nome, d, opc) {
+  opc = opc || {};
   const ext = (String(nome).split('.').pop() || '').toLowerCase();
   if (!TIPOS_NAVEGADOR.includes(ext)) throw erro(400, 'Só PDF e HTML podem ser enviados já como texto.');
   if (!d || typeof d.texto !== 'string' || !d.texto.length) throw erro(400, 'Texto vazio.');
@@ -91,7 +106,9 @@ function deTexto(nome, d) {
     if (!/^[0-9a-f]{64}$/.test(d.hash) || crypto.createHash('sha256').update(d.texto, 'utf8').digest('hex') !== d.hash) throw erro(400, 'O texto chegou alterado. Envie de novo.');
   }
   const completo = d.texto.replace(/\u0000/g, '');
-  const texto = completo.slice(0, MAX_TEXTO);
+  // GUARDA DE DOCUMENTOS (texto que o navegador leu): o navegador já examinou o arquivo e manda o que achou; o servidor examina o texto de novo.
+  const gd = GD.examinarTextoRecebido(nome, completo.slice(0, MAX_TEXTO), { usuario: opc.usuario, origem: opc.origem, filaId: opc.filaId }, d.guarda);
+  const texto = gd.texto;
   if (texto.replace(/\s+/g, '').length < T.MIN_CHARS_ARQUIVO) throw erro(422, 'O arquivo não tem texto legível. Se for PDF escaneado, o sistema não faz OCR: use o arquivo original (Word/Excel/PDF com texto).');
   let paginas = null; let paginasImagem = [];
   if (ext === 'pdf') {
@@ -106,7 +123,7 @@ function deTexto(nome, d) {
     const n = Math.floor(Number(v)); if (TIPOS_MASCARA.has(k) && Number.isFinite(n) && n > 0) cliente[k] = Math.min(n, 1000000);
   }
   const m = mascarar(texto); // segunda máscara, no servidor
-  return { texto: m.texto, paginas, tipo: ext, mascarados: somar(cliente, m.mascarados), paginasImagem, cortado: completo.length > MAX_TEXTO || d.cortado === true };
+  return { texto: m.texto, paginas, tipo: ext, mascarados: somar(cliente, m.mascarados), paginasImagem, cortado: completo.length > MAX_TEXTO || d.cortado === true, guarda: resumoGuarda(gd.resultado), hash: gd.hash };
 }
 
 module.exports = { extrair, deTexto, MAX_CORPO_TEXTO, TIPOS_NAVEGADOR, html, MAX_ARQUIVO, MAX_TEXTO, MIN_CHARS_PAGINA, TIPOS, MB };
