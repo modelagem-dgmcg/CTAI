@@ -83,7 +83,7 @@ function valorDoMes(db, cid, ind, mes, campo, ajustes, pend, conf) {
     return { v: x[campo], origem: x.fonte, ref: x.trecho, estado: 'confirmado' };
   }
   const prop = todos.filter((x) => x[campo] !== null && x[campo] !== undefined);
-  pend.push(C.rotuloMes(mes) + ' — ' + (campo === 'meta' ? 'meta' : 'realizado') + (prop.length ? ': há número LIDO mas NÃO confirmado (' + nBR(prop[0][campo]) + '); confirme em Alimentar o Analista ou digite com motivo' : ': sem número lido; confirme a leitura ou digite com motivo'));
+  pend.push(C.rotuloMes(mes) + ' — ' + (campo === 'meta' ? 'meta' : 'realizado') + (prop.length ? ': há número LIDO mas NÃO confirmado (' + nBR(prop[0][campo]) + '); confirme em Enviar documentos ou digite com motivo' : ': sem número lido; confirme a leitura ou digite com motivo'));
   return null;
 }
 
@@ -226,7 +226,7 @@ function montar(db, c, tri) {
     if (q.pct_bp !== q.pct_bp_verificacao) bloqueios.push(q.nome + ': o recálculo independente do percentual não bate (' + q.pct_bp + ' x ' + q.pct_bp_verificacao + ').');
   }
   const ostoAt = db.all("SELECT mes FROM gaveta_numeros WHERE contrato_id = ? AND fonte = 'anexo_II' AND chave = 'ostomizados_atendimentos' AND mes IN (" + meses.map(() => '?').join(',') + ')', cid, ...meses);
-  if (ostoAt.length) avisos.push('Ostomizados: em ' + ostoAt.map((x) => C.rotuloMes(x.mes)).join(', ') + ' a planilha traz ATENDIMENTOS (sessões), não número de pacientes. O indicador conta pacientes: esses meses ficam pendentes até a analista digitar o número de pacientes com motivo.');
+  if (ostoAt.length) avisos.push('Ostomizados: em ' + ostoAt.map((x) => C.rotuloMes(x.mes)).join(', ') + ' a planilha conta atendimentos (sessões), mas o indicador conta pacientes. Esses meses ficam pendentes até você digitar o número de pacientes e dizer de onde tirou.');
   const satPlanilha = db.all("SELECT mes, pct FROM gaveta_numeros WHERE contrato_id = ? AND fonte = 'anexo_II' AND chave = 'satisfacao' AND estado = 'confirmado' AND pct IS NOT NULL", cid);
   const ql = apurarQualidade(db, cid, meses, dados, simasL, satPlanilha);
   for (const p of ql.pendencias) bloqueios.push('Quadro 03: ' + p);
@@ -249,7 +249,7 @@ function montar(db, c, tri) {
     if (!base.aplicavel) return base;
     const bruto = pctDesc[q.chave];
     const bp = numOk(bruto) === null ? null : Math.round(numOk(bruto) * 100);
-    if (f === 'entre_85_e_100') base.aviso = 'Entre 85% e 100%: as regras carregadas não dizem se há desconto nesta faixa. A analista define (informe 0 se não houver).';
+    if (f === 'entre_85_e_100') base.aviso = 'Entre 85% e 100%: o contrato não fala de desconto nesta faixa. Você decide (informe 0 se não houver).';
     if (bp === null) { base.pendencia = 'percentual de desconto a definir pela analista' + (peso !== null ? ' (peso do indicador no contrato: ' + nBR(peso) + '% do repasse; o peso não é o percentual aplicado)' : ''); bloqueios.push(q.nome + ': ' + base.pendencia + '.'); return base; }
     base.pct_bp = bp;
     if (!repOk) { base.pendencia = 'repasse não informado'; return base; }
@@ -290,7 +290,7 @@ function montar(db, c, tri) {
   const revisoes = dados.revisoes && typeof dados.revisoes === 'object' ? dados.revisoes : {};
   const editados = dados.texto_editado && typeof dados.texto_editado === 'object' ? dados.texto_editado : {};
   const secoesTexto = ['cab', '1', '2', '3', '4', '9', '10'];
-  if (!modelo) bloqueios.push('Sem relatório-modelo ativo: os textos das seções 1 a 4, 9 e 10 não podem ser gerados. Suba o parecer do trimestre anterior na Importação ou digite cada seção.');
+  if (!modelo) bloqueios.push('Preciso do parecer do trimestre anterior desta unidade para usar de modelo: sem ele não consigo montar os textos das seções 1 a 4, 9 e 10. Envie em Enviar documentos ou digite cada seção.');
   for (const k of secoesTexto) {
     const g = k === 'cab' ? (gerado && gerado.cabecalho) : (gerado && gerado.secoes[k]);
     const ed = typeof editados[k] === 'string' && editados[k].trim() ? editados[k] : null;
@@ -329,14 +329,14 @@ function montar(db, c, tri) {
   const estado = { dados, q1: q1.map(semInd), q2: q2.map(semInd), ql: ql.indicadores, rep, repTotal, descontos, totalProducao, qualidade, totalGeral, manual, finais, textoFinal };
   const hash = hashDe(estado);
   const pronto = !!(linha && linha.pronto_hash && linha.pronto_hash === hash && bloqueios.length === 0);
-  // versão congelada no fluxo minuta -> conferência -> autorização -> SEI
+  // versão travada no fluxo minuta -> conferência -> autorização -> SEI
   let versaoCongelada = null;
   const parecer = db.get('SELECT parecer_id FROM pareceres WHERE contrato_id = ? AND trimestre = ?', cid, tri);
   if (parecer) {
     const v = db.get('SELECT versao_id, numero, status, conteudo FROM versoes_minuta WHERE parecer_id = ? ORDER BY numero DESC LIMIT 1', parecer.parecer_id);
     if (v) { const ap = ler(v.conteudo, {}).apuracao; versaoCongelada = { parecer_id: parecer.parecer_id, versao_id: v.versao_id, numero: v.numero, status: v.status, mudou: !!(ap && ap.hash !== hash), apuracao: !!ap }; }
   }
-  if (versaoCongelada && versaoCongelada.mudou) avisos.push('Os números ou textos mudaram depois da versão ' + versaoCongelada.numero + ' congelada. O "pronto" caiu: confira, marque pronto de novo e congele uma versão nova, com o motivo.');
+  if (versaoCongelada && versaoCongelada.mudou) avisos.push('Os números ou textos mudaram depois da versão ' + versaoCongelada.numero + ' travada. O "pronto" caiu: confira, marque pronto de novo e trave uma versão nova, com o motivo.');
   return {
     unidade: c.unidade, trimestre: tri, meses, modelo: modelo ? { id: modelo.id, trimestre: modelo.trimestre, nome_arquivo: modelo.nome_arquivo, secoes: modelo.secoes } : null,
     quadro1: q1.map(semInd), quadro2: q2.map(semInd), quadro3: ql.indicadores, lado_a_lado: lado, lado_qualidade: ql.lado_a_lado,
@@ -350,7 +350,7 @@ function montar(db, c, tri) {
 }
 const semInd = (q) => { const o = Object.assign({}, q); delete o.ind; delete o.conferencia; o.pct_txt = q.pct_bp === null ? null : pctTxt(q.pct_bp); o.status = statusDe(q.pct_bp); return o; };
 
-// ---------- o documento (o que vai para a tela, para a versão congelada e para o PDF) ----------
+// ---------- o documento (o que vai para a tela, para a versão travada e para o PDF) ----------
 function documento(x) {
   const rot = (m) => C.rotuloMes(m);
   const quadro = (q, titulo) => ({
@@ -514,13 +514,13 @@ function marcarPronto(db, usuario, cid, tri) {
   return montar(db, c, tri);
 }
 
-// parte do parecer que entra na versão congelada da minuta (só dados; sem horários)
+// parte do parecer que entra na versão travada da minuta (só dados; sem horários)
 function paraMinuta(db, c, tri) {
   const v = montar(db, c, tri);
   return { trimestre: tri, hash: v.hash, pronto: v.pronto, pendencias: v.bloqueios.length, bloqueios: v.bloqueios, total_geral_cent: v.total_geral_cent, documento: v.documento, conferencia: v.conferencia, lado_a_lado: v.lado_a_lado };
 }
 
-// blocos do PDF do parecer completo, a partir do documento (o mesmo da tela e da versão congelada)
+// blocos do PDF do parecer completo, a partir do documento (o mesmo da tela e da versão travada)
 function blocosDoParecer(d) {
   const blocos = [];
   const tx = (k) => (d.texto && d.texto[k]) || [];

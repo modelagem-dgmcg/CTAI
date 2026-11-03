@@ -132,7 +132,7 @@
       () => [slotImportar],
       // 2. Conferir
       () => [K.length ? tabela([{ t: 'Mês' }, { t: 'Divergências abertas', n: true }, { t: 'Sistema × SEI' }, { t: '' }], K.map((k) => [fmt.comp(k.competencia_id), String(k.divergenciasAbertas || 0), k.seiAlertas ? h('a', { href: '#/c/' + k.cid + '/envios', title: 'Alerta entre o sistema e o SEI' }, selo('SEI: ' + k.seiAlertas + ' alerta(s)', 'atencao')) : '—', link('/c/' + k.cid, 'Conferir')])) : aviso('info', 'Este trimestre não tem meses abertos pelo portal da unidade. A conferência segue pelos arquivos importados e pelos números lidos.'),
-        imp && imp.numeros && imp.numeros.propostos ? aviso('atencao', h('strong', null, imp.numeros.propostos + ' número(s) lido(s) esperando a sua conferência. '), h('a', { href: '#/alimentar' }, 'Conferir em Alimentar o Analista')) : null,
+        imp && imp.numeros && imp.numeros.propostos ? aviso('atencao', h('strong', null, imp.numeros.propostos + ' número(s) lido(s) esperando a sua conferência. '), h('a', { href: '#/alimentar' }, 'Conferir em Enviar documentos')) : null,
         h('p', { class: 'mudo peq' }, 'Fica feita quando a importação estiver feita, sem divergência aberta, sem alerta entre o sistema e o SEI e sem número lido esperando conferência.')],
       // 3. Decidir
       () => [h('div', { class: 'linha espaco' }, h('div', null, c.semRegras ? selo('sem regra cadastrada', 'atencao') : (c.regra && c.regra.conferida ? selo('regra conferida', 'ok') : selo('regra a conferir', 'atencao')), ' ', c.decisoesAbertas ? selo(c.decisoesAbertas + ' dúvida(s) de regra em aberto', 'atencao') : selo('sem dúvidas em aberto', 'ok')),
@@ -140,7 +140,7 @@
         h('p', { class: 'mudo peq' }, 'As regras do contrato já estão carregadas. Aqui ficam só as dúvidas que mudam o resultado, cada uma com a decisão e quem decidiu.')],
       // 4. Produzir
       () => {
-        if (Pa) return [h('div', { class: 'linha espaco' }, h('div', null, h('strong', null, Pa.titulo), h('div', { class: 'mudo peq' }, 'Criado por ' + Pa.criador_nome + ' · ' + (V ? 'versão ' + V.numero + ' congelada' : 'rascunho, ainda não foi para a conferência'))), botaoNovaJanela('/p/' + Pa.parecer_id, 'Abrir o documento em janela própria')),
+        if (Pa) return [h('div', { class: 'linha espaco' }, h('div', null, h('strong', null, Pa.titulo), h('div', { class: 'mudo peq' }, 'Criado por ' + Pa.criador_nome + ' · ' + (V ? 'versão ' + V.numero + ' travada' : 'rascunho, ainda não foi para a conferência'))), botaoNovaJanela('/p/' + Pa.parecer_id, 'Abrir o documento em janela própria')),
           (recebido && conferido && decidido) ? null : aviso('atencao', 'Ainda há etapas anteriores sem terminar. Dá para redigir, mas confira antes de enviar para a conferência.')];
         const posso = ['criador', 'admin'].includes(EU().perfil);
         return [posso ? h('div', { class: 'linha espaco' }, h('span', null, 'Nenhum documento deste trimestre ainda. O parecer abre já com os meses ' + mesesDe(T).map((m) => fmt.comp(m)).join(', ') + '.'),
@@ -150,7 +150,7 @@
       },
       // 5. Conferir novamente
       () => {
-        if (!V) return [h('p', { class: 'mudo' }, 'Quando o documento for congelado no editor, ele segue para a conferência dos colegas e a autorização da superintendência.')];
+        if (!V) return [h('p', { class: 'mudo' }, 'Quando o documento for travado no editor, ele segue para a conferência dos colegas e a autorização da superintendência.')];
         return [h('div', { class: 'linha espaco' }, h('div', null, 'Versão ' + V.numero + ' · ', selo(V.status, V.status === 'autorizada' ? 'ok' : 'atencao')),
           h('div', { class: 'linha' }, link('/v/' + V.versao_id, 'Abrir a conferência', 'btn sec'), V.status === 'autorizada' ? h('a', { class: 'btn', href: '/api/ctai/versoes/' + V.versao_id + '/pdf', target: '_blank', rel: 'noopener' }, 'Gerar o PDF') : null)),
           V.status === 'autorizada' ? null : h('p', { class: 'mudo peq' }, 'O PDF é liberado depois da conferência e da autorização. O OK da conferência é controle interno; a assinatura é feita no SEI.')];

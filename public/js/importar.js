@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // Importar Arquivos (etapa 1 da página da unidade). A analista baixa o ZIP, PDF ou Word do SEI e solta aqui.
-  // Reaproveita o fluxo do "Alimentar o Analista": o ZIP é aberto no navegador, o PDF é lido na máquina e só o texto (já mascarado) sobe.
+  // Reaproveita o fluxo do "Enviar documentos": o ZIP é aberto no navegador, o PDF é lido na máquina e só o texto (já mascarado) sobe.
   // A tela já nasce amarrada à unidade e ao trimestre da página. O sistema dá o "check" na lista de conferência da unidade.
   const anterior = (t) => { const m = /^(\d{4})-T([1-4])$/.exec(t || ''); if (!m) return ''; return Number(m[2]) === 1 ? (Number(m[1]) - 1) + '-T4' : m[1] + '-T' + (Number(m[2]) - 1); };
   const { h, api, toast, janela, confirmar, aviso, selo } = window.CTAI;

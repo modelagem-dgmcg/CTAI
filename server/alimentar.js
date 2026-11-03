@@ -1,5 +1,5 @@
 'use strict';
-// "Alimentar o Analista": primeiro acesso de quem tem carteira e ainda não tem histórico confirmado.
+// "Enviar documentos": primeiro acesso de quem tem carteira e ainda não tem histórico confirmado.
 // A pessoa solta vários arquivos (ZIP, PDF, Word, Excel, CSV, TXT); o servidor lê, MASCARA dado pessoal, identifica unidade e trimestre
 // e monta rascunhos do Histórico (a IA só propõe). Um arquivo por vez, em segundo plano. Só o confirmado entra nos cruzamentos.
 // O arquivo original NUNCA é guardado: fica só na memória do servidor até ser lido.
@@ -185,9 +185,9 @@ function registrarLote(db, usuario, corpo) {
 // 'fallback-*' = o arquivo inteiro veio porque o navegador não conseguiu o texto; sem origem = arquivo enviado direto (Word, Excel, TXT, ZIP pequeno).
 const ORIGENS = ['fallback-sem-texto', 'fallback-erro', 'fallback-tempo'];
 const AVISO_ORIGEM = {
-  'fallback-sem-texto': 'O navegador não achou texto neste PDF (parece só imagem); o arquivo inteiro foi enviado para o sistema tentar ler.',
-  'fallback-erro': 'O navegador não conseguiu ler este PDF; o arquivo inteiro foi enviado para o sistema tentar ler.',
-  'fallback-tempo': 'A leitura deste PDF no navegador demorou demais; o arquivo inteiro foi enviado para o sistema ler.',
+  'fallback-sem-texto': 'Este PDF parece ser só imagem (sem texto). Enviei o arquivo para o sistema tentar ler; ele não fica guardado.',
+  'fallback-erro': 'Este PDF não pôde ser lido no seu computador (pode ter senha ou defeito). Enviei o arquivo para o sistema tentar ler; ele não fica guardado.',
+  'fallback-tempo': 'A leitura deste PDF no seu computador demorou demais. Enviei o arquivo para o sistema ler; ele não fica guardado.',
 };
 const avisoOrigem = (o) => AVISO_ORIGEM[o] || null;
 const juntar = (...partes) => partes.filter(Boolean).join(' ') || null;
@@ -237,7 +237,7 @@ function mesDoDocumento(nome, texto, lote) {
 async function umArquivo(db, item) {
   const u = db.get('SELECT * FROM usuarios WHERE usuario_id = ?', item.usuario_id);
   const buf = memoria.get(item.id);
-  if (!buf) { set(db, item.id, { estado: 'problema', motivo: 'O servidor foi reiniciado antes de ler este arquivo. Envie de novo.' }); return; }
+  if (!buf) { set(db, item.id, { estado: 'problema', motivo: 'O sistema foi atualizado enquanto lia este arquivo. Nada se perdeu: envie este arquivo de novo.' }); return; }
   set(db, item.id, { estado: 'lendo' });
   let ex;
   const opcGuarda = { usuario: u.login, origem: item.imp_trimestre ? 'importar-arquivos' : 'alimentar', filaId: item.id };
@@ -281,7 +281,7 @@ async function decidir(db, u, item, ex, texto, mascarados) {
   await montar(db, item.id, u, { contrato_id: un.contrato_id, trimestre: tri, documento_tipo: tipo, texto, paginas: ex.paginas || null, mascarados, nome: item.nome, aviso: juntar(un.assumida ? 'Unidade assumida (única da sua carteira). Confira.' : null, rt.aviso, avisoOrigem(item.origem)) });
 }
 
-const avisoImagens = (pg, total) => (pg && pg.length ? pg.length + ' página(s) parecem só imagem (pouco texto) e podem ter ficado de fora' + (total ? ' (de ' + total + ')' : '') + ': ' + pg.slice(0, 12).join(', ') + (pg.length > 12 ? '...' : '') + '.' : null);
+const avisoImagens = (pg, total) => (pg && pg.length ? pg.length + ' página(s) são fotos (escaneadas) e o sistema não consegue lê-las. Se forem importantes, peça a versão em PDF com texto' + (total ? ' (de ' + total + ')' : '') + ': ' + pg.slice(0, 12).join(', ') + (pg.length > 12 ? '...' : '') + '.' : null);
 const baseNome = (n) => String(n || '').replace(/\.[A-Za-z0-9]{2,5}$/, '').replace(/^\s*\[\d+\]-\d+_/, '').replace(/[^\wÀ-ÿ]+/g, ' ').trim().slice(0, 60);
 
 // Devolve true quando o arquivo foi tratado pela gaveta (ou ficou esperando o mês); false para seguir o caminho de parecer.
@@ -347,7 +347,7 @@ async function processar(db) {
 
 // Ao subir o servidor, o que estava no meio do caminho não tem mais o arquivo na memória.
 function recuperar(db) {
-  try { db.run("UPDATE alimentar_fila SET estado = 'problema', motivo = 'O servidor foi reiniciado antes de ler este arquivo. Envie de novo.', atualizado_em = ? WHERE estado IN ('espera','fila','lendo','montando')", agora()); } catch (_) { /* tabela ainda não existe */ }
+  try { db.run("UPDATE alimentar_fila SET estado = 'problema', motivo = 'O sistema foi atualizado enquanto lia este arquivo. Nada se perdeu: envie este arquivo de novo.', atualizado_em = ? WHERE estado IN ('espera','fila','lendo','montando')", agora()); } catch (_) { /* tabela ainda não existe */ }
 }
 
 // ---------- o que a pessoa vê ----------
@@ -358,13 +358,13 @@ function divergencias(db, item) {
   const f = H.filhos(db, item.hist_id);
   const d = [];
   if (!item.ia_ok && !f.indicadores.length && !f.achados.length && !f.recomendacoes.length) d.push('A IA não leu este arquivo: preencha à mão.');
-  if (item.ia_ok && r.igq === null && f.indicadores.length) d.push('A nota total (IGQ) não apareceu no texto deste arquivo. Procure no documento e digite ao abrir.');
+  if (item.ia_ok && r.igq === null && f.indicadores.length) d.push('Este documento deveria ter uma nota total (IGQ) e eu não a encontrei. Procure na capa ou no resumo e digite ao abrir.');
   const sem0 = [...f.indicadores, ...f.achados, ...f.recomendacoes].filter((x) => !x.verificada).length;
   if (sem0) d.push('O sistema leu o arquivo, mas ' + sem0 + (sem0 === 1 ? ' item não pôde' : ' itens não puderam') + ' ser confirmado(s) palavra por palavra: a frase que a leitura citou não foi achada igual no texto (comum em PDF com tabelas ou colunas). Ao abrir, cada item mostra a frase citada; compare com o documento antes de aprovar.');
   const pts = f.indicadores.filter((x) => x.pontos !== null);
   if (r.igq !== null && pts.length) { const s = pts.reduce((t, x) => t + Number(x.pontos), 0); if (Math.abs(s - r.igq) > 1) d.push('A soma das notas dos indicadores (' + s.toFixed(1).replace('.', ',') + ') não bate com a nota total (' + String(r.igq).replace('.', ',') + ').'); }
   const outro = db.get("SELECT hist_id FROM hist_relatorios WHERE contrato_id = ? AND trimestre = ? AND hist_id <> ?", r.contrato_id, r.trimestre, r.hist_id);
-  if (outro) d.push('Já existe outro relatório deste trimestre para esta unidade.');
+  if (outro) d.push('Você já aprovou outro documento desta unidade neste trimestre. Se este for uma versão nova, aprove; se for repetido, exclua.');
   return d;
 }
 
@@ -374,7 +374,7 @@ function encerrarParados(db, usuarioId) {
   const parados = db.all("SELECT DISTINCT lote FROM alimentar_fila WHERE usuario_id = ? AND estado = 'espera'", usuarioId);
   for (const p of parados) {
     const ult = db.get("SELECT MAX(atualizado_em) AS t FROM alimentar_fila WHERE usuario_id = ? AND lote IS ?", usuarioId, p.lote).t;
-    if (ult && ult < corte) db.run("UPDATE alimentar_fila SET estado = 'problema', motivo = 'O envio parou antes de este arquivo chegar. Solte o ZIP de novo: o que já foi lido não se repete.', atualizado_em = ? WHERE usuario_id = ? AND lote IS ? AND estado = 'espera'", agora(), usuarioId, p.lote);
+    if (ult && ult < corte) db.run("UPDATE alimentar_fila SET estado = 'problema', motivo = 'O envio parou antes de este arquivo chegar. Solte o ZIP de novo: o que já foi lido não é lido outra vez.', atualizado_em = ? WHERE usuario_id = ? AND lote IS ? AND estado = 'espera'", agora(), usuarioId, p.lote);
   }
 }
 
@@ -454,7 +454,7 @@ function estado(db, u) {
     .map((c) => ({ contrato_id: c.contrato_id, unidade: c.unidade, fluxo: G.usaGaveta(c) ? 'gaveta' : 'trimestre', tipo: C.tipoDaUnidade(c) }));
   const resumo = { total: itens.length, lidos: n('pronto', 'aprovado', 'duplicado', 'lido'), aprovados: n('aprovado'), problemas: n('problema', 'bloqueado'), bloqueados: n('bloqueado'), pendentes: n(...PENDENTES), precisaDados: n('precisa_dados') };
   const ia = iaPronta();
-  return { trava: t.trava, motivo: t.motivo, itens, resumo, unidades: meus, painel: painel(db, u, brutos.map((r, k) => Object.assign({}, r, { mascarados: itens[k].mascarados, paginasImagem: itens[k].paginasImagem }))), ia: { pronta: ia, mensagem: ia ? null : 'A leitura por IA não está ligada. Os arquivos viram rascunho em branco, para você preencher à mão. Peça ao administrador para cadastrar uma chave em Gestão CTAI > IA.' },
+  return { trava: t.trava, motivo: t.motivo, itens, resumo, unidades: meus, painel: painel(db, u, brutos.map((r, k) => Object.assign({}, r, { mascarados: itens[k].mascarados, paginasImagem: itens[k].paginasImagem }))), ia: { pronta: ia, mensagem: ia ? null : 'O leitor automático está desligado. Seus arquivos ficam como rascunho em branco, para você digitar. Avise a administração (Gestão CTAI > IA).' },
     podeLiberar: resumo.pendentes === 0 && resumo.precisaDados === 0 && resumo.total > 0, podeLiberarGuarda: ['admin', 'superintendente'].includes(u.perfil),
     guardaNeutralizados: (db.get("SELECT COUNT(*) n FROM guarda_ocorrencias WHERE decisao = 'neutralizado' AND fila_id IN (SELECT id FROM alimentar_fila WHERE usuario_id = ? AND estado <> 'descartado')", u.usuario_id) || { n: 0 }).n };
 }

@@ -189,7 +189,7 @@ test('páginas só imagem: o servidor refaz a conta pelo texto e avisa; texto qu
   assert.equal(doc.paginas, 4); assert.equal(doc.paginas_imagem, '2,4');
   const e = await estado();
   assert.deepEqual(e.painel.paginasImagem.find((x) => x.arquivo.includes('NSP')).paginas, [2, 4]);
-  assert.match(e.itens.find((i) => i.id === um.id).motivo, /2 página\(s\) parecem só imagem/);
+  assert.match(e.itens.find((i) => i.id === um.id).motivo, /2 página\(s\) são fotos/);
   const t2 = '--- página 1 ---\n\n--- página 2 ---\nfig\n';
   assert.equal((await postTexto(dois.id, { texto: t2, hash: sha(t2), paginas: 2 })).status, 200);
   const e2 = (await estado()).itens.find((i) => i.id === dois.id);
@@ -205,9 +205,9 @@ test('último recurso: PDF inteiro com a origem do fallback; o aviso aparece no 
   assert.equal(r.status, 200);
   const e = await estado();
   const i1 = e.itens.find((i) => i.id === ok.id), i2 = e.itens.find((i) => i.id === ruim.id);
-  assert.equal(i1.estado, 'lido'); assert.equal(i1.origem, 'fallback-erro'); assert.match(i1.motivo, /navegador não conseguiu ler este PDF/);
+  assert.equal(i1.estado, 'lido'); assert.equal(i1.origem, 'fallback-erro'); assert.match(i1.motivo, /não pôde ser lido no seu computador/);
   assert.equal(i2.origem, null); assert.ok(!/navegador/.test(i2.motivo || ''));
-  assert.ok(e.painel.fallback.some((x) => x.id === ok.id && /não conseguiu ler/.test(x.motivo)));
+  assert.ok(e.painel.fallback.some((x) => x.id === ok.id && /não pôde ser lido/.test(x.motivo)));
   assert.ok(!e.painel.fallback.some((x) => x.id === ruim.id));
 });
 

@@ -74,7 +74,7 @@
       try { await api('POST', '/api/unidade/achados/' + a.achado_id + '/responder', { resposta: t }); toast('Resposta enviada. O PDF já está disponível.'); esclarecimentos(); } catch (e) { toast(e.message, true); }
     };
     const abertos = r.achados.filter((a) => a.status === 'encaminhado');
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Esclarecimentos'), h('p', null, 'Pedidos de esclarecimento sobre o relatório. A resposta fica registrada com data e nome e pode ser baixada em PDF para o SEI.'))),
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Esclarecimentos'), h('p', null, 'Pedidos de esclarecimento sobre o relatório. Sua resposta é guardada com data e nome. Depois você baixa o PDF e anexa no SEI.'))),
       abertos.length ? aviso('atencao', h('strong', null, abertos.length + ' aguardando resposta.')) : aviso('ok', 'Nada aguardando resposta.'),
       r.achados.length ? r.achados.map((a) => h('div', { class: 'item-mesa ' + (a.status === 'encaminhado' ? '' : 'ok') },
         h('div', { class: 'linha espaco' }, h('strong', null, (a.tipo || 'Ponto a esclarecer') + (a.competencia_id ? ' · ' + fmt.comp(a.competencia_id) : '')), h('div', { class: 'linha' }, seloGrav(a.gravidade), selo(a.status === 'encaminhado' ? 'aguarda resposta' : 'respondido', a.status === 'encaminhado' ? 'atencao' : 'ok'), a.setor ? selo(NOME[a.setor] || a.setor) : null)),
@@ -99,7 +99,7 @@
     const [d, topo] = await cabecalho(p.cid, '');
     const totalLinhas = Object.values(d.contagem).reduce((s, x) => s + x.confirmadas, 0);
     const prontas = d.setores.filter((s) => s.status === 'pronta').length;
-    const lotes = d.lotes.length ? aviso('atencao', h('strong', null, 'Linhas vindas da integração aguardam a sua confirmação. '), 'Elas só entram no cálculo e no envio depois que o gestor confirmar.',
+    const lotes = d.lotes.length ? aviso('atencao', h('strong', null, 'Estas linhas vieram de outro sistema e aguardam a sua confirmação. '), 'Elas só entram no cálculo e no envio depois que o gestor confirmar.',
       d.lotes.map((l) => h('div', { class: 'linha', style: 'margin-top:6px' }, h('span', null, l.fonte + ': ' + l.registros + ' linha(s)'),
         ehGestor() ? [h('button', { onclick: async () => { await api('POST', '/api/unidade/lotes/' + l.lote_id + '/confirmar', { substituir: false }); toast('Lote confirmado.'); competencia(p); } }, 'Confirmar'),
           h('button', { class: 'sec', onclick: async () => { if (await confirmar('Descartar o lote?', 'As linhas deste lote serão apagadas do rascunho.', 'Descartar', true)) { await api('POST', '/api/unidade/lotes/' + l.lote_id + '/descartar', {}); competencia(p); } } }, 'Descartar')] : null))) : null;

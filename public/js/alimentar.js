@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  // "Alimentar o Analista": soltar vários arquivos (ou o ZIP do SEI de uma unidade), acompanhar a leitura, conferir e liberar o menu completo.
+  // "Enviar documentos": soltar vários arquivos (ou o ZIP do SEI de uma unidade), acompanhar a leitura, conferir e liberar o menu completo.
   // O ZIP é aberto AQUI, no navegador: cada arquivo útil segue separadamente, um por vez, em segundo plano, com nova tentativa se a rede cair.
   // PDF e HTML do SEI também são lidos AQUI: o navegador tira o texto, mascara os dados pessoais e envia SÓ O TEXTO. O PDF inteiro só vai
   // ao servidor como último recurso (PDF só imagem, ou o navegador não conseguiu ler).
@@ -152,10 +152,10 @@
           if (GU.nomeDeArquivoPerigoso(f.name) && !ach.some((a) => a.codigo === 'zip:nome-perigoso')) ach.push(GU.achado(GU.ALTA, 'zip:nome-perigoso', arq.name, 'Nome de arquivo com caminho perigoso dentro do ZIP.', f.name));
         }
         if (todas.length > 6000) ach.push(GU.achado(GU.ALTA, 'zip:muitas-entradas', arq.name, 'O ZIP tem ' + todas.length + ' arquivos: possível bomba de compressão.', ''));
-        if (total > 3 * 1024 * 1048576 || pior > 120) ach.push(GU.achado(GU.ALTA, 'zip:bomba', arq.name, 'Tamanho descompactado ou taxa de compressão anormal: possível bomba de compressão.', ''));
+        if (total > 3 * 1024 * 1048576 || pior > 120) ach.push(GU.achado(GU.ALTA, 'zip:bomba', arq.name, 'Este ZIP parece defeituoso ou perigoso: ao abrir, ficaria enorme.', ''));
         if (ach.length) {
           try { await api('POST', '/api/alimentar/guarda-relato', { nome: arq.name, tamanho: arq.size, achados: ach.map((a) => ({ g: a.g, codigo: a.codigo, onde: a.onde, msg: a.msg, trecho: a.trecho })) }); } catch (_) { /* o aviso na tela vale mesmo assim */ }
-          toast('Bloqueado por segurança: o ZIP ' + arq.name + ' tem estrutura suspeita (' + ach[0].msg.replace(/\.$/, '') + '). Nada foi lido. Peça um ZIP novo à unidade ou avise a superintendência.', true); return;
+          toast('Bloqueado por segurança: o ZIP ' + arq.name + ' tem estrutura suspeita (' + ach[0].msg.replace(/\.$/, '') + ') Nada foi lido. Peça um ZIP novo à unidade ou avise a superintendência.', true); return;
         }
       }
       for (const f of Object.values(z.files)) {
@@ -336,9 +336,9 @@
           trocarFilhos(P.fim, 
             h('p', { class: 'al-resumo', id: 'al-resumo-mes' }, p.resumo || ''),
             p.avisoTrimestre ? h('p', { class: 'al-trim', id: 'al-aviso-tri' }, 'Trimestre: ' + p.avisoTrimestre) : null,
-            (p.fallback || []).length ? aviso('atencao', h('strong', null, 'PDF enviado inteiro: '), p.fallback.map((x) => bonito(x.arquivo)).join('; ') + '. O navegador não conseguiu tirar o texto na sua máquina (PDF só imagem, com senha ou com erro), então o arquivo foi enviado para o sistema tentar ler. Ele não é guardado.') : null,
+            (p.fallback || []).length ? aviso('atencao', h('strong', null, 'PDF enviado inteiro: '), p.fallback.map((x) => bonito(x.arquivo)).join('; ') + '. Este PDF não pôde ser lido no seu computador (pode ser só imagem, ter senha ou defeito). Enviei o arquivo para o sistema tentar ler; ele não fica guardado.') : null,
             pgImg.length ? aviso('atencao', h('strong', null, 'Páginas que parecem só imagem: '), pgImg.map((x) => x.arquivo + ' (pág. ' + x.paginas.slice(0, 8).join(', ') + (x.paginas.length > 8 ? '...' : '') + ')').join('; ') + '. O texto dessas páginas pode não ter sido lido.') : null,
-            p.catalogo && p.contrato_id && p.mes ? h('div', { class: 'linha' }, h('button', { id: 'al-abrir-conf', onclick: () => abrirConferencia(p.contrato_id, p.mes) }, 'Conferir os números de ' + (p.mesNome || 'o mês')), h('span', { class: 'peq mudo' }, 'A leitura só propõe os números. Você confere e confirma.')) : null);
+            p.catalogo && p.contrato_id && p.mes ? h('div', { class: 'linha' }, h('button', { id: 'al-abrir-conf', onclick: () => abrirConferencia(p.contrato_id, p.mes) }, 'Conferir os números de ' + (p.mesNome || 'o mês')), h('span', { class: 'peq mudo' }, 'Quem decide é você: o sistema lê e sugere, e nada vale até você aprovar.')) : null);
         }
       }
     }
@@ -381,7 +381,7 @@
       return h('section', { class: 'cartao', id: 'al-conferir' },
         h('div', { class: 'linha espaco' }, h('h3', null, 'Conferir os números de ' + m.rotulo), h('button', { class: 'leve', onclick: () => hostConferir.replaceChildren() }, 'Fechar')),
         m.divergencias.length ? aviso('atencao', h('strong', null, 'Ofício e Relatório Mensal não batem: '), h('ul', null, m.divergencias.map((d) => h('li', null, d.texto)))) : (m.numeros.some((n) => n.fonte !== 'anexo_I') && m.numeros.some((n) => n.fonte === 'anexo_I') ? aviso('ok', 'Ofício e Relatório Mensal batem nos números lidos.') : null),
-        grupos.length ? grupos.map(tabela) : h('p', { class: 'mudo' }, 'Não encontrei números no padrão esperado neste mês. Nada foi inventado: o texto completo está guardado e você pode consultar o documento.'),
+        grupos.length ? grupos.map(tabela) : h('p', { class: 'mudo' }, 'Não encontrei os números no formato esperado neste mês. Nada foi inventado: o texto lido está guardado e você pode consultar o documento.'),
         pend ? h('div', { class: 'linha' }, h('button', { id: 'al-confirmar-nums', onclick: confirmarSel }, 'Confirmar os marcados'), h('span', { class: 'peq mudo' }, 'Pode corrigir qualquer valor antes de confirmar.')) : null,
         h('h3', { style: 'margin-top:18px' }, t.rotulo + ' (calculado com os 3 meses)'),
         h('div', { class: 'al-meses' }, t.meses.map((x) => h('div', { class: 'al-mes ' + (x.chegou ? (x.faltam.length ? 'parcial' : 'ok') : 'vazio') }, h('strong', null, x.nome), h('span', null, x.chegou ? (x.faltam.length ? 'Faltam ' + x.faltam.length : 'Completo') : 'Não chegou')))),
@@ -425,7 +425,7 @@
       const sig = JSON.stringify([est.trava, est.ia.pronta]);
       if (sig === assinaturaTopo) return; assinaturaTopo = sig;
       trocarFilhos(topo, 
-        h('h2', null, 'Alimentar o Analista'),
+        h('h2', null, 'Enviar documentos'),
         est.trava ? aviso('info', 'Para começar, envie o ZIP do SEI de uma unidade da sua carteira (ou os relatórios e pareceres que ela já tem). O sistema lê tudo, guarda o texto já protegido, confere o que chegou e diz o que falta. O menu completo abre quando o envio terminar.')
           : aviso('ok', 'Seu acesso está liberado. Você pode continuar enviando arquivos por aqui.'),
         aviso('atencao', h('strong', null, 'Antes de enviar: '), 'remova dados de paciente (nome, CPF, telefone, endereço, prontuário) quando for fácil. O sistema mascara esses dados antes de guardar e antes de qualquer envio à IA, e não guarda o arquivo original, mas a máscara não é perfeita.'),
@@ -452,7 +452,7 @@
       trocarFilhos(base, 
         est.itens.length ? h('div', { class: 'cartao' },
           h('h3', null, 'Arquivos'),
-          h('p', { class: 'peq', id: 'al-resumo' }, r.lidos + ' lidos, ' + r.problemas + ' com problema' + (r.bloqueados ? ' (' + r.bloqueados + ' bloqueado(s) por segurança)' : '') + (est.guardaNeutralizados ? '; ' + est.guardaNeutralizados + ' arquivo(s) tinham texto escondido e foram lidos só com o texto visível' : '') + (r.precisaDados ? ', ' + r.precisaDados + ' esperando você' : '') + (r.aprovados ? ', ' + r.aprovados + ' aprovados' : '') + '.'),
+          h('p', { class: 'peq', id: 'al-resumo' }, r.lidos + ' lidos, ' + r.problemas + ' com problema' + (r.bloqueados ? ' (' + r.bloqueados + ' bloqueado(s) por segurança)' : '') + (est.guardaNeutralizados ? '; ' + est.guardaNeutralizados + ' arquivo(s) tinham texto invisível (que não aparece na tela). Por segurança ele foi descartado e só o que se enxerga foi lido. Nada a fazer' : '') + (r.precisaDados ? ', ' + r.precisaDados + ' esperando você' : '') + (r.aprovados ? ', ' + r.aprovados + ' aprovados' : '') + '.'),
           zips.length ? h('div', { class: 'al-zips' }, h('strong', null, 'Enviou o ZIP errado? Exclua o ZIP inteiro de uma vez:'),
             zips.map((z) => h('div', { class: 'linha espaco al-zip' }, h('span', null, h('strong', null, z.nome), ' · ' + z.qtd + ' arquivo(s)' + (z.meses.length ? ' · ' + z.meses.join(', ') : '')),
               h('button', { class: 'leve', title: 'Apaga todos os arquivos deste ZIP e o texto lido deles', onclick: async () => {

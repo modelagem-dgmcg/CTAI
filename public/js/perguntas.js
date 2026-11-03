@@ -74,7 +74,7 @@
   async function urgencias() {
     const d = await api('GET', '/api/ctai/urgencias');
     const recarregar = async () => { await urgencias(); atualizarSelo(); };
-    const topo = h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Urgências'),
+    const topo = h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Perguntas para você'),
       h('p', { style: 'font-size:17px;line-height:1.5;margin:4px 0' }, 'Estas dúvidas de contrato vêm antes do parecer: o parecer deste trimestre usa valores e instrumentos que só você, dona da carteira, confirma.'),
       h('p', { style: 'font-size:17px;line-height:1.5;margin:4px 0' }, 'Respondendo agora, o parecer sai com dados confirmados e sem avisos de "não confirmado". A resposta só registra a sua decisão; não muda valores sozinha.')));
     const resumo = h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('h3', { style: 'margin:0' }, d.abertas ? d.abertas + ' pergunta(s) em aberto em ' + d.unidades.length + ' unidade(s)' : 'Nada em aberto'), d.abertas ? selo('responda antes do parecer', 'atencao') : selo('tudo respondido', 'ok')),

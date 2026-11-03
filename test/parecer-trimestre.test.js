@@ -176,7 +176,7 @@ test('a analista decide o % de desconto, o critério de arredondamento e a faixa
   S.db.run("UPDATE gaveta_numeros SET realizado = 1100 WHERE contrato_id = 'PT-3' AND chave = 'consultas_medicas'");
   v = (await put(cle, 'PT-3', { descontos_pct: { mamografia: 3 } })).json;
   const dm = v.descontos.find((d) => d.chave === 'consultas_medicas');
-  assert.equal(dm.faixa, 'entre_85_e_100'); assert.match(dm.aviso, /não dizem se há desconto nesta faixa/);
+  assert.equal(dm.faixa, 'entre_85_e_100'); assert.match(dm.aviso, /não fala de desconto nesta faixa/);
   assert.ok(v.bloqueios.some((b) => /Consultas Médicas.*percentual de desconto a definir pela analista/.test(b)));
   v = (await put(cle, 'PT-3', { descontos_pct: { consultas_medicas: 0, mamografia: 3 } })).json;
   assert.equal(v.descontos.find((d) => d.chave === 'consultas_medicas').valor_cent, 0, 'a analista disse 0%: zero');
@@ -232,7 +232,7 @@ test('número digitado pela analista exige motivo e aparece na conferência como
   S.db.run("INSERT INTO gaveta_numeros (doc_id, contrato_id, mes, fonte, chave, rotulo, meta, realizado, trecho, estado) SELECT id, 'PT-4', '2026-11', 'anexo_II', 'ostomizados_atendimentos', 'a', 70, 15, 'sessões', 'confirmado' FROM gaveta_documentos WHERE contrato_id = 'PT-4' AND mes = '2026-11' AND codigo = 'anexo_II'");
   let v = (await cle.get(url('PT-4'))).json;
   assert.ok(v.bloqueios.some((b) => /Ostomizados.*Novembro\/2026 — meta/.test(b)), 'atendimentos não substituem pacientes');
-  assert.ok(v.avisos.some((a) => /Ostomizados: em Novembro\/2026 a planilha traz ATENDIMENTOS/.test(a)));
+  assert.ok(v.avisos.some((a) => /Ostomizados: em Novembro\/2026 a planilha conta atendimentos/.test(a)));
   const semMotivo = await put(cle, 'PT-4', { ajustes: [{ chave: 'ostomizados', mes: '2026-11', campo: 'meta', valor: 70, motivo: '' }, { chave: 'ostomizados', mes: '2026-11', campo: 'realizado', valor: 75, motivo: '' }] });
   assert.equal(semMotivo.status, 400); assert.match(semMotivo.json.erro, /motivo/);
   v = (await put(cle, 'PT-4', { ajustes: [{ chave: 'ostomizados', mes: '2026-11', campo: 'meta', valor: 70, motivo: 'planilha de novembro, linha Pessoas com estomia' }, { chave: 'ostomizados', mes: '2026-11', campo: 'realizado', valor: 75, motivo: 'planilha de novembro, linha Pessoas com estomia' }] })).json;
@@ -326,7 +326,7 @@ test('texto: seção com trocas/revisões só passa depois de revisada; mudar o 
 test('texto: sem relatório-modelo ou sem número do parecer, não gera nem chuta', async () => {
   semear('PT-5', BASE());
   const v = (await put(cle, 'PT-5', CORPO())).json;
-  assert.ok(v.bloqueios.some((b) => /Sem relatório-modelo ativo/.test(b)));
+  assert.ok(v.bloqueios.some((b) => /Preciso do parecer do trimestre anterior/.test(b)));
   assert.equal(v.modelo, null); assert.deepEqual(v.documento.texto['1'], []);
   const w = (await put(cle, 'PT-5', { numero_parecer: '' })).json;
   assert.ok(w.bloqueios.some((b) => /número do parecer/.test(b)));
@@ -438,7 +438,7 @@ test('integra ao fluxo minuta -> congelar -> conferir -> autorizar: só congela 
   S.db.run("UPDATE gaveta_numeros SET realizado = 777 WHERE contrato_id = 'PT-7' AND chave = 'consultas_nao_medicas' AND mes = '2026-10'");
   const w = (await cle.get(url('PT-7'))).json;
   assert.equal(w.pronto, false); assert.equal(w.versao_congelada.mudou, true);
-  assert.ok(w.avisos.some((a) => /mudaram depois da versão 1 congelada/.test(a)));
+  assert.ok(w.avisos.some((a) => /mudaram depois da versão 1 travada/.test(a)));
   assert.equal(M.detalhe(S.db, pid, eu).conteudoAtual.apuracao.pronto, false);
   assert.throws(() => M.congelar(S.db, pid, eu, { convocados: [colega.usuario_id], motivo: 'novo número' }), /não está pronta/);
   r = await cle.post(url('PT-7', '/pronto'), {});

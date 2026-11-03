@@ -23,7 +23,7 @@
       { t: 'Abra uma unidade da sua carteira', d: 'Em Unidades, clique na unidade. Ela abre em uma aba própria, com todas as etapas em sequência.', v: 'u', link: '#/unidades', rot: 'Ver unidades' },
       { t: 'Confira o que a unidade enviou', d: 'Dentro da unidade, abra um mês para ver os envios, os prazos e as divergências.', v: 'c' },
       { t: 'Abra o documento do trimestre', d: 'Na etapa Produzir, comece o parecer. Ele abre numa janela própria, já com os dados e as regras ao lado.', v: 'p' },
-      { t: 'Acompanhe a conferência e o registro no SEI', d: 'Depois de congelar a versão, a conferência e a autorização acontecem aqui. No fim, você cola o número do SEI.', v: 'v' },
+      { t: 'Acompanhe a conferência e o registro no SEI', d: 'Depois de travar a versão, a conferência e a autorização acontecem aqui. No fim, você cola o número do SEI.', v: 'v' },
     ],
     gestao: [
       { t: 'Cadastre a equipe e distribua as unidades', d: 'Em Gestão, use Usuários e Carteira.', v: 'gestao', link: '#/gestao', rot: 'Abrir Gestão' },

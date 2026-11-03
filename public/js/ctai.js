@@ -408,7 +408,7 @@
           tabela([{ t: 'Item' }, { t: 'Status' }, { t: 'Validação' }, { t: 'Observações' }], k.checklist.itens.map((it) => [it.titulo, selo(it.status, STATUS_CK[it.status] || ''), it.validacao || 'não registrada', it.observacao || '']))] : null))); }
     if (id === 'sei') {
       const ms = c.indicadores.competencias;
-      if (!ms.some((k) => k.canais)) return aviso('atencao', 'Esta versão foi congelada antes do vínculo com o SEI e não guardou os dados de apoio. Veja a aba Envios da competência.');
+      if (!ms.some((k) => k.canais)) return aviso('atencao', 'Esta versão foi travada antes do vínculo com o SEI e não guardou os dados de apoio. Veja a aba Envios da competência.');
       return h('div', null, h('p', { class: 'peq' }, 'No SEI, abra o documento e veja o rodapé do PDF: deve estar escrito ', h('strong', null, 'Versão vN · código de integridade'), ' seguido do código curto abaixo. Se for outro, a unidade registrou a versão errada ou há versão mais nova.'),
         tabela([{ t: 'Mês' }, { t: 'Versão no sistema' }, { t: 'Código curto (rodapé do PDF)' }, { t: 'SEI registrado' }, { t: 'Alertas' }],
           ms.map((k) => { const cn = k.canais; if (!cn) return [k.competencia, '—', '—', '—', '—']; const s = cn.sistema, e = cn.sei;
@@ -544,7 +544,7 @@
         h('p', { class: 'peq mudo' }, 'Documento: Parecer Técnico CTAI. O texto-padrão já vem preenchido com os dados da unidade e do período.'), h('label', { style: 'font-weight:400' }, branco, ' Começar em branco (preenchimento manual)'),
         h('button', { onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres', { contrato_id: sel.value, trimestre: triVal(), numero_parecer: num.value, competencias: [...comps.querySelectorAll('input:checked')].map((x) => x.value) }); await api('POST', '/api/ctai/pareceres/' + o.parecer_id + '/modelo', { modo: branco.checked ? 'branco' : 'padrao' }); location.hash = '#/p/' + o.parecer_id; } catch (e) { toast(e.message, true); } } }, 'Criar a minuta'));
     };
-    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Editor de Documentos'), h('p', null, 'Aqui o parecer é redigido (ofício e despacho ficam no cartão abaixo). Quem cria monta e congela; os colegas conferem; a superintendente autoriza; quem criou anexa no SEI.'))), abasRedator('pareceres'),
+    montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Editor de Documentos'), h('p', null, 'Aqui o parecer é redigido (ofício e despacho ficam no cartão abaixo). Quem cria monta e trava; os colegas conferem; a superintendente autoriza; quem criou anexa no SEI.'))), abasRedator('pareceres'),
       h('div', { class: 'cartao' }, h('div', { class: 'linha espaco' }, h('div', null, h('strong', null, 'Ofício, despacho e documento em branco'), h('div', { class: 'mudo peq' }, 'O sistema aprende com um modelo seu e monta o rascunho.')), h('div', { class: 'linha' }, h('a', { class: 'btn', href: '#/d/novo/-/-' }, 'Novo documento'), h('a', { class: 'btn sec', href: '#/documentos' }, 'Meus documentos'), h('a', { class: 'btn sec', href: '#/documentos/modelos' }, 'Modelos')))),
       podeCriar || ehAdmin() ? window.CTAI.recolher('editor:novo', 'Novo parecer', 'também dá para começar pela página da unidade', formNovo()) : aviso('info', 'Só o perfil criador abre uma minuta nova.'),
       h('div', { class: 'cartao' }, tabela([{ t: 'Parecer' }, { t: 'Unidade' }, { t: 'Trimestre' }, { t: 'Criado por' }, { t: 'Versão' }, { t: 'Situação' }], lista.pareceres.map((p) => [h('a', { href: '#/p/' + p.parecer_id }, p.titulo), p.unidade + (p.demo ? ' (demo)' : ''), p.trimestre, p.criador_nome, p.ultimaVersao ? 'v' + p.ultimaVersao.numero + ' · ' + p.ultimaVersao.status : '—', selo(p.status, p.status === 'anexado ao SEI' ? 'ok' : 'atencao')]), { vazio: 'Nenhum parecer ainda.' })));
@@ -567,7 +567,7 @@
     document.title = P.titulo + ' · Analista CTAI';
     montar(demo(P.demo), migalha(h('a', { href: '#/pareceres' }, 'Editor de Documentos'), P.titulo),
       h('div', { class: 'topo' }, h('div', null, h('h1', null, P.titulo), h('p', null, P.unidade + ' · ' + P.trimestre + (P.numero_parecer ? ' · parecer ' + P.numero_parecer : ''))), h('div', { class: 'linha' }, selo(P.status, P.status === 'anexado ao SEI' || P.status === 'autorizado' ? 'ok' : 'atencao'), ult ? h('a', { class: 'btn', href: '#/v/' + ult.versao_id }, 'Abrir a mesa (v' + ult.numero + ')') : null, h('a', { class: 'btn sec', href: '/api/ctai/pareceres/' + P.parecer_id + '/pdf', target: '_blank', rel: 'noopener', title: 'Rascunho para ler e imprimir' }, 'Imprimir rascunho (PDF)'), h('button', { type: 'button', class: 'sec', onclick: () => window.CTAI_UNIDADE.configuracoes(P.contrato_id, () => parecer(p)).catch((e) => toast(e.message, true)) }, 'Configurações'))),
-      d.alteradoDesdeCongelamento && ult && !travado ? aviso('atencao', h('strong', null, 'A minuta mudou desde a versão ' + ult.numero + '. '), 'Para os colegas conferirem a mudança, congele uma nova versão com o motivo.') : null,
+      d.alteradoDesdeCongelamento && ult && !travado ? aviso('atencao', h('strong', null, 'A minuta mudou desde a versão ' + ult.numero + '. '), 'Para os colegas conferirem a mudança, trave uma nova versão com o motivo.') : null,
       !eCriador ? aviso('info', 'Você vê esta minuta, mas só quem a criou altera. Para conferir, abra a mesa.') : null,
       painelConsulta,
       blocoHistorico,
@@ -579,22 +579,22 @@
         c.indicadores.competencias.some((k) => !k.envio) ? h('p', { class: 'mudo peq' }, 'Meses sem envio pelo portal usam os totais da carga (somente leitura).') : null),
       h('div', { class: 'cartao' }, h('h2', null, '2. Divergências, desconto e alertas'), h('p', { class: 'peq' }, c.divergencias.length + ' divergência(s) (' + c.divergencias.filter((x) => x.status === 'aberta').length + ' abertas) · ' + c.alertas.recalculo.length + ' alerta(s) do recálculo'), renderSecao('desconto', c),
         c.desconto.decisoesAbertas.length ? h('p', { class: 'peq' }, h('a', { href: '#/regras/' + P.contrato_id }, 'Decidir as dúvidas de regra')) : null),
-      c.apuracao && window.CTAI_PARECER_TRI ? h('div', { class: 'cartao', id: 'cartao-apuracao' }, h('h2', null, 'Apuração do trimestre'), h('p', { class: 'peq mudo' }, 'Quadros, descontos e textos desta unidade UPAE são montados na página da unidade (etapa Produzir). Só congela com a apuração pronta. ', h('a', { href: '#/u/' + P.contrato_id }, 'Abrir a página da unidade')), window.CTAI_PARECER_TRI.resumo(c.apuracao)) : null,
+      c.apuracao && window.CTAI_PARECER_TRI ? h('div', { class: 'cartao', id: 'cartao-apuracao' }, h('h2', null, 'Apuração do trimestre'), h('p', { class: 'peq mudo' }, 'Quadros, descontos e textos desta unidade UPAE são montados na página da unidade (etapa Produzir). Só trava com a apuração pronta. ', h('a', { href: '#/u/' + P.contrato_id }, 'Abrir a página da unidade')), window.CTAI_PARECER_TRI.resumo(c.apuracao)) : null,
       cartaoModelo(P, c, eCriador && !travado, () => parecer(p), d.modeloDef),
       c.modelo ? null : h('div', { class: 'cartao' }, h('h2', null, '3b. Texto livre (formato antigo)'),
         area('abertura', 'Abertura'), area('analise', 'Análise'), area('conclusao', 'Conclusão'),
         eCriador && !travado ? h('div', { class: 'linha' }, h('button', { onclick: salvarTexto }, 'Salvar o texto'), h('button', { class: 'sec', onclick: async () => { const s = await api('POST', '/api/ctai/pareceres/' + P.parecer_id + '/rascunho-texto', { aplicar: true }); toast('Sugestão aplicada nos campos vazios.'); void s; parecer(p); } }, 'Sugerir texto a partir dos números'),
           h('button', { class: 'sec', onclick: async () => { try { troca(achadosMin, h('p', { class: 'mudo' }, 'Lendo…')); const o = await api('POST', '/api/analista/pareceres/' + P.parecer_id + '/analisar', {}); troca(achadosMin, h('p', { class: 'peq mudo' }, o.achados.length + ' ponto(s) · ' + o.provedor), o.achados.length ? o.achados.map((a) => achadoCard(a)) : aviso('ok', 'O Analista não apontou nada no texto.')); } catch (e) { troca(achadosMin, aviso('erro', e.message)); } } }, 'Pedir ao Analista que leia o texto')) : null, achadosMin),
       c.achados.length ? h('div', { class: 'cartao' }, h('h2', null, '4. Achados do Analista fixados (' + c.achados.length + ')'), c.achados.map((a) => achadoCard(a))) : null,
-      eCriador && !travado ? h('div', { class: 'cartao' }, h('h2', null, ult ? 'Congelar nova versão' : 'Congelar a primeira versão'),
-        h('p', { class: 'peq mudo' }, 'Ao congelar, a versão não muda mais: os colegas conferem exatamente o que está aqui. Escolha quem confere (a superintendente confere por último, na mesa).'),
+      eCriador && !travado ? h('div', { class: 'cartao' }, h('h2', null, ult ? 'Travar nova versão' : 'Travar a primeira versão'),
+        h('p', { class: 'peq mudo' }, 'Ao travar, a versão não muda mais: os colegas conferem exatamente o que está aqui. Escolha quem confere (a superintendente confere por último, na mesa).'),
         nCol.length ? h('div', { class: 'linha' }, nCol.map((u, i) => h('label', { style: 'font-weight:400;margin:0' }, marcados[i], ' ' + u.nome))) : aviso('erro', 'Não há colegas conferentes cadastrados.'),
         h('div', { class: 'campo', style: 'margin-top:10px' }, h('label', { for: 'cv-motivo' }, 'Motivo da versão'), motivo),
-        h('button', { disabled: !nCol.length, onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres/' + P.parecer_id + '/congelar', { convocados: marcados.filter((x) => x.checked).map((x) => Number(x.value)), motivo: motivo.value }); toast('Versão congelada.'); location.hash = '#/v/' + o.versao_id; } catch (e) { toast(e.message, true); } } }, 'Congelar e enviar para conferência')) : null,
+        h('button', { disabled: !nCol.length, onclick: async () => { try { const o = await api('POST', '/api/ctai/pareceres/' + P.parecer_id + '/congelar', { convocados: marcados.filter((x) => x.checked).map((x) => Number(x.value)), motivo: motivo.value }); toast('Versão travada.'); location.hash = '#/v/' + o.versao_id; } catch (e) { toast(e.message, true); } } }, 'Travar o texto e enviar para conferência')) : null,
       ult && ult.status === 'autorizada' && eCriador && !travado ? h('div', { class: 'cartao' }, h('h2', null, 'Anexar no SEI'), aviso('info', 'Baixe o PDF da versão autorizada, anexe e assine no SEI (fora deste sistema, com a sua própria senha do SEI). Depois registre aqui o número do documento.'),
         h('div', { class: 'linha' }, pdfLink('/api/ctai/versoes/' + ult.versao_id + '/pdf', 'Abrir o PDF da versão autorizada'), h('button', { onclick: async () => { const n = await perguntar('Registrar o número no SEI', 'Número do documento no SEI', { dica: 'ex.: 12345678', botao: 'Registrar' }); if (!n) return; try { await api('POST', '/api/ctai/pareceres/' + P.parecer_id + '/sei', { numero: n }); toast('Registrado.'); parecer(p); } catch (e) { toast(e.message, true); } } }, 'Registrar o número do SEI'))) : null,
       P.sei_numero ? aviso('ok', 'Anexado ao SEI: documento ' + P.sei_numero + ' em ' + fmt.data(P.sei_anexado_em) + ' por ' + P.sei_anexado_por + '.') : null,
-      h('div', { class: 'cartao' }, h('h3', null, 'Versões'), tabela([{ t: 'Versão', n: true }, { t: 'Congelada em' }, { t: 'Situação' }, { t: 'Motivo' }, { t: 'Código' }, { t: '' }], d.versoes.map((v) => ['v' + v.numero, fmt.data(v.criada_em), selo(v.status, v.status === 'autorizada' ? 'ok' : ''), v.motivo || '—', v.hash.slice(0, 12), h('a', { href: '#/v/' + v.versao_id }, 'Abrir')]), { vazio: 'Nenhuma versão congelada.' })));
+      h('div', { class: 'cartao' }, h('h3', null, 'Versões'), tabela([{ t: 'Versão', n: true }, { t: 'Travada em' }, { t: 'Situação' }, { t: 'Motivo' }, { t: 'Código' }, { t: '' }], d.versoes.map((v) => ['v' + v.numero, fmt.data(v.criada_em), selo(v.status, v.status === 'autorizada' ? 'ok' : ''), v.motivo || '—', v.hash.slice(0, 12), h('a', { href: '#/v/' + v.versao_id }, 'Abrir')]), { vazio: 'Nenhuma versão travada.' })));
   }
 
   async function ajustar(P, k, i, p) {
@@ -634,7 +634,7 @@
         posso ? h('div', { class: 'linha', style: 'margin-top:8px' }, h('button', { disabled: m && m.status === 'ok', onclick: () => marcar(it, 'ok') }, m && m.status === 'ok' ? 'Você deu OK' : 'OK'), h('button', { class: 'sec', onclick: () => marcar(it, 'reparo') }, 'Pedir reparo')) : null); }),
       h('div', { class: 'cartao' }, h('h3', null, 'Autorização e documento'),
         h('div', { class: 'linha' }, pdfLink('/api/ctai/versoes/' + V.versao_id + '/pdf', 'Abrir o PDF desta versão'),
-          EU.perfil === 'superintendente' && ativo && !euCriador ? h('button', { disabled: V.status !== 'conferida' || !todosOkMeus, onclick: async () => { if (!(await confirmar('Autorizar a versão ' + V.numero + '?', 'Isto é o seu OK interno. Depois, a assinatura é feita no SEI. A versão fica congelada.', 'Autorizar'))) return; try { await api('POST', '/api/ctai/versoes/' + V.versao_id + '/autorizar', {}); toast('Versão autorizada.'); mesa(p); } catch (e) { toast(e.message, true); } } }, 'Autorizar esta versão') : null),
+          EU.perfil === 'superintendente' && ativo && !euCriador ? h('button', { disabled: V.status !== 'conferida' || !todosOkMeus, onclick: async () => { if (!(await confirmar('Autorizar a versão ' + V.numero + '?', 'Isto é o seu OK interno. Depois, a assinatura é feita no SEI. A versão fica travada.', 'Autorizar'))) return; try { await api('POST', '/api/ctai/versoes/' + V.versao_id + '/autorizar', {}); toast('Versão autorizada.'); mesa(p); } catch (e) { toast(e.message, true); } } }, 'Autorizar esta versão') : null),
         EU.perfil === 'superintendente' && ativo && (V.status !== 'conferida' || !todosOkMeus) ? h('p', { class: 'peq mudo' }, V.status !== 'conferida' ? 'Falta a conferência dos colegas convocados (ou há reparo aberto).' : 'Confira você mesma todos os itens (OK em cada um) antes de autorizar.') : null,
         V.status === 'autorizada' ? aviso('ok', 'Autorizada por ' + V.autorizada_por_nome + ' em ' + fmt.data(V.autorizada_em) + '. Quem criou o parecer anexa e assina no SEI e registra o número na página do parecer.') : null));
   }
@@ -672,11 +672,11 @@
     const montarRel = async () => {
       try {
         const o = await api('POST', '/api/analista/relatorio-trimestral', { contrato_id: un.value, trimestre: tri.value, numero_parecer: num.value || null });
-        troca(out, aviso('ok', (o.jaExistia ? 'Já existia uma minuta deste trimestre; completei só os trechos vazios. ' : 'Minuta aberta com as competências ' + o.competencias.join(', ') + '. '), o.faltam.length ? 'Sem competência cadastrada em: ' + o.faltam.join(', ') + '. ' : '', h('a', { href: '#/p/' + o.parecer_id }, 'Abrir para editar e congelar')));
+        troca(out, aviso('ok', (o.jaExistia ? 'Já existia uma minuta deste trimestre; completei só os trechos vazios. ' : 'Minuta aberta com as competências ' + o.competencias.join(', ') + '. '), o.faltam.length ? 'Sem competência cadastrada em: ' + o.faltam.join(', ') + '. ' : '', h('a', { href: '#/p/' + o.parecer_id }, 'Abrir para editar e travar')));
       } catch (e) { troca(out, aviso('erro', e.message)); }
     };
     return [h('div', { class: 'cartao' }, h('h3', null, 'Montar o relatório trimestral da unidade'),
-      h('p', { class: 'peq mudo' }, 'O Analista reúne as competências do trimestre, traz os números conferidos (declarado × recalculado × adotado), as divergências, o desconto e os achados fixados, e escreve uma primeira versão do texto. Você edita à vontade. Ao congelar, a versão fica imutável, passa pela mesa de conferência e sai em PDF.'),
+      h('p', { class: 'peq mudo' }, 'O Analista reúne as competências do trimestre, traz os números conferidos (declarado × recalculado × adotado), as divergências, o desconto e os achados fixados, e escreve uma primeira versão do texto. Você edita à vontade. Ao travar, a versão fica imutável, passa pela mesa de conferência e sai em PDF.'),
       h('div', { class: 'grade' }, h('div', { class: 'campo' }, h('label', { for: 'rt-u' }, 'Unidade'), un), h('div', { class: 'campo' }, h('label', { for: 'rt-t' }, 'Trimestre'), tri), h('div', { class: 'campo' }, h('label', { for: 'rt-n' }, 'Número do parecer'), num)),
       EU.perfil === 'criador' || EU.perfil === 'admin' ? h('button', { onclick: montarRel }, 'Montar a minuta') : aviso('info', 'Só quem cria o parecer (perfil criador) monta a minuta.'), out)];
   }
@@ -932,23 +932,23 @@
     const meta0 = await api('GET', '/api/meta').catch(() => null);
     window.__semPainel = !!(me0 && ['criador', 'colega'].includes(me0.usuario.perfil) && meta0 && !meta0.painelAnalista);
     window.__soGestao = me0 && ['superintendente', 'admin'].includes(me0.usuario.perfil) ? [{ href: '#/gestao', rotulo: 'Gestão' }, { href: '#/regras', rotulo: 'Regras e decisões' }, { href: '#/integracoes', rotulo: 'Fontes de dados' }, { href: '#/trilha', rotulo: 'Auditoria' }] : [];
-    // Primeiro acesso: quem tem carteira e ainda não tem histórico confirmado só vê "Alimentar o Analista".
+    // Primeiro acesso: quem tem carteira e ainda não tem histórico confirmado só vê "Enviar documentos".
     if (me0 && me0.usuario.trocar_senha) { await window.CTAI.trocarSenha(true); if (window.SalaGuiada) window.SalaGuiada.iniciar(); } // senha provisória primeiro: a API fica bloqueada até a troca
     const alim0 = await api('GET', '/api/alimentar/estado').catch(() => null);
     const travado = !!(alim0 && alim0.trava);
-    const itemAlim = alim0 && alim0.unidades && alim0.unidades.length ? [{ href: '#/alimentar', rotulo: 'Alimentar o Analista' }] : [];
+    const itemAlim = alim0 && alim0.unidades && alim0.unidades.length ? [{ href: '#/alimentar', rotulo: 'Enviar documentos' }] : [];
     if (travado) {
-      EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/alimentar', rotulo: 'Alimentar o Analista' }, { href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }] });
+      EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/alimentar', rotulo: 'Enviar documentos' }, { href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }] });
       if (!EU) return;
       window.__eu = EU; META = await api('GET', '/api/meta');
       rotear([['/', window.CTAI_ALIMENTAR.tela], ['/alimentar', window.CTAI_ALIMENTAR.tela]].concat(window.CTAI_HISTORICO.rotas.filter((r) => r[0] === '/historico/r/:id')).concat(window.CTAI_MENSAGEIRO.rotas), (hash) => window.__marcarMenu && window.__marcarMenu(hash),
         // Enquanto o primeiro acesso não termina, as outras telas ainda não existem para esta pessoa: em vez de "Página não encontrada", explica e leva de volta.
-        () => montar(aviso('info', h('strong', null, 'Esta tela abre depois que você alimentar o Analista. '), 'Termine o primeiro acesso (enviar os relatórios e pareceres da sua carteira) e todas as telas ficam liberadas.'), h('p', null, h('a', { class: 'btn', href: '#/alimentar' }, 'Voltar para o Alimentar o Analista'))));
+        () => montar(aviso('info', h('strong', null, 'Esta tela abre depois que você enviar os documentos. '), 'Termine o primeiro acesso (enviar os relatórios e pareceres da sua carteira) e todas as telas ficam liberadas.'), h('p', null, h('a', { class: 'btn', href: '#/alimentar' }, 'Voltar para o Enviar documentos'))));
       window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => window.CTAI_MENSAGEIRO.atualizarContador(), 15000);
       if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
       return;
     }
-    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/unidades', rotulo: 'Unidades' }, { href: '#/urgencias', rotulo: 'URGÊNCIAS', classe: 'urgencia' }].concat(itemAlim).concat([{ href: '#/pareceres', rotulo: 'Editor de Documentos' }, { href: '#/historico', rotulo: 'Histórico' }, { href: '#/ensinar', rotulo: 'Ensinar ao Sistema' }]).concat(window.__soGestao || []).concat([{ href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }]) });
+    EU = await casca({ titulo: 'Analista CTAI', subtitulo: '', perfis: ['admin', 'criador', 'colega', 'superintendente'], itens: [{ href: '#/unidades', rotulo: 'Unidades' }, { href: '#/urgencias', rotulo: 'Perguntas para você', classe: 'urgencia' }].concat(itemAlim).concat([{ href: '#/pareceres', rotulo: 'Editor de Documentos' }, { href: '#/historico', rotulo: 'Relatórios anteriores' }, { href: '#/ensinar', rotulo: 'Ensinar ao Sistema' }]).concat(window.__soGestao || []).concat([{ href: '#/mensageiro', rotulo: 'Falar com a equipe', icone: 'conversa', classe: 'fim' }]) });
     if (!EU) return;
     window.__eu = EU;
     window.CTAI_MENSAGEIRO.atualizarContador(); setInterval(() => { window.CTAI_MENSAGEIRO.atualizarContador(); }, 15000);

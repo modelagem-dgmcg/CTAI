@@ -199,7 +199,7 @@ test('PDF com página só imagem: avisa quais páginas ficaram de fora', async (
   assert.equal(respostas[0].estado, 'lido');
   const e = await estado();
   const it = e.itens.slice(-1)[0];
-  assert.deepEqual(it.paginasImagem, [2]); assert.match(it.motivo, /1 página\(s\) parecem só imagem.*: 2/);
+  assert.deepEqual(it.paginasImagem, [2]); assert.match(it.motivo, /1 página\(s\) são fotos.*: 2/);
   assert.deepEqual(e.painel.paginasImagem.map((x) => x.paginas), [[2]]);
   assert.equal(e.painel.paginas, 3);
   assert.deepEqual(S.db.get("SELECT paginas_imagem FROM gaveta_documentos WHERE codigo = 'anexo_8' AND mes = '2026-12'"), { paginas_imagem: '2' });

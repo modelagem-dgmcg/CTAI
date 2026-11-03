@@ -97,7 +97,7 @@ async function importar(db, usuario, d) {
   return importarTexto(db, usuario, Object.assign({}, d, { contrato_id: c.contrato_id, nome, texto: ex.texto, paginas: ex.paginas, mascarados: ex.mascarados }));
 }
 
-// Mesmo caminho, a partir de texto que já foi lido e mascarado (usado também pela tela "Alimentar o Analista").
+// Mesmo caminho, a partir de texto que já foi lido e mascarado (usado também pela tela "Enviar documentos").
 async function importarTexto(db, usuario, d) {
   const c = exigirUnidade(db, usuario, d.contrato_id);
   const cab = validarCabeca(d);

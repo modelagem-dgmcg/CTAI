@@ -259,7 +259,7 @@ CREATE INDEX IF NOT EXISTS ix_contrato_pontos ON contrato_pontos (doc_id);
 CREATE TABLE IF NOT EXISTS msg_anexos (
   anexo_id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, mime TEXT NOT NULL, tamanho INTEGER NOT NULL, dados BLOB NOT NULL, criado_em TEXT NOT NULL
 );
--- "Alimentar o Analista": fila de arquivos do primeiro acesso. O arquivo original nunca é guardado (fica só na memória até ser lido);
+-- "Enviar documentos": fila de arquivos do primeiro acesso. O arquivo original nunca é guardado (fica só na memória até ser lido);
 -- o texto (já mascarado) só fica aqui enquanto a pessoa não indica unidade e trimestre.
 CREATE TABLE IF NOT EXISTS alimentar_fila (
   id INTEGER PRIMARY KEY AUTOINCREMENT, usuario_id INTEGER NOT NULL, lote TEXT, nome TEXT NOT NULL, tamanho INTEGER, estado TEXT NOT NULL DEFAULT 'fila', motivo TEXT,
