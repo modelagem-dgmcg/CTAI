@@ -73,7 +73,7 @@
     const campo = (rot, el, id) => h('div', { class: 'campo' }, h('label', { for: id }, rot), el);
     const ent = (id, val, fn, extra) => h('input', Object.assign({ type: 'text', id, value: val === null || val === undefined ? '' : val, disabled: trava, oninput: (ev) => fn(ev.target.value) }, extra || {}));
     const area = (id, val, fn, linhas) => h('textarea', { id, rows: linhas || 2, disabled: trava, oninput: (ev) => fn(ev.target.value) }, val || '');
-    const origem = (x) => (x.trecho ? h('div', { class: 'peq', style: x.verificada ? '' : 'color:#8e1628' }, (x.verificada ? '✔ confere no texto · ' : '⚠ não encontrei no texto · ') + x.trecho) : (d.origem === 'ia' && !trava ? h('div', { class: 'peq', style: 'color:#8e1628' }, '⚠ sem trecho de origem: confira') : null));
+    const origem = (x) => (x.trecho ? h('div', { class: 'peq', style: x.verificada ? '' : 'color:#8e1628' }, (x.verificada ? '✔ confere no texto · ' : '⚠ frase citada não achada igual no texto (compare com o documento) · ') + x.trecho) : (d.origem === 'ia' && !trava ? h('div', { class: 'peq', style: 'color:#8e1628' }, '⚠ sem trecho de origem: confira') : null));
     const alvo = h('div');
     const desenhar = () => troca(alvo, E.pontos.length ? E.pontos.map((x, i) => h('div', { class: 'hi-item' }, h('div', { class: 'hi-linha' },
       h('div', { class: 'hi-campos' },

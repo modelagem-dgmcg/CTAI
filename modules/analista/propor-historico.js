@@ -42,7 +42,17 @@ function paginaDe(texto, trecho) {
   }
   return null;
 }
-const trechoExiste = (trecho, texto) => !!norm(trecho) && norm(texto).includes(norm(trecho));
+// Conferência tolerante: ignora acentos, maiúsculas, pontuação, quebras de linha e hifenização do PDF.
+const compacto = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/-\s*\n\s*/g, '').replace(/[^a-z0-9]+/g, '');
+function trechoExiste(trecho, texto) {
+  const t = compacto(trecho); if (t.length < 8) return false;
+  const f = compacto(texto);
+  if (f.includes(t)) return true;
+  // Quase igual: a IA trocou ou omitiu uma palavra. Aceita se 80% ou mais dos pedaços de 16 letras estão no texto.
+  const passo = 16, pedacos = []; for (let i = 0; i + passo <= t.length; i += passo) pedacos.push(t.slice(i, i + passo));
+  if (pedacos.length < 2) return false;
+  return pedacos.filter((c) => f.includes(c)).length / pedacos.length >= 0.8;
+}
 const origem = (texto, trecho) => { const p = paginaDe(texto, trecho); return (p ? 'página ' + p + ': ' : '') + String(trecho || '').slice(0, 300); };
 
 const GRAV = (g) => { const s = String(g || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); return s.startsWith('ALT') ? 'ALTA' : (s.startsWith('MED') ? 'MÉDIA' : 'BAIXA'); };

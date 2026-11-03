@@ -107,7 +107,7 @@
       indicadores: d.indicadores.map((x) => Object.assign({}, x)), achados: d.achados.map((x) => Object.assign({}, x)), recomendacoes: d.recomendacoes.map((x) => Object.assign({}, x)) };
     const campo = (rotulo, el, id) => h('div', { class: 'campo' }, h('label', { for: id }, rotulo), el);
     const ent = (id, val, aoMudar, extra) => h('input', Object.assign({ type: 'text', id, value: val === null || val === undefined ? '' : val, disabled: trava, oninput: (ev) => aoMudar(ev.target.value) }, extra || {}));
-    const origem = (x) => (x.trecho ? h('div', { class: 'peq ' + (x.verificada ? 'mudo' : ''), style: x.verificada ? '' : 'color:#8e1628' }, (x.verificada ? '✔ confere no texto · ' : '⚠ não encontrei no texto · ') + x.trecho) : (d.origem === 'ia' && !trava ? h('div', { class: 'peq', style: 'color:#8e1628' }, '⚠ sem trecho de origem: confira') : null));
+    const origem = (x) => (x.trecho ? h('div', { class: 'peq ' + (x.verificada ? 'mudo' : ''), style: x.verificada ? '' : 'color:#8e1628' }, (x.verificada ? '✔ confere no texto · ' : '⚠ frase citada não achada igual no texto (compare com o documento) · ') + x.trecho) : (d.origem === 'ia' && !trava ? h('div', { class: 'peq', style: 'color:#8e1628' }, '⚠ sem trecho de origem: confira') : null));
     const lista = (chave, vazio, cabecalho, linha, novo) => {
       const alvo = h('div');
       const desenhar = () => troca(alvo, E[chave].length ? E[chave].map((x, i) => h('div', { class: 'hi-item' }, linha(x, i), trava ? null : h('button', { type: 'button', class: 'leve', 'aria-label': 'Remover esta linha', onclick: () => { E[chave].splice(i, 1); desenhar(); } }, 'Remover'))) : h('p', { class: 'mudo peq' }, vazio));
