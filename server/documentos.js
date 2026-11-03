@@ -244,6 +244,7 @@ function registrarSEI(db, u, id, numero) {
   if (!n) throw erro(400, 'Informe o número do documento gerado no SEI.');
   db.run("UPDATE documentos SET sei_numero = ?, sei_em = ?, status = 'finalizado' WHERE doc_id = ?", n.slice(0, 60), agora(), d.doc_id);
   trilha.registrar(db, { usuario: u.login, tabela: 'documentos', registro: d.doc_id, campo: 'número no SEI', valor_novo: n });
+  require('./acervo-ctai').agendar(db, 'documento', d.doc_id);
 }
 
 // ---------- rotas ----------

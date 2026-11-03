@@ -65,6 +65,11 @@
   async function carteira() {
     const [o, meta] = await Promise.all([api('GET', '/api/historico/carteira'), api('GET', '/api/historico/meta')]);
     const eu = meta.voce || {};
+    const adm = ['admin', 'superintendente'].includes(eu.perfil);
+    const ac = adm ? await api('GET', '/api/historico/acervo').catch(() => null) : null;
+    const cartaoAcervo = ac ? h('div', { class: 'cartao' }, h('h3', null, 'Acervo CTAI no Google Drive'),
+      h('p', { class: 'mudo peq' }, ac.ligado ? 'Quando o número do SEI é registrado, o texto do documento (sem dados de paciente) é guardado na pasta do Acervo: Unidade / Trimestre. ' + ac.arquivados + ' arquivado(s), ' + ac.pendentes + ' pendente(s).' : ac.motivo + ' Veja docs/ACERVO-DRIVE.md.'),
+      ac.ligado && ac.pendentes ? h('button', { type: 'button', class: 'sec', onclick: async () => { try { const r = await api('POST', '/api/historico/acervo/reenviar'); toast(r.arquivados + ' de ' + r.tentados + ' enviado(s) ao Acervo.', r.arquivados < r.tentados); } catch (e) { toast(e.message, true); } } }, 'Reenviar os pendentes') : null) : null;
     const espelho = h('div', { class: 'linha', style: 'align-items:center' }, selo(meta.espelho.ligado ? 'Cópia no Drive: ligada' : 'Cópia no Drive: desligada', meta.espelho.ligado ? 'ok' : ''),
       meta.espelho.ligado ? h('button', { type: 'button', class: 'sec', onclick: async () => { try { const r = await api('POST', '/api/historico/espelho/enviar'); toast(r.ok ? 'Cópia enviada ao Drive.' : (r.motivo || 'Não enviou.'), !r.ok); } catch (e) { toast(e.message, true); } } }, 'Enviar agora') : null,
       meta.espelho.ligado ? h('button', { type: 'button', class: 'sec', onclick: async () => { if (!(await confirmar('Restaurar da planilha', 'Só funciona com o histórico do sistema vazio. Continuar?', 'Restaurar'))) return; try { const r = await api('POST', '/api/historico/espelho/restaurar'); toast(r.ok ? r.relatorios + ' relatório(s) restaurado(s).' : (r.motivo || 'Não restaurou.'), !r.ok); carteira(); } catch (e) { toast(e.message, true); } } }, 'Restaurar da planilha') : null);
@@ -76,7 +81,7 @@
     montar(h('div', { class: 'topo' }, h('div', null, h('h1', null, 'Histórico das unidades'), h('p', null, 'Os relatórios e pareceres anteriores de cada unidade da sua carteira, com a nota ao longo dos trimestres e os avisos que o cruzamento encontra.')),
       h('div', { class: 'linha' }, h('button', { type: 'button', onclick: async () => { if (!o.unidades.length) return toast('Você não tem unidade na carteira.', true); const u = o.unidades.length === 1 ? o.unidades[0] : await escolherUnidade(o.unidades); if (u) importar(u.contrato_id, u.unidade); } }, 'Importar relatório anterior'))),
       h('div', { class: 'cartao' }, tabela([{ t: 'Unidade' }, { t: 'Nota por trimestre' }, { t: 'Avisos' }, { t: 'Histórico' }, { t: '' }], linhas, { vazio: 'Nenhuma unidade na sua carteira.' })),
-      ['admin', 'superintendente'].includes(eu.perfil) ? h('div', { class: 'cartao' }, h('h3', null, 'Cópia no Google Drive'), h('p', { class: 'mudo peq' }, meta.espelho.ligado ? 'Ao confirmar, o relatório é guardado no Acervo da CTAI, para toda a equipe.' : meta.espelho.motivo + ' Veja docs/ESPELHO-DRIVE.md.'), espelho) : null);
+      ['admin', 'superintendente'].includes(eu.perfil) ? h('div', { class: 'cartao' }, h('h3', null, 'Cópia no Google Drive'), h('p', { class: 'mudo peq' }, meta.espelho.ligado ? 'Ao confirmar, o relatório é guardado no Acervo da CTAI, para toda a equipe.' : meta.espelho.motivo + ' Veja docs/ESPELHO-DRIVE.md.'), espelho) : null, cartaoAcervo);
   }
 
   // ---------- unidade: linha do tempo ----------

@@ -24,6 +24,8 @@ module.exports = (db) => {
   r.delete('/relatorios/:id', (req, res) => { H.excluirRascunho(db, req.usuario, req.params.id); res.json({ ok: true }); });
   r.put('/recomendacoes/:id', (req, res) => res.json(H.mudarSituacao(db, req.usuario, req.params.id, (req.body || {}).situacao, (req.body || {}).nota)));
 
+  r.get('/acervo', (req, res) => { soAdmin(req.usuario); res.json(require('../acervo-ctai').estado(db)); });
+  r.post('/acervo/reenviar', async (req, res) => { soAdmin(req.usuario); res.json(await require('../acervo-ctai').reenviarPendentes(db)); });
   r.post('/espelho/enviar', async (req, res) => { soAdmin(req.usuario); res.json(await H.espelharAgora(db, req.usuario)); });
   r.post('/espelho/restaurar', async (req, res) => { soAdmin(req.usuario); res.json(await H.restaurarDoEspelho(db, req.usuario)); });
   return r;

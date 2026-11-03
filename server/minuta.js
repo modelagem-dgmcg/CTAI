@@ -351,6 +351,7 @@ function registrarSEI(db, parecerId, usuario, numeroSei) {
     for (const id of p.competencias) db.run("UPDATE competencias SET status = 'parecer emitido', parecer_numero = COALESCE(?, parecer_numero) WHERE contrato_id = ? AND competencia_id = ?", p.numero_parecer, p.contrato_id, id);
     trilha.registrar(db, { usuario: usuario.login, tabela: 'pareceres', registro: p.parecer_id, campo: 'sei_numero', valor_novo: n, motivo: 'Versão ' + v.numero + ' anexada no SEI fora do sistema (a assinatura é feita lá).' });
   });
+  require('./acervo-ctai').agendar(db, 'parecer', p.parecer_id);
 }
 
 function detalhe(db, parecerId, usuario) {

@@ -261,6 +261,10 @@ CREATE TABLE IF NOT EXISTS msg_anexos (
 );
 -- "Enviar documentos": fila de arquivos do primeiro acesso. O arquivo original nunca é guardado (fica só na memória até ser lido);
 -- o texto (já mascarado) só fica aqui enquanto a pessoa não indica unidade e trimestre.
+CREATE TABLE IF NOT EXISTS acervo_arquivos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, origem TEXT NOT NULL, origem_id INTEGER NOT NULL, estado TEXT NOT NULL DEFAULT 'pendente', drive_id TEXT, caminho TEXT, erro TEXT,
+  tentativas INTEGER NOT NULL DEFAULT 0, atualizado_em TEXT, UNIQUE (origem, origem_id)
+);
 CREATE TABLE IF NOT EXISTS alimentar_fila (
   id INTEGER PRIMARY KEY AUTOINCREMENT, usuario_id INTEGER NOT NULL, lote TEXT, nome TEXT NOT NULL, tamanho INTEGER, estado TEXT NOT NULL DEFAULT 'fila', motivo TEXT,
   contrato_id TEXT, trimestre TEXT, documento_tipo TEXT, texto TEXT, paginas INTEGER, mascarados TEXT, hist_id INTEGER, ia_ok INTEGER, criado_em TEXT NOT NULL, atualizado_em TEXT
