@@ -15,6 +15,7 @@ test.before(async () => {
     if (url.includes('oauth2.googleapis.com')) return J({ access_token: 'tok', expires_in: 3600 });
     if (!url.includes('googleapis.com/')) return realFetch(url, o);
     if (falhar) return J({ error: { message: 'Drive fora do ar' } }, 503);
+    if (url.includes('alt=media')) { const f = arquivos.get(/files\/(\w+)\?/.exec(url)[1]); return { ok: true, status: 200, text: async () => f.texto }; }
     if (url.includes('/upload/')) {
       const m = /\/files\/(\w+)\?/.exec(url); const corpo = String(o.body); const meta = JSON.parse(/\r\n\r\n(\{.*?\})\r\n--/s.exec(corpo)[1]);
       const txt = /text\/plain; charset=UTF-8\r\n\r\n(.*)\r\n--ctai/s.exec(corpo)[1];
@@ -59,4 +60,29 @@ test('a administração vê o estado do Acervo; colega não', async () => {
   const adm = cliente(S.base); await adm.entrar('nathalia');
   const r = await adm.get('/api/historico/acervo'); assert.equal(r.status, 200); assert.equal(r.json.ligado, true);
   assert.equal((await a.get('/api/historico/acervo')).status, 403);
+});
+
+test('histórico confirmado vai ao Acervo (texto guardado até o Drive aceitar) e outro sistema lê só com chave', async () => {
+  const H = require('../server/historico'); const AC = require('../server/acervo-ctai');
+  const cle = S.db.get("SELECT * FROM usuarios WHERE login = 'cleuton'");
+  const CART = require('../server/carteira'); CART.definir(S.db, 'admin', cle.usuario_id, ['AC-1'], 'teste');
+  const r = await H.importarTexto(S.db, cle, { contrato_id: 'AC-1', trimestre: '2025-T4', documento_tipo: 'parecer', numero_parecer: '77/2025', nome: 'p77.pdf', texto: 'Parecer antigo. Indicador 1.1 atingiu 90 pontos.', semIA: true });
+  const hid = r.hist_id || (r.relatorio && r.relatorio.hist_id) || S.db.get('SELECT MAX(hist_id) AS i FROM hist_relatorios').i;
+  S.db.run("INSERT INTO hist_achados (hist_id, tipo, descricao, gravidade, trecho, verificada) VALUES (?, 'x', 'achado de teste', 'BAIXA', '', 0)", hid);
+  falhar = true; H.confirmar(S.db, cle, hid); await new Promise((ok) => setTimeout(ok, 150)); falhar = false;
+  assert.equal(S.db.get("SELECT estado FROM acervo_arquivos WHERE origem = 'historico' AND origem_id = ?", hid).estado, 'pendente', 'Drive fora: fica pendente');
+  assert.equal(S.db.get('SELECT texto FROM hist_relatorios WHERE hist_id = ?', hid).texto, null, 'o histórico apaga o texto ao confirmar');
+  const re = await AC.reenviarPendentes(S.db); assert.ok(re.arquivados >= 1);
+  const linha = S.db.get("SELECT * FROM acervo_arquivos WHERE origem = 'historico' AND origem_id = ?", hid);
+  assert.equal(linha.estado, 'arquivado'); assert.equal(linha.texto_pendente, null); assert.equal(linha.trimestre, '2025-T4');
+  // leitura por chave
+  assert.equal((await a.get('/api/acervo-api/documentos')).status, 401, 'sem chave não lê');
+  const adm = cliente(S.base); await adm.entrar('nathalia');
+  const k = await adm.post('/api/historico/acervo/chaves', { sistema: 'Raio-X' }); assert.equal(k.status, 200); const chave = k.json.chave;
+  const get = (u, c) => fetch(S.base + u, { headers: { authorization: 'Bearer ' + c } }).then(async (x) => ({ status: x.status, json: await x.json() }));
+  const lista = await get('/api/acervo-api/documentos?trimestre=2025-T4', chave); assert.equal(lista.status, 200); assert.ok(lista.json.documentos.length >= 1);
+  const um = await get('/api/acervo-api/documentos/' + lista.json.documentos[0].id, chave); assert.equal(um.status, 200); assert.match(um.json.texto, /Parecer antigo/);
+  assert.equal((await fetch(S.base + '/api/acervo-api/documentos', { method: 'POST', headers: { authorization: 'Bearer ' + chave, 'x-ctai': '1' } })).status, 405, 'só leitura');
+  const id = S.db.get('SELECT chave_id FROM acervo_chaves').chave_id; assert.equal((await adm.del('/api/historico/acervo/chaves/' + id)).status, 200);
+  assert.equal((await get('/api/acervo-api/documentos', chave)).status, 401, 'chave revogada não lê');
 });

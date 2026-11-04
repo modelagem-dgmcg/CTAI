@@ -25,6 +25,9 @@ module.exports = (db) => {
   r.put('/recomendacoes/:id', (req, res) => res.json(H.mudarSituacao(db, req.usuario, req.params.id, (req.body || {}).situacao, (req.body || {}).nota)));
 
   r.get('/acervo', (req, res) => { soAdmin(req.usuario); res.json(require('../acervo-ctai').estado(db)); });
+  r.get('/acervo/chaves', (req, res) => { soAdmin(req.usuario); res.json({ chaves: require('../acervo-ctai').listarChaves(db) }); });
+  r.post('/acervo/chaves', (req, res) => { soAdmin(req.usuario); try { res.json(require('../acervo-ctai').criarChave(db, (req.body || {}).sistema, req.usuario)); } catch (e) { throw erro(e.status || 400, e.message); } });
+  r.delete('/acervo/chaves/:id', (req, res) => { soAdmin(req.usuario); require('../acervo-ctai').revogarChave(db, req.params.id); res.json({ ok: true }); });
   r.post('/acervo/reenviar', async (req, res) => { soAdmin(req.usuario); res.json(await require('../acervo-ctai').reenviarPendentes(db)); });
   r.post('/espelho/enviar', async (req, res) => { soAdmin(req.usuario); res.json(await H.espelharAgora(db, req.usuario)); });
   r.post('/espelho/restaurar', async (req, res) => { soAdmin(req.usuario); res.json(await H.restaurarDoEspelho(db, req.usuario)); });

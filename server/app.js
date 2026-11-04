@@ -44,6 +44,7 @@ function criarApp(db) {
   app.use('/api/ensinar', require('./ensinar')(db));
   app.use('/api/documentos', require('./documentos')(db));
   app.use('/api/analista', require('./routes/analista')(db));
+  app.use('/api/acervo-api', require('./routes/acervo-api')(db));
   app.use('/api/historico', require('./routes/historico')(db));
   app.use('/api/alimentar', require('./routes/alimentar')(db));
   app.use('/api/gaveta', require('./routes/gaveta')(db));

@@ -265,6 +265,9 @@ CREATE TABLE IF NOT EXISTS acervo_arquivos (
   id INTEGER PRIMARY KEY AUTOINCREMENT, origem TEXT NOT NULL, origem_id INTEGER NOT NULL, estado TEXT NOT NULL DEFAULT 'pendente', drive_id TEXT, caminho TEXT, erro TEXT,
   tentativas INTEGER NOT NULL DEFAULT 0, atualizado_em TEXT, UNIQUE (origem, origem_id)
 );
+CREATE TABLE IF NOT EXISTS acervo_chaves (
+  chave_id INTEGER PRIMARY KEY AUTOINCREMENT, sistema TEXT NOT NULL, hash TEXT NOT NULL UNIQUE, final TEXT, criada_por TEXT NOT NULL, criada_em TEXT NOT NULL, revogada_em TEXT, ultimo_uso TEXT, usos INTEGER NOT NULL DEFAULT 0
+);
 CREATE TABLE IF NOT EXISTS alimentar_fila (
   id INTEGER PRIMARY KEY AUTOINCREMENT, usuario_id INTEGER NOT NULL, lote TEXT, nome TEXT NOT NULL, tamanho INTEGER, estado TEXT NOT NULL DEFAULT 'fila', motivo TEXT,
   contrato_id TEXT, trimestre TEXT, documento_tipo TEXT, texto TEXT, paginas INTEGER, mascarados TEXT, hist_id INTEGER, ia_ok INTEGER, criado_em TEXT NOT NULL, atualizado_em TEXT
@@ -416,6 +419,7 @@ const COLUNAS_NOVAS = {
   competencias: ['simas_enviado_em TEXT', 'simas_registrado_por TEXT', 'simas_registrado_em TEXT'],
   alimentar_fila: ['codigo TEXT', 'parte TEXT', 'mes TEXT', 'paginas_imagem TEXT', 'caracteres INTEGER', 'zip_nome TEXT', 'gaveta_id INTEGER', 'origem TEXT', 'imp_trimestre TEXT', 'imp_modelo INTEGER'],
   perguntas_contrato: ['o_que_e TEXT', 'doc_origem TEXT', 'trecho_origem TEXT', 'data_origem TEXT', 'por_que_importa TEXT', 'o_que_fazer TEXT', 'impacto INTEGER'],
+  acervo_arquivos: ['unidade TEXT', 'trimestre TEXT', 'titulo TEXT', 'sei TEXT', 'tipo TEXT', 'texto_pendente TEXT'],
   imp_checks: ['situacao TEXT', 'data_pedido TEXT', 'processo_sei TEXT'],
   achados: ['contrato_id TEXT', 'trimestre TEXT', 'chave TEXT', 'encaminhado_a TEXT', 'encaminhado_por TEXT', 'encaminhado_em TEXT', 'mensagem TEXT', 'prazo TEXT', 'resposta TEXT', 'respondido_por TEXT', 'respondido_em TEXT', 'origem_fonte TEXT', 'origem_doc TEXT', 'origem_local TEXT', 'origem_data TEXT'],
 };

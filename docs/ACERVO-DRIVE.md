@@ -18,3 +18,18 @@ O original não é guardado. O banco do CTAI continua sendo a base de trabalho. 
 6. Reinicie. Em **Relatórios anteriores** a administração vê "Acervo CTAI no Google Drive" com a contagem.
 
 Nunca coloque a chave no GitHub. Quem tem a chave escreve na pasta compartilhada com ela, e só nela.
+
+## Carga de todos os pareceres desde o começo
+
+Cada relatório ou parecer anterior que a analista **confirma** em *Enviar documentos* / *Relatórios anteriores* também vai para o Acervo (o texto, já sem dados de paciente, é guardado até o Drive aceitar). Nome: `Parecer <número> [código].txt`, na pasta Unidade / Trimestre. O mesmo documento nunca é guardado duas vezes.
+Por isso a carga inicial é: cada analista envia o ZIP do SEI da sua carteira, confere e confirma. Ao terminar, a administração confere o cartão do Acervo (arquivados e pendentes).
+
+## Quem lê: os sistemas, por chave
+
+Pessoas não leem o Acervo por aqui. Quem lê são os sistemas (Raio-X, Analista da diretoria etc.), cada um com **uma chave de leitura própria**.
+
+- Criar e revogar: tela *Relatórios anteriores* → cartão "Acervo CTAI no Google Drive" → **Criar chave** / **Revogar chave** (administração e superintendência). A chave aparece uma única vez; guarde só no sistema que vai usá-la.
+- Uso (só leitura, cabeçalho `Authorization: Bearer <chave>`):
+  - `GET /api/acervo-api/documentos?unidade=&trimestre=&tipo=&q=&limite=` lista o que existe (sem o texto);
+  - `GET /api/acervo-api/documentos/<id>` devolve o texto.
+- Qualquer escrita é recusada. Cada chave tem o uso contado e pode ser revogada a qualquer momento.

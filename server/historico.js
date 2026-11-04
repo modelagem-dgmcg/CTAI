@@ -147,6 +147,7 @@ function confirmar(db, usuario, id) {
     trilha.registrar(db, { usuario: usuario.login, tabela: 'hist_relatorios', registro: r.hist_id, campo: 'confirmado', valor_novo: { contrato: r.contrato_id, trimestre: r.trimestre, igq: r.igq, origem: r.origem } });
   });
   espelhar(db);
+  require('./acervo-ctai').agendar(db, 'historico', r.hist_id, r.texto);
   return obter(db, usuario, r.hist_id);
 }
 

@@ -60,6 +60,12 @@ async function gravarTexto(nome, texto, paiId) {
   const j = await api(url, { method: ja ? 'PATCH' : 'POST', headers: { 'content-type': 'multipart/related; boundary=' + lim }, body: corpo });
   return { id: j.id, substituiu: !!ja };
 }
+async function lerTexto(id) {
+  const t = await token();
+  const r = await fetch(D + '/' + encodeURIComponent(id) + '?alt=media&supportsAllDrives=true', { headers: { authorization: 'Bearer ' + t } });
+  if (!r.ok) throw new Error('Drive ' + r.status + ' ao ler o arquivo.');
+  return r.text();
+}
 async function testar() { return api(D + '/' + pastaRaiz() + '?supportsAllDrives=true&fields=id,name,capabilities(canAddChildren)'); }
 
-module.exports = { ligado, pastaRaiz, garantirPasta, gravarTexto, testar, emailConta: () => (chave() || {}).client_email || null };
+module.exports = { lerTexto, ligado, pastaRaiz, garantirPasta, gravarTexto, testar, emailConta: () => (chave() || {}).client_email || null };
